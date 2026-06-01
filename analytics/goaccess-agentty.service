@@ -4,12 +4,7 @@ After=network.target nginx.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/goaccess /var/log/nginx/agentty.access.log \
-  --config-file=/home/ayush/projects/agentpp-site/analytics/goaccess.conf \
-  --output=/var/lib/goaccess/html/index.html \
-  --real-time-html \
-  --ws-url=wss://stats.agentty.org/ws \
-  --addr=127.0.0.1 --port=7890
+ExecStart=/home/ayush/projects/agentpp-site/analytics/goaccess-live.sh
 Restart=always
 RestartSec=3
 # GoAccess must read root-owned logs and write the webroot report.
