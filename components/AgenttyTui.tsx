@@ -194,6 +194,7 @@ export function AgenttyTui() {
       </div>
 
       <div className="ttui-body">
+        <div className="ttui-scroll">
         {/* ── USER TURN ── */}
         <div className="ttui-turn rail-mag">
           <div className="row ttui-head">
@@ -350,6 +351,8 @@ export function AgenttyTui() {
         )}
 
         {/* ── COMPOSER ── */}
+        </div>
+        <div className="ttui-chrome">
         <div className="ttui-composer">
           <div className="ttui-comp-top">
             <span className="dim">╭</span>
@@ -414,6 +417,7 @@ export function AgenttyTui() {
         </div>
         <div className={`ttui-accent ${phase === "stream" ? "bcyan" : "dim"}`}>
           ────────────────────────────────────────────────────────────
+        </div>
         </div>
       </div>
     </div>

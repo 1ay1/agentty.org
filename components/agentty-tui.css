@@ -24,19 +24,31 @@
   font-size: 12.5px;
   line-height: 1.65;
   color: #c9d1d9;
-  overflow-x: auto;
-  /* hold a stable height so the card doesn't jump as the session
-     streams in — sized to the fully-settled turn. */
-  min-height: 540px;
+  /* FIXED height — the window never grows or jumps as the session
+     streams in. The conversation area scrolls internally; composer +
+     status bar stay pinned to the bottom. */
+  height: 540px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .ttui-body .row { white-space: pre-wrap; word-break: break-word; }
 .ttui-blank { height: 0.7em; }
 
-/* the conversation grows from the top; composer + status pinned to bottom */
+/* conversation scrollback — grows from the top, pinned to the bottom so
+   new lines push older ones up instead of resizing the card. */
+.ttui-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
 .ttui-turn { flex: none; }
-.ttui-composer { margin-top: auto; }
+
+/* composer + status pinned to the bottom, fixed in place */
+.ttui-chrome { flex: none; margin-top: 12px; }
 
 /* fade/slide-in for streamed-in blocks — the "a new line just landed" feel */
 @keyframes ttui-in {
