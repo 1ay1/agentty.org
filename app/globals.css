@@ -131,7 +131,7 @@ pre.code::-webkit-scrollbar,
 .btn-ghost:hover { border-color: var(--accent); background: #161824; }
 
 /* ---------- HERO ---------- */
-.hero { padding: 52px 0 64px; }
+.hero { padding: 52px 0 24px; }
 
 /* two-column: text left, live TUI window right */
 .hero-grid {
@@ -181,7 +181,7 @@ pre.code::-webkit-scrollbar,
 
 /* ---------- INSTALL BAND ---------- */
 .install-band {
-  padding: 30px 0 8px;
+  padding: 8px 0 8px;
 }
 .install-inner {
   display: flex; flex-direction: column; align-items: center; text-align: center;
