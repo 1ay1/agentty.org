@@ -55,12 +55,24 @@ brew install agentty
 brew upgrade agentty     # update`}</Code>
       <p>Linux Homebrew gets the prebuilt static binary; macOS builds from source (~1 min).</p>
 
-      <h2 id="windows">Windows (Scoop)</h2>
+      <h2 id="windows">Windows (installer)</h2>
+      <p>
+        The easiest way: download and run the{" "}
+        <a href="https://github.com/1ay1/agentty/releases/latest/download/agentty-windows-x86_64.msi">
+          signed <code>.msi</code> installer
+        </a>
+        . It installs to <code>Program&nbsp;Files</code>, adds <code>agentty</code> to your
+        <code> PATH</code>, creates a Start&nbsp;Menu entry, and registers a normal
+        Add/Remove&nbsp;Programs entry for clean uninstall — no SmartScreen warning.
+      </p>
+      <Note type="tip">
+        Prefer a package manager? Scoop tracks every release:
+      </Note>
       <Code>{`scoop bucket add 1ay1 https://github.com/1ay1/scoop-bucket
 scoop install agentty
 scoop update agentty     # update`}</Code>
       <p>
-        Direct <code>.exe</code>:{" "}
+        Portable single <code>.exe</code> (no installer):{" "}
         <code>curl -L https://github.com/1ay1/agentty/releases/latest/download/agentty-windows-x86_64.exe -o agentty.exe</code>
       </p>
 
