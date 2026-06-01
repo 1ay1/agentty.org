@@ -1,53 +1,40 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
 import { CopyRow } from "@/components/CopyRow";
+import { AgenttyTui } from "@/components/AgenttyTui";
 
 export default function Home() {
   return (
     <>
       {/* HERO */}
       <section className="hero">
-        <div className="wrap">
+        <div className="wrap hero-inner">
           <div className="badge">
-            <span className="dot" /> C++26 · single static binary · {site.license}
+            <span className="dot" /> C++26 · single static binary · {site.license} licensed
           </div>
           <h1>
             Blazing-fast <span className="grad">Claude</span>
             <br /> in your terminal.
           </h1>
           <p className="lede">
-            A drop-in alternative to <code>claude-code</code> written in C++26 —{" "}
+            A drop-in alternative to <code>claude-code</code>, written in C++26.{" "}
             <strong>8.8&nbsp;MB binary</strong>, <strong>sub-millisecond cold start</strong>,{" "}
-            <strong>sandboxed by default</strong>, SSH air-gap in one command. No Node,
-            no Python, no Electron, no <code>npm install</code>.
+            <strong>sandboxed by default</strong>, SSH air-gap in one command — with no Node,
+            Python, Electron, or <code>npm install</code>.
           </p>
           <div className="hero-actions">
             <Link className="btn btn-primary" href="/docs/installation">
-              Install in one line
+              Get started
             </Link>
             <Link className="btn btn-ghost" href="/docs">
               Read the docs →
             </Link>
           </div>
           <CopyRow cmd={site.installOneLiner} />
+        </div>
 
-          <div className="term" style={{ marginTop: 44 }}>
-            <div className="term-bar">
-              <span className="d r" /><span className="d y" /><span className="d g" />
-              <span className="title">agentty — ~/projects/app</span>
-            </div>
-            <div className="term-body">
-              <div><span className="c-accent">▌</span> <span className="c-dim">refactor the auth handler to use the new token cache</span></div>
-              <div style={{ height: 8 }} />
-              <div><span className="c-blue">●</span> <span className="c-dim">read</span> <span className="c-dim">src/auth/handler.cpp</span> <span className="c-green">✓ 142 lines</span></div>
-              <div><span className="c-blue">●</span> <span className="c-dim">grep</span> <span className="c-dim">TokenCache</span> <span className="c-green">✓ 3 files</span></div>
-              <div><span className="c-warm">✎</span> <span className="c-dim">edit</span> <span className="c-dim">src/auth/handler.cpp</span> <span className="c-green">+18 −9</span></div>
-              <div><span className="c-blue">●</span> <span className="c-dim">bash</span> <span className="c-dim">cmake --build build -j</span> <span className="c-green">✓ exit 0</span></div>
-              <div style={{ height: 8 }} />
-              <div><span className="c-accent">Done.</span> <span className="c-dim">Auth handler now resolves through </span><span className="c-warm">TokenCache::lookup</span><span className="c-dim">, falling back to a network</span></div>
-              <div><span className="c-dim">refresh only on a miss. Build is green.</span><span className="cursor">&nbsp;</span></div>
-            </div>
-          </div>
+        <div className="wrap">
+          <AgenttyTui />
         </div>
       </section>
 

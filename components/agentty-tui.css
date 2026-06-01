@@ -1,0 +1,85 @@
+/* agentty TUI replica — faithful to src/runtime/view/* + maya widgets */
+.ttui {
+  background: #07080b;
+  border: 1px solid #20242e;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 40px 100px -24px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  max-width: 780px;
+  margin: 56px auto 0;
+}
+.ttui-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 14px; background: #0d0f14; border-bottom: 1px solid #20242e;
+}
+.ttui-dot { width: 11px; height: 11px; border-radius: 50%; }
+.ttui-dot.r { background: #ff5f56; }
+.ttui-dot.y { background: #ffbd2e; }
+.ttui-dot.g { background: #27c93f; }
+.ttui-title { margin-left: 8px; color: #6a7280; font-family: var(--mono); font-size: 12px; }
+
+.ttui-body {
+  padding: 18px 20px 16px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #c9d1d9;
+  overflow-x: auto;
+}
+.ttui-body .row { white-space: pre-wrap; word-break: break-word; }
+
+/* speaker rail */
+.ttui-turn { border-left: 2px solid transparent; padding-left: 14px; margin-bottom: 4px; }
+.ttui-turn.rail-mag { border-color: #c586c0; }
+.ttui-turn.rail-bmag { border-color: #d97cd9; }
+.ttui-rule { border-top: 1px solid #181b22; margin: 12px 0; }
+.ttui-prose { margin-top: 10px; }
+
+/* AgentTimeline panel */
+.ttui-panel { margin: 12px 0 4px; font-size: 12px; line-height: 1.7; }
+.ttui-panel-top, .ttui-panel-bot { white-space: pre; display: flex; }
+.ttui-panel-top .ttui-fill { flex: 1; overflow: hidden; }
+.ttui-panel-bot { overflow: hidden; }
+.ttui-panel-row { white-space: pre; position: relative; display: flex; align-items: baseline; }
+.ttui-elapsed { margin-left: auto; padding-left: 16px; }
+
+/* composer */
+.ttui-composer { margin-top: 16px; font-size: 12px; }
+.ttui-comp-top, .ttui-comp-bot { white-space: pre; overflow: hidden; }
+.ttui-comp-mid { display: flex; align-items: baseline; white-space: pre; }
+.ttui-comp-right { margin-left: auto; padding: 0 8px; }
+
+/* status bar */
+.ttui-status {
+  display: flex; align-items: center; flex-wrap: wrap;
+  margin-top: 14px; font-size: 12px; white-space: pre;
+}
+.ttui-shortcuts {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  margin-top: 6px; font-size: 11.5px;
+}
+.ttui-shortcuts span { white-space: nowrap; }
+
+/* ANSI palette (faithful xterm-ish mapping of agentty's named colors) */
+.ttui .mag     { color: #c586c0; }
+.ttui .bmag    { color: #d97cd9; }
+.ttui .cyan    { color: #56b6c2; }
+.ttui .bcyan   { color: #56d4e0; }
+.ttui .blue    { color: #61afef; }
+.ttui .green   { color: #98c379; }
+.ttui .bgreen  { color: #7ee787; }
+.ttui .yellow  { color: #e5c07b; }
+.ttui .byellow { color: #f0d98c; }
+.ttui .red     { color: #e06c75; }
+.ttui .white   { color: #b9c0cb; }
+.ttui .bwhite  { color: #f2f4f8; }
+.ttui .dim     { color: #5c6370; }
+.ttui .faint   { color: #4b5263; }
+.ttui .b       { font-weight: 700; }
+.ttui .i       { font-style: italic; }
+.term-cursor   { background: #56d4e0; color: #07080b; }
+
+@media (max-width: 640px) {
+  .ttui-body { font-size: 11px; padding: 14px; }
+  .ttui-shortcuts span:nth-child(n+4) { display: none; }
+}
