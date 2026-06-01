@@ -471,7 +471,10 @@ kbd { background: var(--bg-elev); border: 1px solid var(--border); border-bottom
   .hero { padding: 36px 0 0; }
   .hero-actions { width: 100%; }
   .hero-actions .btn { flex: 1 1 auto; }
-  .hero-tui .ttui { margin-top: 8px; }
+  .hero-tui .ttui { margin-top: 24px; }
+  /* clear the demo window before the install band (cancel the desktop
+     negative pull that overlaps the TUI when stacked) */
+  .install-band { margin-top: 0; padding-top: 28px; }
 
   /* lighter vertical rhythm on phones */
   section.block { padding: 48px 0; }
