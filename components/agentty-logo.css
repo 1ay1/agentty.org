@@ -30,8 +30,11 @@
 .agentty-logo.md { font-size: 15px; }
 .agentty-logo.sm { font-size: 11px; }
 
-@media (max-width: 640px) {
-  .agentty-logo.lg { font-size: 15px; }
+/* the wordmark is a fixed 55-cell-wide monospace grid (~33ch). On narrow
+   screens a fixed font-size overflows the viewport, so scale it fluidly to
+   the available width — capped at the desktop size, floored so it stays legible. */
+@media (max-width: 720px) {
+  .agentty-logo.lg { font-size: clamp(9px, 2.7vw, 22px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
