@@ -11,7 +11,9 @@ export const site = {
   license: "MIT",
   maya: "https://github.com/1ay1/maya",
   installOneLiner:
-    "curl -fsSL https://raw.githubusercontent.com/1ay1/agentty/master/install.sh | sh",
+    "curl -fsSL https://agentty.org/install.sh | sh",
+  installOneLinerWindows:
+    "irm https://agentty.org/install.ps1 | iex",
 } as const;
 
 export type NavItem = { title: string; href: string };

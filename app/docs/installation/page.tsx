@@ -30,9 +30,11 @@ export default function Installation() {
         newest release. No <code>apt</code>, no <code>brew</code>, no version drift.
       </p>
       <Note>
-        Flags: <code>--prefix ~/somewhere</code>, <code>--version v0.1.0</code>. Prebuilt
-        binaries for Linux (x86_64, aarch64) and Windows (x86_64); macOS builds from source
-        in seconds.
+        Flags: <code>--prefix ~/somewhere</code>, <code>--version v0.1.0</code>,{" "}
+        <code>--no-verify</code>, <code>--build</code> (force a source build). Prebuilt
+        binaries for Linux (x86_64, i686), macOS (Apple&nbsp;Silicon &amp; Intel), and
+        Windows (x86_64). On any other platform the script builds from source
+        automatically. Works with <code>curl</code> or <code>wget</code>.
       </Note>
 
       <h2 id="debian">Debian / Ubuntu</h2>
@@ -49,30 +51,30 @@ sudo dpkg -i agentty_0.1.0_amd64.deb       # or agentty_0.1.0_arm64.deb`}</Code>
 yay -Syu agentty-bin     # update`}</Code>
       <p>Or install the release-page <code>.pkg.tar.zst</code> with <code>sudo pacman -U</code>.</p>
 
-      <h2 id="macos">macOS (Homebrew)</h2>
+      <h2 id="macos">macOS</h2>
+      <p>
+        The one-line installer above ships prebuilt binaries for both Apple&nbsp;Silicon
+        (<code>arm64</code>) and Intel (<code>x86_64</code>) and strips the Gatekeeper
+        quarantine flag for you, so it just runs:
+      </p>
+      <CopyRow cmd={site.installOneLiner} />
+      <p>Homebrew (once the tap lands):</p>
       <Code>{`brew tap 1ay1/tap
 brew install agentty
 brew upgrade agentty     # update`}</Code>
-      <p>Linux Homebrew gets the prebuilt static binary; macOS builds from source (~1 min).</p>
 
       <h2 id="windows">Windows</h2>
+      <p>The fastest way — one line in PowerShell:</p>
+      <CopyRow cmd={site.installOneLinerWindows} />
       <p>
-        The easiest, warning-free way is a package manager — it installs from the
-        signed release with no SmartScreen prompt:
+        Downloads <code>agentty.exe</code>, verifies its SHA256, installs to{" "}
+        <code>%LOCALAPPDATA%\agentty</code>, and adds it to your user <code>PATH</code>.
+        Or use a package manager (no SmartScreen prompt):
       </p>
       <Code>{`winget install agentty
 # or
 scoop bucket add 1ay1 https://github.com/1ay1/scoop-bucket
 scoop install agentty`}</Code>
-      <p>
-        Prefer a classic installer? Download and run the{" "}
-        <a href="https://github.com/1ay1/agentty/releases/latest/download/agentty-windows-x86_64.msi">
-          <code>.msi</code> installer
-        </a>
-        . It installs to <code>Program&nbsp;Files</code>, adds <code>agentty</code> to your
-        <code> PATH</code>, creates a Start&nbsp;Menu entry, and registers a normal
-        Add/Remove&nbsp;Programs entry for clean uninstall.
-      </p>
       <p>
         Portable single <code>.exe</code> (no installer):{" "}
         <code>curl -L https://github.com/1ay1/agentty/releases/latest/download/agentty-windows-x86_64.exe -o agentty.exe</code>
@@ -80,9 +82,17 @@ scoop install agentty`}</Code>
 
       <h2 id="raw">Raw static binaries</h2>
       <p>Fully-static, no shared-library dependencies. Drop and run:</p>
-      <Code>{`curl -fsSL https://github.com/1ay1/agentty/releases/latest/download/agentty-linux-x86_64 -o agentty && chmod +x agentty
-curl -fsSL https://github.com/1ay1/agentty/releases/latest/download/agentty-linux-aarch64 -o agentty && chmod +x agentty`}</Code>
-      <p>Verify with <code>SHA256SUMS</code> on the release page.</p>
+      <Code>{`# Linux x86_64
+curl -fsSL https://github.com/1ay1/agentty/releases/latest/download/agentty-linux-x86_64 -o agentty && chmod +x agentty
+# Linux i686 (32-bit)
+curl -fsSL https://github.com/1ay1/agentty/releases/latest/download/agentty-linux-i686 -o agentty && chmod +x agentty
+# macOS (Apple Silicon / Intel)
+curl -fsSL https://github.com/1ay1/agentty/releases/latest/download/agentty-macos-arm64 -o agentty && chmod +x agentty
+curl -fsSL https://github.com/1ay1/agentty/releases/latest/download/agentty-macos-x86_64 -o agentty && chmod +x agentty`}</Code>
+      <p>
+        Each release asset carries a published SHA256 (shown on the release page and
+        verified automatically by the one-line installer).
+      </p>
 
       <Note type="tip">
         Building from source? See <a href="/docs/building">Building from Source</a> for the

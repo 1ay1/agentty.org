@@ -48,6 +48,18 @@ server {
         try_files $uri $uri/ $uri.html $uri/index.html =404;
     }
 
+    # The one-line installer advertised on the site & social cards.
+    # Serve the raw shell script with a sane content-type and no caching
+    # so `curl -fsSL https://agentty.org/install.sh | sh` always gets latest.
+    location = /install.sh {
+        default_type text/x-shellscript;
+        add_header Cache-Control "no-cache" always;
+    }
+    location = /install.ps1 {
+        default_type text/plain;
+        add_header Cache-Control "no-cache" always;
+    }
+
     # Next.js generates the social-share cards as extensionless routes;
     # force the PNG content-type so crawlers (Google, Slack, X, …) accept them.
     location = /opengraph-image { default_type image/png; }
