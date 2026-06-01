@@ -1,21 +1,191 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import "./agentty-tui.css";
 
 /**
- * A faithful static replica of the agentty TUI. Every glyph, color, and
- * layout decision is lifted directly from the real source:
- *   - turn header / rail  → src/runtime/view/thread/turn/turn.cpp + maya/widget/turn.hpp
- *   - Actions panel       → maya/widget/agent_timeline.hpp + agent_timeline.cpp
- *   - tool colors / detail→ src/runtime/view/thread/turn/agent_timeline/tool_helpers.cpp
- *   - status bar          → maya/widget/status_bar.hpp + src/runtime/view/status_bar/*
- *   - palette             → include/agentty/runtime/view/palette.hpp
+ * A faithful, *animated* replica of the agentty TUI — plays a live session
+ * the way the real app renders one: the user turn lands, the assistant
+ * header appears, tool events stream into the Actions panel one by one
+ * (Pending/Running spinner → Done ✓ with elapsed), the title `n/total`
+ * and stats counts tick up live, then the assistant prose types out and
+ * the status bar settles from Streaming → Ready. Then it loops.
  *
- * Glyphs:  ❯ user · ✦ assistant · ╭─ ├─ ╰─ tree · │ connector · ✓ done
- *          ● model/idle · ⚡ rate · ▎ title edge · ▌ phase rail · ─ accent
- * small_caps: every letter uppercased + space-separated → "A C T I O N S".
+ * Every glyph / color / layout is lifted from the real source:
+ *   turn header  → src/runtime/view/thread/turn/turn.cpp + maya/widget/turn.hpp
+ *   Actions panel→ maya/widget/agent_timeline.hpp + agent_timeline.cpp
+ *   tool colors  → .../agent_timeline/tool_helpers.cpp
+ *   status bar   → maya/widget/status_bar.hpp + status_bar/*
+ *   palette      → include/agentty/runtime/view/palette.hpp
+ *
+ * Spinner frames are maya's exact braille set; status icons ✓ / ⠋ match.
  */
+
+const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
+type Cat = "inspect" | "mutate" | "execute";
+
+interface ToolEvent {
+  name: string;
+  detail: string;
+  cat: Cat;
+  elapsed: string;
+  elapsedClass: string; // duration_color zone
+  runMs: number; // how long the spinner spins before settling
+  body?: { cls: string; text: string }[];
+}
+
+const EVENTS: ToolEvent[] = [
+  {
+    name: "Read",
+    detail: "src/auth/handler.cpp  ·  214 lines",
+    cat: "inspect",
+    elapsed: "142ms",
+    elapsedClass: "dim",
+    runMs: 700,
+  },
+  {
+    name: "Grep",
+    detail: "TokenCache  ·  3 matches",
+    cat: "inspect",
+    elapsed: " 89ms",
+    elapsedClass: "dim",
+    runMs: 600,
+  },
+  {
+    name: "Edit",
+    detail: "src/auth/handler.cpp  (+18 −9)",
+    cat: "mutate",
+    elapsed: "  6ms",
+    elapsedClass: "green",
+    runMs: 900,
+    body: [
+      { cls: "dim", text: "@@ resolve(id) @@" },
+      { cls: "red", text: "- return fetch_remote(id);" },
+      { cls: "green", text: "+ if (auto v = cache.lookup(id)) return *v;" },
+    ],
+  },
+  {
+    name: "Bash",
+    detail: "cmake --build build -j",
+    cat: "execute",
+    elapsed: "  3.6s",
+    elapsedClass: "yellow",
+    runMs: 1400,
+    body: [{ cls: "dim", text: "[100%] Built target agentty" }],
+  },
+];
+
+const PROSE =
+  "Auth handler now resolves through TokenCache::lookup, falling back to a network refresh only on a miss. Build is green.";
+
+const catColor: Record<Cat, string> = {
+  inspect: "cyan",
+  mutate: "mag",
+  execute: "cyan",
+};
+
+// timeline scheduling — cumulative ms offsets
+function schedule() {
+  const steps: { at: number; running?: number; done?: number }[] = [];
+  let t = 1100; // after user msg + assistant header appear
+  EVENTS.forEach((ev, i) => {
+    steps.push({ at: t, running: i }); // event i starts (Running)
+    t += ev.runMs;
+    steps.push({ at: t, done: i }); // event i settles (Done)
+    t += 120;
+  });
+  return { steps, settleAt: t };
+}
+
 export function AgenttyTui() {
+  // count of events that have STARTED rendering, and how many are DONE
+  const [running, setRunning] = useState(-1); // index currently/last running
+  const [done, setDone] = useState(-1); // highest done index
+  const [frame, setFrame] = useState(0);
+  const [proseLen, setProseLen] = useState(0);
+  const [phase, setPhase] = useState<"idle" | "stream" | "ready">("idle");
+  const [userTyped, setUserTyped] = useState(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // master loop — clears + reschedules everything each cycle
+  useEffect(() => {
+    let cancelled = false;
+    const clearAll = () => {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+    };
+
+    const run = () => {
+      if (cancelled) return;
+      // reset
+      setRunning(-1);
+      setDone(-1);
+      setProseLen(0);
+      setPhase("idle");
+      setUserTyped(false);
+
+      const push = (ms: number, fn: () => void) =>
+        timers.current.push(setTimeout(fn, ms));
+
+      push(300, () => setUserTyped(true));
+      push(700, () => setPhase("stream"));
+
+      const { steps, settleAt } = schedule();
+      steps.forEach((s) => {
+        push(s.at, () => {
+          if (s.running !== undefined) setRunning(s.running);
+          if (s.done !== undefined) setDone(s.done);
+        });
+      });
+
+      // type the prose out after the panel settles
+      const proseStart = settleAt + 250;
+      for (let i = 1; i <= PROSE.length; i++) {
+        push(proseStart + i * 11, () => setProseLen(i));
+      }
+      const proseEnd = proseStart + PROSE.length * 11;
+      push(proseEnd + 150, () => setPhase("ready"));
+
+      // hold, then loop
+      push(proseEnd + 4200, () => {
+        clearAll();
+        run();
+      });
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+      clearAll();
+    };
+  }, []);
+
+  // spinner ticker — only while anything is in flight
+  const anyRunning = running >= 0 && done < EVENTS.length - 1;
+  useEffect(() => {
+    if (!anyRunning && phase !== "stream") return;
+    const id = setInterval(() => setFrame((f) => (f + 1) % 10), 90);
+    return () => clearInterval(id);
+  }, [anyRunning, phase]);
+
+  const total = EVENTS.length;
+  const doneCount = done + 1;
+  const allDone = doneCount === total;
+  const visibleCount = Math.max(running + 1, doneCount); // events shown so far
+  const showPanel = running >= 0;
+
+  // live stats counts (only count categories of events seen so far)
+  const seen = EVENTS.slice(0, visibleCount);
+  const inspect = seen.filter((e) => e.cat === "inspect").length;
+  const mutate = seen.filter((e) => e.cat === "mutate").length;
+  const execute = seen.filter((e) => e.cat === "execute").length;
+
+  // prose split: render code-ref span (TokenCache::lookup) in bright_cyan
+  const prose = PROSE.slice(0, proseLen);
+
   return (
-    <div className="ttui" role="img" aria-label="agentty terminal interface showing a coding session">
+    <div className="ttui" role="img" aria-label="agentty terminal interface showing a live coding session">
       <div className="ttui-bar">
         <span className="ttui-dot r" />
         <span className="ttui-dot y" />
@@ -24,7 +194,7 @@ export function AgenttyTui() {
       </div>
 
       <div className="ttui-body">
-        {/* ── USER TURN ── rail: bold left border, role_brand (magenta) ── */}
+        {/* ── USER TURN ── */}
         <div className="ttui-turn rail-mag">
           <div className="row ttui-head">
             <span className="mag">❯</span>
@@ -35,117 +205,151 @@ export function AgenttyTui() {
           <div className="row ttui-blank" />
           <div className="row">
             <span className="bwhite">refactor the auth handler to use the new token cache</span>
+            {!userTyped && <span className="term-cursor"> </span>}
           </div>
         </div>
 
-        {/* ── ASSISTANT TURN ── rail: role_brand_alt (bright_magenta, Opus) ── */}
-        <div className="ttui-turn rail-bmag">
-          <div className="row ttui-head">
-            <span className="bmag">✦</span>
-            <span> </span>
-            <span className="bmag b">Opus 4.7</span>
-            <span className="ttui-meta dim">{"12:34  ·  4.2s  ·  turn 3"}</span>
-          </div>
-          <div className="row ttui-blank" />
-
-          {/* Actions panel — maya::AgentTimeline (rounded border) */}
-          <div className="ttui-panel">
-            {/* top border with start title + end title */}
-            <div className="ttui-panel-top">
-              <span className="dim">╭─</span>
-              <span className="dim b ttui-cap">{" A C T I O N S  ·  4/4 "}</span>
-              <span className="dim ttui-fill" />
-              <span className="dim b">{" 4.2s "}</span>
-              <span className="dim">─╮</span>
-            </div>
-
-            {/* stats row: small-caps category · count, dots ornamental */}
-            <div className="ttui-panel-line">
-              <span className="ttui-edge dim">│</span>
-              <span className="ttui-pad">
-                <span className="cyan b">I N S P E C T</span><span className="white"> 2</span>
-                <span className="dim">{"  ·  "}</span>
-                <span className="mag b">M U T A T E</span><span className="white"> 1</span>
-                <span className="dim">{"  ·  "}</span>
-                <span className="cyan b">E X E C U T E</span><span className="white"> 1</span>
+        {/* ── ASSISTANT TURN (appears after user message) ── */}
+        {userTyped && (
+          <div className="ttui-turn rail-bmag ttui-fade">
+            <div className="row ttui-head">
+              <span className="bmag">✦</span>
+              <span> </span>
+              <span className="bmag b">Opus 4.7</span>
+              <span className="ttui-meta dim">
+                {phase === "ready" ? "12:34  ·  4.2s  ·  turn 3" : "12:34  ·  turn 3"}
               </span>
-              <span className="ttui-edge dim">│</span>
             </div>
-            <div className="ttui-panel-line"><span className="ttui-edge dim">│</span><span className="ttui-pad" /><span className="ttui-edge dim">│</span></div>
+            <div className="row ttui-blank" />
 
-            {/* event 0 — Read (inspect → bright_cyan, dim because terminal) */}
-            <PanelRow>
-              <span className="cyan dim">╭─</span>
-              <span> </span><span className="bgreen b">✓</span>
-              <span>{"  "}</span><span className="cyan dim b">Read</span>
-              <span>{"  "}</span><span className="cyan dim i">{"src/auth/handler.cpp  ·  214 lines"}</span>
-              <span className="ttui-elapsed dim">{"142ms"}</span>
-            </PanelRow>
-            {/* connector: color of NEXT event status (Done → bright_black) */}
-            <PanelRow><span className="dim">{"   │"}</span></PanelRow>
+            {/* Actions panel */}
+            {showPanel && (
+              <div className="ttui-panel ttui-fade">
+                <div className="ttui-panel-top">
+                  <span className="dim">╭─</span>
+                  <span className="dim b ttui-cap">{` A C T I O N S  ·  ${doneCount}/${total} `}</span>
+                  <span className="dim ttui-fill" />
+                  <span className="dim b">
+                    {allDone ? " 4.2s " : ` ${EVENTS[running]?.name ?? ""} `}
+                  </span>
+                  <span className="dim">─╮</span>
+                </div>
 
-            {/* event 1 — Grep (inspect → bright_cyan) */}
-            <PanelRow>
-              <span className="cyan dim">├─</span>
-              <span> </span><span className="bgreen b">✓</span>
-              <span>{"  "}</span><span className="cyan dim b">Grep</span>
-              <span>{"  "}</span><span className="cyan dim i">{"TokenCache  ·  3 matches"}</span>
-              <span className="ttui-elapsed dim">{" 89ms"}</span>
-            </PanelRow>
-            <PanelRow><span className="dim">{"   │"}</span></PanelRow>
+                {/* stats row */}
+                <div className="ttui-panel-line">
+                  <span className="ttui-edge dim">│</span>
+                  <span className="ttui-pad">
+                    {inspect > 0 && (
+                      <>
+                        <span className="cyan b">I N S P E C T</span>
+                        <span className="white"> {inspect}</span>
+                      </>
+                    )}
+                    {mutate > 0 && (
+                      <>
+                        {inspect > 0 && <span className="dim">{"  ·  "}</span>}
+                        <span className="mag b">M U T A T E</span>
+                        <span className="white"> {mutate}</span>
+                      </>
+                    )}
+                    {execute > 0 && (
+                      <>
+                        {(inspect > 0 || mutate > 0) && <span className="dim">{"  ·  "}</span>}
+                        <span className="cyan b">E X E C U T E</span>
+                        <span className="white"> {execute}</span>
+                      </>
+                    )}
+                  </span>
+                  <span className="ttui-edge dim">│</span>
+                </div>
+                <div className="ttui-panel-line">
+                  <span className="ttui-edge dim">│</span>
+                  <span className="ttui-pad" />
+                  <span className="ttui-edge dim">│</span>
+                </div>
 
-            {/* event 2 — Edit (mutate → magenta) */}
-            <PanelRow>
-              <span className="mag dim">├─</span>
-              <span> </span><span className="bgreen b">✓</span>
-              <span>{"  "}</span><span className="mag dim b">Edit</span>
-              <span>{"  "}</span><span className="mag dim i">{"src/auth/handler.cpp  (+18 −9)"}</span>
-              <span className="ttui-elapsed green">{"  6ms"}</span>
-            </PanelRow>
-            {/* body preview, striped with the event's `│` connector */}
-            <PanelRow><span className="mag dim">{"   │  "}</span><span className="dim">{"@@ resolve(id) @@"}</span></PanelRow>
-            <PanelRow><span className="mag dim">{"   │  "}</span><span className="red">{"- return fetch_remote(id);"}</span></PanelRow>
-            <PanelRow><span className="mag dim">{"   │  "}</span><span className="green">{"+ if (auto v = cache.lookup(id)) return *v;"}</span></PanelRow>
-            <PanelRow><span className="dim">{"   │"}</span></PanelRow>
+                {/* events */}
+                {EVENTS.slice(0, visibleCount).map((ev, i) => {
+                  const isDone = i <= done;
+                  const isLast = i === total - 1;
+                  const glyph = total === 1 ? "──" : i === 0 ? "╭─" : isLast ? "╰─" : "├─";
+                  const c = catColor[ev.cat];
+                  const showBody = isDone && ev.body;
+                  // connector after this event uses NEXT event status
+                  const nextDone = i + 1 <= done;
+                  return (
+                    <div key={i} className="ttui-evgroup ttui-fade">
+                      <PanelRow>
+                        <span className={`${c} dim`}>{glyph}</span>
+                        <span> </span>
+                        {isDone ? (
+                          <span className="bgreen b">✓</span>
+                        ) : (
+                          <span className="bcyan b">{SPINNER[frame]}</span>
+                        )}
+                        <span>{"  "}</span>
+                        <span className={`${c} ${isDone ? "dim" : ""} b`}>{ev.name}</span>
+                        <span>{"  "}</span>
+                        <span className={`${c} ${isDone ? "dim" : ""} i`}>
+                          {isDone ? ev.detail : "running…"}
+                        </span>
+                        {isDone && (
+                          <span className={`ttui-elapsed ${ev.elapsedClass}`}>{ev.elapsed}</span>
+                        )}
+                      </PanelRow>
+                      {showBody &&
+                        ev.body!.map((b, j) => (
+                          <PanelRow key={j}>
+                            <span className={`${c} dim`}>{"   │  "}</span>
+                            <span className={b.cls}>{b.text}</span>
+                          </PanelRow>
+                        ))}
+                      {!isLast && (
+                        <PanelRow>
+                          <span className={nextDone ? "dim" : "blue"}>{"   │"}</span>
+                        </PanelRow>
+                      )}
+                    </div>
+                  );
+                })}
 
-            {/* event 3 — Bash (execute → cyan), last → ╰─ */}
-            <PanelRow>
-              <span className="cyan dim">╰─</span>
-              <span> </span><span className="bgreen b">✓</span>
-              <span>{"  "}</span><span className="cyan dim b">Bash</span>
-              <span>{"  "}</span><span className="cyan dim i">{"cmake --build build -j"}</span>
-              <span className="ttui-elapsed yellow">{"  3.6s"}</span>
-            </PanelRow>
-            <PanelRow><span className="dim">{"   │  "}</span><span className="dim">{"[100%] Built target agentty"}</span></PanelRow>
+                {/* footer — appears once all events done */}
+                {allDone && (
+                  <>
+                    <PanelRow>
+                      <span className="ttui-pad" />
+                    </PanelRow>
+                    <PanelRow>
+                      <span>{"   "}</span>
+                      <span className="bgreen b">{"✓ "}</span>
+                      <span className="bgreen b">D O N E</span>
+                      <span className="white">{"   4 actions   4.2s"}</span>
+                    </PanelRow>
+                  </>
+                )}
 
-            {/* footer — present whole lifetime; ✓ DONE in success color */}
-            <PanelRow><span className="ttui-pad" /></PanelRow>
-            <PanelRow>
-              <span>{"   "}</span><span className="bgreen b">{"✓ "}</span>
-              <span className="bgreen b">D O N E</span>
-              <span className="white">{"   4 actions   4.2s"}</span>
-            </PanelRow>
+                <div className="ttui-panel-bot">
+                  <span className="dim">╰</span>
+                  <span className="dim ttui-fill-bot" />
+                  <span className="dim">╯</span>
+                </div>
+              </div>
+            )}
 
-            <div className="ttui-panel-bot">
-              <span className="dim">╰</span>
-              <span className="dim ttui-fill-bot" />
-              <span className="dim">╯</span>
-            </div>
+            {/* assistant prose — types out after panel settles */}
+            {proseLen > 0 && (
+              <>
+                <div className="row ttui-blank" />
+                <div className="row ttui-prose">
+                  <ProseText text={prose} />
+                  {phase !== "ready" && <span className="term-cursor"> </span>}
+                </div>
+              </>
+            )}
           </div>
+        )}
 
-          {/* assistant prose — bright_white body, bright_cyan code refs */}
-          <div className="row ttui-blank" />
-          <div className="row ttui-prose">
-            <span className="bwhite">Auth handler now resolves through </span>
-            <span className="bcyan">TokenCache::lookup</span>
-            <span className="bwhite">, falling back to a network</span>
-          </div>
-          <div className="row ttui-prose">
-            <span className="bwhite">refresh only on a miss. Build is green.</span>
-          </div>
-        </div>
-
-        {/* ── COMPOSER ── maya::Composer (rounded border, 2-row body) ── */}
+        {/* ── COMPOSER ── */}
         <div className="ttui-composer">
           <div className="ttui-comp-top">
             <span className="dim">╭</span>
@@ -156,7 +360,6 @@ export function AgenttyTui() {
             <span className="dim">│ </span>
             <span className="bmag b">❯ </span>
             <span className="dim">type a message…</span>
-            <span className="term-cursor"> </span>
             <span className="ttui-comp-right" />
             <span className="dim"> │</span>
           </div>
@@ -167,35 +370,70 @@ export function AgenttyTui() {
           </div>
         </div>
 
-        {/* ── STATUS BAR ── maya::StatusBar: accent / activity / accent ── */}
-        <div className="ttui-accent dim">────────────────────────────────────────────────────────────</div>
+        {/* ── STATUS BAR ── */}
+        <div className={`ttui-accent ${phase === "stream" ? "bcyan" : "dim"}`}>
+          ────────────────────────────────────────────────────────────
+        </div>
         <div className="ttui-status">
           <div className="ttui-status-left">
             <span> </span>
             <span className="cyan">▎</span>
             <span className="white"> refactor auth</span>
             <span className="dim">{"   ·   "}</span>
-            <span className="dim">▌</span>
-            <span> </span>
-            <span className="dim">●</span>
-            <span className="dim b"> Ready</span>
+            {phase === "stream" ? (
+              <>
+                <span className="bcyan b">▌</span>
+                <span> </span>
+                <span className="bcyan b">{SPINNER[frame]}</span>
+                <span className="bcyan b"> {allDone && proseLen > 0 ? "Streaming" : EVENTS[running]?.name ?? "Streaming"}</span>
+              </>
+            ) : (
+              <>
+                <span className="dim">▌</span>
+                <span> </span>
+                <span className="dim">●</span>
+                <span className="dim b"> Ready</span>
+              </>
+            )}
           </div>
           <div className="ttui-status-right">
             <span className="yellow">⚡ </span>
-            <span className="cyan">{"  0.0"}</span>
+            <span className="cyan">{phase === "stream" ? "78.3" : "  0.0"}</span>
             <span className="cyan"> t/s </span>
-            <span className="cyan">▁▁▂▁▃▂▁▁▂▁▂▃▂▁▁▁</span>
+            <span className={phase === "stream" ? "cyan" : "dim"}>
+              {phase === "stream" ? "▂▃▅▆▇█▇▆▅▃▄▆▇▅▃▂" : "▁▁▂▁▃▂▁▁▂▁▂▃▂▁▁▁"}
+            </span>
             <span className="dim">{"   ·   "}</span>
             <span className="bmag">● </span>
             <span className="bmag">Opus 4.7</span>
             <span className="dim">{" · "}</span>
-            <span className="green">████</span><span className="dim">░░░░░░ 38%</span>
+            <span className="green">████</span>
+            <span className="dim">░░░░░░ 38%</span>
             <span> </span>
           </div>
         </div>
-        <div className="ttui-accent dim">────────────────────────────────────────────────────────────</div>
+        <div className={`ttui-accent ${phase === "stream" ? "bcyan" : "dim"}`}>
+          ────────────────────────────────────────────────────────────
+        </div>
       </div>
     </div>
+  );
+}
+
+/* prose with the TokenCache::lookup identifier highlighted in bright_cyan
+   once it's been typed past — mirrors maya markdown inline-code coloring. */
+function ProseText({ text }: { text: string }) {
+  const ref = "TokenCache::lookup";
+  const idx = text.indexOf(ref);
+  if (idx === -1) return <span className="bwhite">{text}</span>;
+  const end = idx + ref.length;
+  const shownRef = text.slice(idx, end);
+  return (
+    <>
+      <span className="bwhite">{text.slice(0, idx)}</span>
+      <span className="bcyan">{shownRef}</span>
+      <span className="bwhite">{text.slice(end)}</span>
+    </>
   );
 }
 

@@ -25,9 +25,30 @@
   line-height: 1.65;
   color: #c9d1d9;
   overflow-x: auto;
+  /* hold a stable height so the card doesn't jump as the session
+     streams in — sized to the fully-settled turn. */
+  min-height: 540px;
+  display: flex;
+  flex-direction: column;
 }
 .ttui-body .row { white-space: pre-wrap; word-break: break-word; }
 .ttui-blank { height: 0.7em; }
+
+/* the conversation grows from the top; composer + status pinned to bottom */
+.ttui-turn { flex: none; }
+.ttui-composer { margin-top: auto; }
+
+/* fade/slide-in for streamed-in blocks — the "a new line just landed" feel */
+@keyframes ttui-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ttui-fade { animation: ttui-in 0.22s ease-out both; }
+.ttui-evgroup { animation: ttui-in 0.18s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ttui-fade, .ttui-evgroup { animation: none; }
+}
 
 /* ── speaker turn: maya::Turn rail — Bold left border, padding-left 2 ── */
 .ttui-turn { border-left: 2px solid transparent; padding-left: 16px; margin-bottom: 2px; }
@@ -52,7 +73,7 @@
 .ttui-elapsed { margin-left: auto; padding-left: 16px; white-space: pre; }
 
 /* ── composer: maya::Composer bordered, 2-row body ── */
-.ttui-composer { margin-top: 14px; font-size: 12px; }
+.ttui-composer { font-size: 12px; }
 .ttui-comp-top, .ttui-comp-bot { display: flex; white-space: pre; align-items: center; }
 .ttui-comp-mid { display: flex; align-items: baseline; white-space: pre; }
 .ttui-comp-right { flex: 1; }
