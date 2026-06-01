@@ -69,14 +69,28 @@ fetch_stdout() {
     fi
 }
 
-# download URL -> file
+# download URL -> file, with up to 3 attempts on transient network errors.
+# A definite "not found" (HTTP 404) is not retried — it won't fix itself.
 fetch_file() {
     # $1 url  $2 dest
-    if [ "$HTTP" = curl ]; then
-        curl -fsSL "$1" -o "$2"
-    else
-        wget -q "$1" -O "$2"
-    fi
+    _i=1
+    while [ "$_i" -le 3 ]; do
+        if [ "$HTTP" = curl ]; then
+            # curl exit 22 = HTTP >=400 (with -f). Capture the HTTP code to
+            # decide whether a retry is worthwhile.
+            _code=$(curl -fsSL --retry 2 --connect-timeout 15 -w '%{http_code}' "$1" -o "$2" 2>/dev/null) && return 0
+            _rc=$?
+            case "$_code" in 404|403|410) return 1 ;; esac
+            [ "$_rc" -eq 22 ] && case "$_code" in 4??) return 1 ;; esac
+        else
+            wget -q --tries=2 --timeout=15 "$1" -O "$2" && return 0
+            # wget exit 8 = server issued an error response (e.g. 404)
+            [ $? -eq 8 ] && return 1
+        fi
+        _i=$((_i+1))
+        [ "$_i" -le 3 ] && { warn "download attempt failed, retrying ($_i/3)"; sleep 2; }
+    done
+    return 1
 }
 
 # ----------------------------------------------------------------------------- detect os/arch
@@ -294,20 +308,21 @@ case ":${PATH:-}:" in
     *)
         printf '\n'
         warn "$bindir is not on your PATH. Add it:"
-        # Best-effort shell-specific hint.
-        sh_rc="$HOME/.profile"
         case "${SHELL:-}" in
-            *zsh)  sh_rc="$HOME/.zshrc" ;;
-            *bash) sh_rc="$HOME/.bashrc" ;;
-            *fish) sh_rc="$HOME/.config/fish/config.fish" ;;
+            *fish)
+                printf '    fish_add_path %s\n\n' "$bindir" ;;
+            *)
+                if [ "$os" = windows ]; then
+                    printf '    setx PATH "%%PATH%%;%s"\n\n' "$bindir"
+                else
+                    sh_rc="$HOME/.profile"
+                    case "${SHELL:-}" in
+                        *zsh)  sh_rc="$HOME/.zshrc" ;;
+                        *bash) sh_rc="$HOME/.bashrc" ;;
+                    esac
+                    printf '    echo '\''export PATH="%s:$PATH"'\'' >> %s && . %s\n\n' "$bindir" "$sh_rc" "$sh_rc"
+                fi ;;
         esac
-        if [ "$os" = windows ]; then
-            printf '    setx PATH "%%PATH%%;%s"\n\n' "$bindir"
-        elif [ "${SHELL:-}" = "*fish" ]; then
-            printf '    fish_add_path %s\n\n' "$bindir"
-        else
-            printf '    echo '\''export PATH="%s:$PATH"'\'' >> %s && . %s\n\n' "$bindir" "$sh_rc" "$sh_rc"
-        fi
         ;;
 esac
 
