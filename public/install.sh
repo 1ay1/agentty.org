@@ -108,7 +108,7 @@ case "$os" in
         case "$arch" in
             x86_64) asset="agentty-linux-x86_64" ;;
             i686)   asset="agentty-linux-i686" ;;
-            arm64)  asset="" ;;   # no prebuilt linux-arm64 yet -> source build
+            arm64)  asset="agentty-linux-aarch64" ;;
             *)      asset="" ;;
         esac ;;
     macos)
@@ -148,8 +148,14 @@ build_from_source() {
     src=$(mktemp -d)
     trap 'rm -rf "$src"' EXIT
     info "cloning $REPO"
-    git clone --depth 1 --recursive "https://github.com/$REPO" "$src/agentty" >/dev/null 2>&1 \
-        || err "git clone failed"
+    # Force HTTPS and disable any prompts so a user's url.insteadOf rewrite to
+    # SSH (which would trigger host-key verification) can't break the clone.
+    GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND='ssh -oBatchMode=yes' \
+        git -c 'url.https://github.com/.insteadOf=git@github.com:' \
+            -c 'url.https://github.com/.insteadOf=ssh://git@github.com/' \
+            -c 'url.https://github.com/.insteadOf=git://github.com/' \
+            clone --depth 1 --recursive "https://github.com/$REPO" "$src/agentty" >/dev/null 2>&1 \
+        || err "git clone failed. Grab a prebuilt binary instead: https://github.com/$REPO/releases"
     info "configuring (cmake)"
     cmake -S "$src/agentty" -B "$src/agentty/build" -DCMAKE_BUILD_TYPE=Release >/dev/null \
         || err "cmake configure failed"
@@ -177,27 +183,29 @@ sha256_of() {
     fi
 }
 
-# Pull the expected sha256 for an asset from the GitHub releases API.
-# Each asset carries a "digest":"sha256:<hex>" field — robust and always present,
-# unlike a SHA256SUMS file (which this project does not publish).
+# Resolve the expected sha256 for an asset. Preferred source is the release's
+# SHA256SUMS file (standard "<hex>  <name>" format). If that's absent, fall
+# back to the GitHub API's per-asset "digest":"sha256:<hex>" field.
 expected_sha256_for() {
-    # $1 asset name
-    # The API returns one asset object per block; "name" appears before
-    # "digest" within each block. We scan line-by-line (the API pretty-prints
-    # one field per line) and print the digest of the block whose name matches.
-    # Tolerant of arbitrary whitespace around the JSON ':' separators.
+    # $1 asset name  $2 release base url (.../download)
+    name=$1; base=$2
+    # 1) SHA256SUMS file
+    sums=$(fetch_stdout "$base/SHA256SUMS" 2>/dev/null || true)
+    if [ -n "$sums" ]; then
+        hex=$(printf '%s\n' "$sums" | awk -v n="$name" '$2==n {print $1; exit}')
+        if [ -n "$hex" ]; then printf '%s' "$hex"; return 0; fi
+    fi
+    # 2) GitHub API digest fallback
     api="https://api.github.com/repos/$REPO/releases/tags/$VERSION"
     [ "$VERSION" = "latest" ] && api="https://api.github.com/repos/$REPO/releases/latest"
     fetch_stdout "$api" 2>/dev/null \
-        | awk -v want="$1" '
-            # name line: "name": "agentty-linux-x86_64"
+        | awk -v want="$name" '
             /"name"[[:space:]]*:/ {
                 line=$0
                 sub(/^.*"name"[[:space:]]*:[[:space:]]*"/, "", line)
                 sub(/".*$/, "", line)
                 match_block = (line == want) ? 1 : 0
             }
-            # digest line: "digest": "sha256:<hex>"
             match_block && /"digest"[[:space:]]*:[[:space:]]*"sha256:/ {
                 d=$0
                 sub(/^.*"sha256:/, "", d)
@@ -225,7 +233,7 @@ install_prebuilt() {
     if [ "$NO_VERIFY" -eq 1 ]; then
         warn "skipping SHA256 verification (--no-verify)"
     else
-        expected=$(expected_sha256_for "$asset" 2>/dev/null || true)
+        expected=$(expected_sha256_for "$asset" "$base" 2>/dev/null || true)
         actual=$(sha256_of "$tmp/$asset")
         if [ -z "$actual" ]; then
             warn "no sha256 tool (sha256sum/shasum/openssl) — cannot verify checksum"
