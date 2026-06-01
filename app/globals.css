@@ -131,7 +131,7 @@ pre.code::-webkit-scrollbar,
 .btn-ghost:hover { border-color: var(--accent); background: #161824; }
 
 /* ---------- HERO ---------- */
-.hero { padding: 52px 0 24px; position: relative; overflow: hidden; }
+.hero { padding: 52px 0 0; position: relative; overflow: hidden; }
 .hero .wrap { position: relative; z-index: 1; }
 
 /* two-column: text left, live TUI window right */
@@ -233,7 +233,8 @@ pre.code::-webkit-scrollbar,
 
 /* ---------- INSTALL BAND ---------- */
 .install-band {
-  padding: 8px 0 8px;
+  padding: 0 0 8px;
+  margin-top: -8px;
 }
 .install-inner {
   display: flex; flex-direction: column; align-items: center; text-align: center;
