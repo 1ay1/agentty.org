@@ -38,6 +38,7 @@ body {
   letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
 body::before {
@@ -462,17 +463,48 @@ kbd { background: var(--bg-elev); border: 1px solid var(--border); border-bottom
   .docs-side { display: none; }
   .docs-side.open { display: block; position: static; max-height: none; margin-bottom: 20px; }
   .docs-side-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; background: var(--bg-elev); border: 1px solid var(--border); color: var(--text); padding: 11px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .grid-3, .grid-2, .foot-grid, .boxrow { grid-template-columns: 1fr; }
+  /* 3-up feature grid → 2-up on tablets before collapsing to 1 */
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-2, .foot-grid, .boxrow { grid-template-columns: 1fr; }
   .foot-grid { grid-template-columns: 1fr 1fr; }
   .stats { grid-template-columns: 1fr 1fr; }
 }
+
 @media (max-width: 720px) {
   .nav-links { display: none; }
   .ghbtn span { display: none; }
   .search-label, .search-kbd { display: none; }
-  .hero { padding: 56px 0 40px; }
   .nav-toggle { display: block; }
   .mobile-menu { display: flex; flex-direction: column; gap: 2px; padding: 10px 24px 16px; border-top: 1px solid var(--border-soft); background: var(--bg-soft); }
   .mobile-menu a { color: var(--text-dim); padding: 10px 12px; border-radius: 8px; }
   .mobile-menu a:hover { background: var(--bg-elev); color: var(--text); text-decoration: none; }
+
+  /* hero: keep the tightened bottom (install band sits right under) */
+  .hero { padding: 36px 0 0; }
+  .hero-spec { align-self: center; justify-content: center; }
+  .hero-actions { width: 100%; }
+  .hero-actions .btn { flex: 1 1 auto; }
+  .hero-tui .ttui { margin-top: 8px; }
+
+  /* lighter vertical rhythm on phones */
+  section.block { padding: 48px 0; }
+  .cta { padding: 56px 0; }
+
+  /* feature grid single column on phones */
+  .grid-3 { grid-template-columns: 1fr; }
+
+  /* install command: stack note, keep command scrollable */
+  .copyrow { font-size: 13px; padding: 12px 13px; }
+  .copyrow code { font-size: 12.5px; }
+
+  .quote { font-size: 18px; padding-left: 18px; }
+  .stat { padding: 22px 14px; }
+  .stat .num { font-size: 26px; }
+}
+
+@media (max-width: 460px) {
+  .wrap { padding: 0 18px; }
+  .stats, .foot-grid { grid-template-columns: 1fr; }
+  .hero-spec { font-size: 11px; gap: 7px; }
+  .copybtn { padding: 5px 9px; }
 }

@@ -4,6 +4,12 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { site } from "@/lib/site";
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#08090c",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {

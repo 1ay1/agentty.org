@@ -127,6 +127,10 @@
 .term-cursor   { background: #6fe0ee; color: #07080b; }
 
 @media (max-width: 640px) {
-  .ttui-body { font-size: 11px; padding: 14px; }
+  .ttui-body { font-size: 11px; padding: 14px; height: 440px; }
   .ttui-status { font-size: 10.5px; }
+  .ttui { margin-left: 0; margin-right: 0; }
+}
+@media (max-width: 400px) {
+  .ttui-body { height: 400px; font-size: 10px; }
 }
