@@ -145,7 +145,7 @@ pre.code::-webkit-scrollbar,
 /* keep the text/logo column above the TUI window's large soft box-shadow,
    which otherwise bleeds left over the wordmark */
 .hero-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
-.hero-logo { margin: 0 0 22px; max-width: 100%; overflow: hidden; }
+.hero-logo { margin: 0 0 22px; max-width: 100%; }
 .hero-inner .lede { margin-left: 0; margin-right: 0; }
 .hero-inner .hero-actions { justify-content: flex-start; }
 .hero-tui { min-width: 0; }
