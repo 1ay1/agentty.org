@@ -131,17 +131,17 @@ pre.code::-webkit-scrollbar,
 .btn-ghost:hover { border-color: var(--accent); background: #161824; }
 
 /* ---------- HERO ---------- */
-.hero { padding: 100px 0 64px; }
+.hero { padding: 52px 0 64px; }
 
 /* two-column: text left, live TUI window right */
 .hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
   gap: 56px;
-  align-items: center;
+  align-items: start;
 }
 .hero-inner { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
-.hero-logo { margin: 0 0 26px; }
+.hero-logo { margin: 0 0 22px; }
 .hero-inner .lede { margin-left: 0; margin-right: 0; }
 .hero-inner .hero-actions { justify-content: flex-start; }
 .hero-tui { min-width: 0; }
