@@ -90,17 +90,23 @@
 .ttui-comp-mid { display: flex; align-items: baseline; white-space: pre; }
 .ttui-comp-right { flex: 1; }
 
-/* ── status bar: PhaseAccent / activity / PhaseAccent ── */
+/* ── status bar: PhaseAccent (─ full-width) / activity / PhaseAccent ── */
 .ttui-accent {
-  font-size: 12px; line-height: 1; letter-spacing: -0.5px;
-  overflow: hidden; white-space: nowrap; opacity: 0.5;
+  height: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.4;
+  margin: 2px 0;
 }
 .ttui-status {
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 6px 12px;
-  margin: 3px 0; font-size: 12px; white-space: pre;
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; font-size: 12px; white-space: pre;
+  overflow: hidden;
 }
-.ttui-status-left, .ttui-status-right { display: flex; align-items: baseline; white-space: pre; }
+.ttui-status-left, .ttui-status-right {
+  display: flex; align-items: baseline; white-space: pre; flex: none;
+  min-width: 0;
+}
+.ttui-status-right { margin-left: auto; }
 
 /* ── ANSI palette (xterm-ish mapping of agentty's named colors) ── */
 .ttui .mag     { color: #c586c0; }   /* magenta  (role_brand) */
@@ -122,5 +128,5 @@
 
 @media (max-width: 640px) {
   .ttui-body { font-size: 11px; padding: 14px; }
-  .ttui-status { flex-direction: column; align-items: flex-start; }
+  .ttui-status { font-size: 10.5px; }
 }

@@ -374,9 +374,7 @@ export function AgenttyTui() {
         </div>
 
         {/* ── STATUS BAR ── */}
-        <div className={`ttui-accent ${phase === "stream" ? "bcyan" : "dim"}`}>
-          ────────────────────────────────────────────────────────────
-        </div>
+        <div className={`ttui-accent ${phase === "stream" ? "bcyan" : "dim"}`} aria-hidden />
         <div className="ttui-status">
           <div className="ttui-status-left">
             <span> </span>
@@ -415,9 +413,7 @@ export function AgenttyTui() {
             <span> </span>
           </div>
         </div>
-        <div className={`ttui-accent ${phase === "stream" ? "bcyan" : "dim"}`}>
-          ────────────────────────────────────────────────────────────
-        </div>
+        <div className={`ttui-accent ${phase === "stream" ? "bcyan" : "dim"}`} aria-hidden />
         </div>
       </div>
     </div>
