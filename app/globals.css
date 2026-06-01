@@ -147,7 +147,7 @@ pre.code::-webkit-scrollbar,
 .hero-inner .lede { margin-left: 0; margin-right: 0; }
 .hero-inner .hero-actions { justify-content: flex-start; }
 .hero-tui { min-width: 0; }
-.hero-tui .ttui { margin: 0; max-width: 100%; width: 100%; }
+.hero-tui .ttui { margin: 64px 0 0; max-width: 100%; width: 100%; }
 
 @media (max-width: 960px) {
   .hero-grid { grid-template-columns: 1fr; gap: 40px; }
