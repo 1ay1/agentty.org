@@ -454,7 +454,16 @@ kbd { background: var(--bg-elev); border: 1px solid var(--border); border-bottom
   .ghbtn span { display: none; }
   .search-label, .search-kbd { display: none; }
   .nav-toggle { display: block; }
-  .mobile-menu { display: flex; flex-direction: column; gap: 2px; padding: 10px 24px 16px; border-top: 1px solid var(--border-soft); background: var(--bg-soft); }
+  .mobile-menu {
+    display: flex; flex-direction: column; gap: 2px;
+    position: absolute; top: 100%; left: 0; right: 0;
+    padding: 10px 24px 16px;
+    border-top: 1px solid var(--border-soft);
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(8, 9, 12, 0.96);
+    backdrop-filter: saturate(180%) blur(16px);
+    box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.7);
+  }
   .mobile-menu a { color: var(--text-dim); padding: 10px 12px; border-radius: 8px; }
   .mobile-menu a:hover { background: var(--bg-elev); color: var(--text); text-decoration: none; }
 
