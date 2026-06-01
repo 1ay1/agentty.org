@@ -29,8 +29,9 @@ export default function Installation() {
         newest release. No <code>apt</code>, no <code>brew</code>, no version drift.
       </p>
       <Note>
-        Flags: <code>--prefix ~/somewhere</code>, <code>--version v0.1.0</code>. Works on
-        Linux + macOS, x86_64 + aarch64.
+        Flags: <code>--prefix ~/somewhere</code>, <code>--version v0.1.0</code>. Prebuilt
+        binaries for Linux (x86_64, aarch64) and Windows (x86_64); macOS builds from source
+        in seconds.
       </Note>
 
       <h2 id="debian">Debian / Ubuntu</h2>

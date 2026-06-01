@@ -23,8 +23,9 @@ export default function Home() {
             <p className="lede">
               A drop-in alternative to <code>claude-code</code>, written in C++26.{" "}
               <strong>8.8&nbsp;MB binary</strong>, <strong>sub-millisecond cold start</strong>,{" "}
-              <strong>sandboxed by default</strong>, SSH air-gap in one command — with no Node,
-              Python, Electron, or <code>npm install</code>.
+              <strong>sandboxed by default</strong>, SSH air-gap in one command. Signs in with your
+              existing <strong>Claude Pro/Max</strong> &mdash; no Node, Python, Electron, or{" "}
+              <code>npm install</code>.
             </p>
             <div className="hero-actions">
               <Link className="btn btn-primary" href="/docs/installation">
@@ -99,7 +100,7 @@ export default function Home() {
           <div className="grid grid-3" style={{ marginTop: 28 }}>
             <div className="card"><span className="ico">⚡</span><h3>Native speed</h3><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup.</p></div>
             <div className="card"><span className="ico">📦</span><h3>One static binary</h3><p>8.8 MB. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
-            <div className="card"><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS). An approved bash call still can&apos;t read <code>~/.ssh/id_rsa</code>.</p></div>
+            <div className="card"><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS) / job objects (Windows). An approved bash call still can&apos;t read <code>~/.ssh/id_rsa</code>.</p></div>
             <div className="card"><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays bytes over SOCKS5-over-SSH.</p></div>
             <div className="card"><span className="ico">📐</span><h3>Workspace boundary</h3><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>
             <div className="card"><span className="ico">📜</span><h3>Inline render</h3><p>Lives at the bottom of your terminal, preserves scrollback, never takes over the screen.</p></div>
@@ -120,6 +121,7 @@ export default function Home() {
               <tbody>
                 <tr><td>Language / runtime</td><td><span className="win">C++26 — static binary</span></td><td>TypeScript / Node</td><td>Python</td></tr>
                 <tr><td>Footprint</td><td><span className="win">~9 MB</span></td><td>npm + Node runtime</td><td>pip + Python runtime</td></tr>
+                <tr><td>Platforms</td><td><span className="win">Linux · macOS · Windows</span></td><td>Linux · macOS · Windows</td><td>Linux · macOS · Windows</td></tr>
                 <tr><td>Air-gapped mode</td><td><span className="win">Yes (SOCKS5/SSH)</span></td><td>No</td><td>No</td></tr>
                 <tr><td>Auth</td><td>OAuth (Pro/Max) + API key</td><td>OAuth + API key</td><td>per-provider env vars</td></tr>
                 <tr><td>Models</td><td>Claude (Anthropic)</td><td>Claude (Anthropic)</td><td>many providers</td></tr>
@@ -192,7 +194,7 @@ export default function Home() {
       <section className="cta">
         <div className="wrap">
           <h2>Ready in one line.</h2>
-          <p>Works on Linux &amp; macOS, x86_64 &amp; aarch64. Same line updates it.</p>
+          <p>Linux, macOS &amp; Windows · x86_64 &amp; aarch64. The same line updates it.</p>
           <div style={{ maxWidth: 620, margin: "0 auto" }}>
             <CopyRow cmd={site.installOneLiner} />
           </div>
