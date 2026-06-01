@@ -58,6 +58,29 @@ h1, h2, h3, h4 { line-height: 1.15; font-weight: 700; letter-spacing: -0.025em; 
 
 code, pre, kbd { font-family: var(--mono); }
 
+/* ---------- SCROLLBARS ---------- */
+/* Thin, subtle scrollbars that blend into the dark theme — applied to
+   every scroll container (code blocks, copy rows, tables, docs aside). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 140, 249, 0.28) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(139, 140, 249, 0.22);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(139, 140, 249, 0.45); background-clip: padding-box; }
+*::-webkit-scrollbar-corner { background: transparent; }
+/* horizontal code-scroll rails get an even slimmer thumb */
+.copyrow code::-webkit-scrollbar,
+pre.code::-webkit-scrollbar,
+.tablewrap::-webkit-scrollbar { height: 6px; }
+.copyrow code, pre.code, .tablewrap { scrollbar-width: thin; }
+
 .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
 
 .skip {
@@ -151,6 +174,28 @@ code, pre, kbd { font-family: var(--mono); }
 .copyrow code { flex: 1; overflow-x: auto; white-space: nowrap; }
 .copybtn { background: var(--bg-elev); border: 1px solid var(--border); color: var(--text-dim); border-radius: 7px; padding: 5px 11px; font-size: 12px; cursor: pointer; font-family: var(--sans); transition: color .15s, border-color .15s; }
 .copybtn:hover { color: var(--text); border-color: var(--accent); }
+
+/* ---------- INSTALL BAND ---------- */
+.install-band {
+  padding: 30px 0 8px;
+}
+.install-inner {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.install-kicker {
+  color: var(--text-faint); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 14px;
+}
+.install-band .copyrow {
+  width: 100%; max-width: 660px;
+  box-shadow: 0 0 0 1px rgba(139,140,249,0.10), 0 18px 50px -28px rgba(139,140,249,0.45);
+}
+.install-band .copyrow code { font-size: 13.5px; }
+.install-note { color: var(--text-dim); font-size: 14px; margin: 16px 0 0; }
+.install-note code {
+  background: var(--bg-elev); border: 1px solid var(--border-soft); border-radius: 5px;
+  padding: 1px 6px; font-size: 0.86em; color: var(--accent-2);
+}
 
 /* terminal mock — faithful agentty TUI replica */
 .term { background: #07080b; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 40px 100px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02); max-width: 760px; margin-left: auto; margin-right: auto; }
