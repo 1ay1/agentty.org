@@ -37,7 +37,6 @@ export default function Community() {
         <li><a href={site.github} target="_blank" rel="noopener noreferrer">Source code</a> — the agentty repository.</li>
         <li><a href={site.releasesLatest} target="_blank" rel="noopener noreferrer">Releases</a> — prebuilt binaries and packages.</li>
         <li><a href={site.maya} target="_blank" rel="noopener noreferrer">maya</a> — the sister TUI engine agentty renders through.</li>
-        <li><a href="/changelog">Changelog</a> — what&apos;s new and what&apos;s next.</li>
       </ul>
 
       <h2>Be excellent to each other</h2>

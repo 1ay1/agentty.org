@@ -68,7 +68,5 @@ export const topNav: NavItem[] = [
   { title: "Docs", href: "/docs" },
   { title: "Install", href: "/docs/installation" },
   { title: "Manual", href: "/docs/interface" },
-  { title: "Roadmap", href: "/roadmap" },
-  { title: "Changelog", href: "/changelog" },
   { title: "Community", href: "/community" },
 ];

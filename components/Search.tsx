@@ -9,7 +9,6 @@ type Item = { title: string; href: string; section: string };
 const index: Item[] = [
   ...topNav.map((n) => ({ ...n, section: "Pages" })),
   ...docsNav.flatMap((s) => s.items.map((i) => ({ ...i, section: s.title }))),
-  { title: "Roadmap", href: "/roadmap", section: "Pages" },
   { title: "Acknowledgements", href: "/acknowledgements", section: "Pages" },
   { title: "License", href: "/license", section: "Pages" },
   { title: "Security", href: "/security", section: "Pages" },

@@ -1,0 +1,40 @@
+/* agentty pixel-art wordmark — half-block cells, monospace grid.
+   Mirrors maya/widget/welcome_screen.hpp rendering. */
+.agentty-logo {
+  --logo-mag: #e29be0; /* bright_magenta (role_brand_alt) */
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  line-height: 1;
+  letter-spacing: 0;
+  display: inline-flex;
+  flex-direction: column;
+  user-select: none;
+  /* the half-block glyphs paint on transparent bg → terminal-clean look */
+  text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
+  transition: color 0.05s linear;
+}
+.logo-row {
+  display: flex;
+  white-space: pre;
+  height: 1em;
+}
+.agentty-logo .px {
+  display: inline-block;
+  width: 1ch;
+  text-align: center;
+  font-size: inherit;
+}
+.agentty-logo .px.off { visibility: hidden; }
+
+/* size presets */
+.agentty-logo.lg { font-size: 22px; }
+.agentty-logo.md { font-size: 15px; }
+.agentty-logo.sm { font-size: 11px; }
+
+@media (max-width: 640px) {
+  .agentty-logo.lg { font-size: 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* component still mounts at age 0; the RAF loop drives motion. The
+     reduced-motion path is handled in JS via this flag if needed. */
+}

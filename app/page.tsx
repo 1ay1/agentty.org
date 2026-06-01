@@ -179,7 +179,7 @@ export default function Home() {
             </div>
             <div className="bigbox">
               <h3>Get involved</h3>
-              <p>Bug reports, fixes, and well-scoped features are all welcome. Start with the contributing guide and the roadmap.</p>
+              <p>Bug reports, fixes, and well-scoped features are all welcome. Start with the contributing guide.</p>
               <Link className="btn btn-ghost" href="/contributing">How to contribute →</Link>
             </div>
           </div>

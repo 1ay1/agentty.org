@@ -29,8 +29,6 @@ export function SiteFooter() {
             <h4>Project</h4>
             <a href={site.github} target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href={site.releasesLatest} target="_blank" rel="noopener noreferrer">Releases</a>
-            <Link href="/roadmap">Roadmap</Link>
-            <Link href="/changelog">Changelog</Link>
             <Link href="/contributing">Contributing</Link>
             <Link href="/security">Security</Link>
           </div>
