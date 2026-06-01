@@ -9,9 +9,6 @@ export default function Home() {
       {/* HERO */}
       <section className="hero">
         <div className="wrap hero-inner">
-          <div className="badge">
-            <span className="dot" /> C++26 · single static binary · {site.license} licensed
-          </div>
           <h1>
             Blazing-fast <span className="grad">Claude</span>
             <br /> in your terminal.
