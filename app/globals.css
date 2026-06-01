@@ -131,7 +131,8 @@ pre.code::-webkit-scrollbar,
 .btn-ghost:hover { border-color: var(--accent); background: #161824; }
 
 /* ---------- HERO ---------- */
-.hero { padding: 52px 0 24px; }
+.hero { padding: 52px 0 24px; position: relative; overflow: hidden; }
+.hero .wrap { position: relative; z-index: 1; }
 
 /* two-column: text left, live TUI window right */
 .hero-grid {
@@ -144,10 +145,49 @@ pre.code::-webkit-scrollbar,
    which otherwise bleeds left over the wordmark */
 .hero-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
 .hero-logo { margin: 0 0 22px; }
+.hero-spec {
+  display: inline-flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  font-size: 12px; color: var(--text-faint);
+  background: rgba(139, 140, 249, 0.05);
+  border: 1px solid rgba(139, 140, 249, 0.16);
+  border-radius: 999px; padding: 5px 13px; margin: 0 0 22px;
+}
+.hero-spec .mono { font-family: var(--mono); letter-spacing: 0.02em; }
+.hero-spec-sep { color: var(--border); }
+.hero-spec-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: spec-pulse 2.4s ease-in-out infinite;
+}
+@keyframes spec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-spec-dot { animation: none; }
+}
 .hero-inner .lede { margin-left: 0; margin-right: 0; }
 .hero-inner .hero-actions { justify-content: flex-start; }
 .hero-tui { min-width: 0; }
-.hero-tui .ttui { margin: 64px 0 0; max-width: 100%; width: 100%; }
+.hero-tui .ttui {
+  margin: 64px 0 0; max-width: 100%; width: 100%;
+  position: relative;
+}
+/* animated brand glow ring behind the demo window */
+.hero-tui .ttui::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 13px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(139,140,249,0.55), rgba(94,234,212,0.35), transparent 60%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.8;
+}
 
 @media (max-width: 960px) {
   .hero-grid { grid-template-columns: 1fr; gap: 40px; }
@@ -164,7 +204,19 @@ pre.code::-webkit-scrollbar,
 }
 .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 9px var(--green); }
 .hero h1 { font-size: clamp(42px, 7.2vw, 74px); margin: 0 0 22px; letter-spacing: -0.045em; line-height: 1.04; }
-.hero h1 .grad { background: linear-gradient(110deg, var(--accent) 10%, var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero h1 .grad {
+  background: linear-gradient(110deg, var(--accent) 8%, var(--accent-2) 48%, var(--accent-hover) 90%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: grad-pan 7s ease-in-out infinite alternate;
+}
+@keyframes grad-pan {
+  from { background-position: 0% 50%; }
+  to   { background-position: 100% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero h1 .grad { animation: none; }
+}
 .lede { font-size: clamp(17px, 2.1vw, 20px); color: var(--text-dim); max-width: 600px; margin: 0 0 34px; line-height: 1.6; }
 .lede strong { color: var(--text); font-weight: 600; }
 .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 34px; }

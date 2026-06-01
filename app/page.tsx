@@ -3,16 +3,28 @@ import { site } from "@/lib/site";
 import { CopyRow } from "@/components/CopyRow";
 import { AgenttyTui } from "@/components/AgenttyTui";
 import { AgenttyLogo } from "@/components/AgenttyLogo";
+import { HeroBackground } from "@/components/HeroBackground";
 
 export default function Home() {
   return (
     <>
       {/* HERO */}
       <section className="hero">
+        <HeroBackground />
         <div className="wrap hero-grid">
           <div className="hero-inner">
             <div className="hero-logo">
               <AgenttyLogo />
+            </div>
+            <div className="hero-spec" aria-hidden>
+              <span className="hero-spec-dot" />
+              <span className="mono">v0.1.0</span>
+              <span className="hero-spec-sep">·</span>
+              <span className="mono">x86_64 · aarch64</span>
+              <span className="hero-spec-sep">·</span>
+              <span className="mono">linux · macos</span>
+              <span className="hero-spec-sep">·</span>
+              <span className="mono">MIT</span>
             </div>
             <h1>
               Blazing-fast <span className="grad">Claude</span>
