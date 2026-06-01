@@ -118,7 +118,12 @@ server {
     }
 
     # GoAccess real-time WebSocket feed (goaccess --real-time-html).
+    # Browsers cannot send HTTP Basic-Auth on a WebSocket handshake, so this
+    # location must be exempt from auth_basic or the upgrade 401s and the
+    # dashboard hangs at "Authorizing WebSocket session...". The feed is
+    # read-only stats and same-origin, so this is safe.
     location /ws {
+        auth_basic off;
         proxy_pass http://127.0.0.1:7890;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
