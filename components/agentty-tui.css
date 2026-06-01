@@ -48,7 +48,7 @@
 .ttui-turn { flex: none; }
 
 /* composer + status pinned to the bottom, fixed in place */
-.ttui-chrome { flex: none; margin-top: 12px; }
+.ttui-chrome { flex: none; margin-top: auto; padding-top: 12px; }
 
 /* fade/slide-in for streamed-in blocks — the "a new line just landed" feel */
 @keyframes ttui-in {
