@@ -1,12 +1,11 @@
 server {
     listen 80;
     listen [::]:80;
-    server_name agentpp.dev www.agentpp.dev;
+    server_name agentty.org www.agentty.org;
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
-
     location / {
         return 301 https://$host$request_uri;
     }
@@ -16,24 +15,23 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     http2 on;
-    server_name agentpp.dev www.agentpp.dev;
+    server_name agentty.org www.agentty.org;
 
-    ssl_certificate /etc/letsencrypt/live/agentpp.dev/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/agentpp.dev/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/agentty.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/agentty.org/privkey.pem;
 
     ssl_session_timeout 1d;
-    ssl_session_cache shared:AgentppSSL:10m;
+    ssl_session_cache shared:AgenttyOrgSSL:10m;
     ssl_session_tickets off;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
 
-    # Redirect www -> apex
-    if ($host = www.agentpp.dev) {
-        return 301 https://agentpp.dev$request_uri;
+    if ($host = www.agentty.org) {
+        return 301 https://agentty.org$request_uri;
     }
 
-    root /var/www/agentpp.dev;
+    root /var/www/agentty.org;
     index index.html;
 
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -46,16 +44,18 @@ server {
     gzip_comp_level 6;
     gzip_types text/plain text/css application/json application/javascript application/xml image/svg+xml;
 
-    # Static export uses trailingSlash: directory-style URLs map to index.html
     location / {
         try_files $uri $uri/ $uri.html $uri/index.html =404;
     }
 
-    # Hashed Next.js assets — cache hard
+    # Next.js generates the social-share cards as extensionless routes;
+    # force the PNG content-type so crawlers (Google, Slack, X, …) accept them.
+    location = /opengraph-image { default_type image/png; }
+    location = /twitter-image { default_type image/png; }
+
     location /_next/static/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
-
     error_page 404 /404.html;
 }
