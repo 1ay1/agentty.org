@@ -2,7 +2,7 @@
    Mirrors maya/widget/welcome_screen.hpp rendering. */
 .agentty-logo {
   --logo-mag: #e29be0; /* bright_magenta (role_brand_alt) */
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   line-height: 1;
   letter-spacing: 0;
   display: inline-flex;

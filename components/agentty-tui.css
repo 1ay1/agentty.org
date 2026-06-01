@@ -20,7 +20,7 @@
 
 .ttui-body {
   padding: 18px 20px 14px;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   font-size: 12.5px;
   line-height: 1.65;
   color: #c9d1d9;

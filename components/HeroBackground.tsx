@@ -39,6 +39,11 @@ export function HeroBackground() {
     let drops: number[] = [];
     let speeds: number[] = [];
     let dpr = 1;
+    // resolve the self-hosted mono family so the canvas matches the page
+    const mono =
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--font-mono")
+        .trim() || "monospace";
 
     function resize() {
       if (!canvas || !ctx) return;
@@ -51,7 +56,7 @@ export function HeroBackground() {
       cols = Math.ceil(w / FONT);
       drops = new Array(cols).fill(0).map(() => Math.random() * -40);
       speeds = new Array(cols).fill(0).map(() => 0.25 + Math.random() * 0.55);
-      ctx.font = `${FONT}px "JetBrains Mono", monospace`;
+      ctx.font = `${FONT}px ${mono}, monospace`;
     }
 
     function frame() {
@@ -84,19 +89,43 @@ export function HeroBackground() {
     window.addEventListener("resize", resize);
 
     let raf = 0;
+    let last = 0;
+    const FRAME_MS = 1000 / 30; // cap at 30fps — plenty for rain, halves CPU
+    let visible = true; // in viewport
+    let active = !document.hidden; // tab focused
+
+    // pause the loop when the hero scrolls out of view
+    const io = new IntersectionObserver(
+      ([e]) => {
+        visible = e.isIntersecting;
+      },
+      { threshold: 0 },
+    );
+    if (canvas) io.observe(canvas);
+
+    const onVisibility = () => {
+      active = !document.hidden;
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     if (reduced) {
-      // single static pass
+      // single static pass — no RAF loop
       for (let p = 0; p < 60; p++) frame();
     } else {
-      const loop = () => {
-        frame();
+      const loop = (now: number) => {
         raf = requestAnimationFrame(loop);
+        if (!visible || !active) return;
+        if (now - last < FRAME_MS) return;
+        last = now;
+        frame();
       };
       raf = requestAnimationFrame(loop);
     }
 
     return () => {
       window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", onVisibility);
+      io.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);

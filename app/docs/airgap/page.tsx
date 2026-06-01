@@ -6,6 +6,7 @@ import { Code, Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "SSH Air-gap",
   description: "Run agentty on a host with no direct internet, relaying bytes over SSH.",
+  alternates: { canonical: "/docs/airgap" },
 };
 
 export default function Airgap() {

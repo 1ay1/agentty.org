@@ -6,6 +6,7 @@ import { Code, Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Building from Source",
   description: "Compile agentty with CMake, including the standalone static build.",
+  alternates: { canonical: "/docs/building" },
 };
 
 export default function Building() {

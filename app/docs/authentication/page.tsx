@@ -6,6 +6,7 @@ import { Code, Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Authentication",
   description: "OAuth, API keys, and the credential override order.",
+  alternates: { canonical: "/docs/authentication" },
 };
 
 export default function Authentication() {

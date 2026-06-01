@@ -6,6 +6,7 @@ import { Code, Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Workspace Boundary",
   description: "Why filesystem tools refuse paths outside your project, and how to opt out.",
+  alternates: { canonical: "/docs/workspace" },
 };
 
 export default function Workspace() {

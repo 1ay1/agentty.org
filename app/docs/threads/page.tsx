@@ -6,6 +6,7 @@ import { Code } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Threads & Persistence",
   description: "Where agentty stores conversations and credentials, and how to manage them.",
+  alternates: { canonical: "/docs/threads" },
 };
 
 export default function Threads() {

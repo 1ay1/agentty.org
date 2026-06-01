@@ -8,6 +8,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Installation",
   description: "Install agentty in one line, or via your distro's package manager.",
+  alternates: { canonical: "/docs/installation" },
 };
 
 export default function Installation() {

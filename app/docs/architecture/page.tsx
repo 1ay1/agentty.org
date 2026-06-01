@@ -6,6 +6,7 @@ import { Code, Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Architecture",
   description: "The update loop, the view function, the provider, and the subprocess model.",
+  alternates: { canonical: "/docs/architecture" },
 };
 
 export default function Architecture() {

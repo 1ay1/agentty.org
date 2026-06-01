@@ -6,6 +6,7 @@ import { Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Tool Overview",
   description: "The full set of tools agentty can call, and how they render.",
+  alternates: { canonical: "/docs/tools" },
 };
 
 const tools: [string, string, string][] = [

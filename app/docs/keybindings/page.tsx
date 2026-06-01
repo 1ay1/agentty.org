@@ -5,6 +5,7 @@ import { Breadcrumb, EditThisPage } from "@/components/DocMeta";
 export const metadata: Metadata = {
   title: "Keybindings",
   description: "The complete agentty keymap.",
+  alternates: { canonical: "/docs/keybindings" },
 };
 
 const keys: [string, string][] = [

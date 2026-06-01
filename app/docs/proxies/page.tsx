@@ -6,6 +6,7 @@ import { Code, Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Corporate Proxies",
   description: "Make agentty work behind TLS-terminating forward proxies.",
+  alternates: { canonical: "/docs/proxies" },
 };
 
 export default function Proxies() {

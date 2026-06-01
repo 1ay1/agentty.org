@@ -4,6 +4,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Contributing",
   description: "How to contribute to agentty — bugs, code, and the maintainer workflow.",
+  alternates: { canonical: "/contributing" },
 };
 
 export default function Contributing() {

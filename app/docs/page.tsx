@@ -7,6 +7,7 @@ import { Breadcrumb, EditThisPage } from "@/components/DocMeta";
 export const metadata: Metadata = {
   title: "Introduction",
   description: "What agentty is, who it's for, and what makes it different.",
+  alternates: { canonical: "/docs" },
 };
 
 export default function DocsIndex() {

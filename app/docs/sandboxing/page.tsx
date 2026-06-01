@@ -6,6 +6,7 @@ import { Code, Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Sandboxing",
   description: "How agentty isolates shell and build calls with bwrap and sandbox-exec.",
+  alternates: { canonical: "/docs/sandboxing" },
 };
 
 export default function Sandboxing() {

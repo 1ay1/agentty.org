@@ -4,6 +4,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Community",
   description: "Get involved with agentty — contribute, report bugs, and help others.",
+  alternates: { canonical: "/community" },
 };
 
 export default function Community() {

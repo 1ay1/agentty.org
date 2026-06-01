@@ -5,6 +5,7 @@ import { Breadcrumb, EditThisPage } from "@/components/DocMeta";
 export const metadata: Metadata = {
   title: "The Interface",
   description: "A tour of the agentty TUI — composer, transcript, status bar, and tool widgets.",
+  alternates: { canonical: "/docs/interface" },
 };
 
 export default function Interface() {

@@ -6,6 +6,7 @@ import { Code, Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Quick Start",
   description: "From install to your first agent turn in under a minute.",
+  alternates: { canonical: "/docs/quick-start" },
 };
 
 export default function QuickStart() {

@@ -6,6 +6,7 @@ import { Note } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Permission Profiles",
   description: "Ask, Write, and Minimal — how agentty gates writes, shell, and network.",
+  alternates: { canonical: "/docs/profiles" },
 };
 
 export default function Profiles() {

@@ -4,6 +4,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Security Policy",
   description: "How to report a security vulnerability in agentty.",
+  alternates: { canonical: "/security" },
 };
 
 export default function Security() {

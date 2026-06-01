@@ -7,6 +7,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Troubleshooting",
   description: "Common issues and how to resolve them.",
+  alternates: { canonical: "/docs/troubleshooting" },
 };
 
 export default function Troubleshooting() {

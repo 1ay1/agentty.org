@@ -4,6 +4,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Acknowledgements",
   description: "The projects and people that make agentty possible.",
+  alternates: { canonical: "/acknowledgements" },
 };
 
 const deps: [string, string, string][] = [

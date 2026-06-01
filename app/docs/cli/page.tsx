@@ -6,6 +6,7 @@ import { Code } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "CLI Reference",
   description: "Every agentty subcommand and flag.",
+  alternates: { canonical: "/docs/cli" },
 };
 
 export default function Cli() {

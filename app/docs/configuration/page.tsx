@@ -6,6 +6,7 @@ import { Code } from "@/components/Doc";
 export const metadata: Metadata = {
   title: "Configuration",
   description: "Environment variables and on-disk paths agentty reads.",
+  alternates: { canonical: "/docs/configuration" },
 };
 
 const envs: [string, string][] = [
