@@ -1,3 +1,11 @@
+# Rich log format for analytics: adds request time, referer, host on top of
+# the standard combined fields. GoAccess parses this via the matching
+# log-format string in its config (see analytics/goaccess.conf).
+log_format agentty_detailed '$remote_addr - $remote_user [$time_local] '
+                            '"$request" $status $body_bytes_sent '
+                            '"$http_referer" "$http_user_agent" '
+                            'rt=$request_time host=$host';
+
 server {
     listen 80;
     listen [::]:80;
@@ -33,6 +41,9 @@ server {
 
     root /var/www/agentty.org;
     index index.html;
+
+    # Dedicated detailed log for this site only (consumed by GoAccess).
+    access_log /var/log/nginx/agentty.access.log agentty_detailed;
 
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
@@ -70,4 +81,82 @@ server {
         add_header Cache-Control "public, immutable";
     }
     error_page 404 /404.html;
+}
+
+# ---------------------------------------------------------------------------
+# stats.agentty.org — GoAccess real-time HTML dashboard.
+# Static report + live WebSocket feed. Protected by HTTP basic auth.
+# ---------------------------------------------------------------------------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name stats.agentty.org;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name stats.agentty.org;
+
+    ssl_certificate /etc/letsencrypt/live/agentty.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/agentty.org/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    root /var/lib/goaccess/html;
+    index index.html;
+
+    # Lock the dashboard behind basic auth — generate the file with:
+    #   sudo htpasswd -c /etc/nginx/agentty.htpasswd ayush
+    auth_basic           "agentty.org analytics";
+    auth_basic_user_file /etc/nginx/agentty.htpasswd;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # GoAccess real-time WebSocket feed (goaccess --real-time-html).
+    location /ws {
+        proxy_pass http://127.0.0.1:7890;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 7d;
+    }
+}
+
+# ---------------------------------------------------------------------------
+# analytics.agentty.org — self-hosted Umami (client-side product analytics).
+# Reverse-proxies the Umami container on 127.0.0.1:3001.
+# ---------------------------------------------------------------------------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name analytics.agentty.org;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name analytics.agentty.org;
+
+    ssl_certificate /etc/letsencrypt/live/agentty.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/agentty.org/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    # Umami serves its own dashboard UI + the /script.js tracker + /api ingest.
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 }

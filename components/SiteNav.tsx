@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { site, topNav } from "@/lib/site";
 import { Search } from "@/components/Search";
+import { track } from "@/lib/analytics";
 
 export function SiteNav() {
   const [open, setOpen] = useState(false);
@@ -24,7 +25,13 @@ export function SiteNav() {
         <span className="nav-spacer" />
         <div className="nav-cta">
           <Search />
-          <a className="ghbtn" href={site.github} target="_blank" rel="noopener noreferrer">
+          <a
+            className="ghbtn"
+            href={site.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => track("github-click", { from: "nav" })}
+          >
             <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
               <path
                 fill="currentColor"

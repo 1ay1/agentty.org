@@ -4,4 +4,5 @@ out
 .DS_Store
 *.log
 .env*.local
+analytics/.env
 next-env.d.ts

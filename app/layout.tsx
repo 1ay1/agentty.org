@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteNav } from "@/components/SiteNav";
@@ -154,6 +155,15 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        {/* Self-hosted Umami analytics — first-party, privacy-friendly, no
+            cookies, served from our own subdomain so ad-blockers that target
+            third-party trackers leave it alone. */}
+        <Script
+          src="https://analytics.agentty.org/script.js"
+          data-website-id="4dc82793-234c-474c-837f-8bc736d6b954"
+          strategy="afterInteractive"
+          defer
         />
       </head>
       <body>
