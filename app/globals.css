@@ -109,9 +109,27 @@ code, pre, kbd { font-family: var(--mono); }
 
 /* ---------- HERO ---------- */
 .hero { padding: 100px 0 64px; }
-.hero-inner { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.hero-inner .lede { margin-left: auto; margin-right: auto; }
-.hero-inner .hero-actions { justify-content: center; }
+
+/* two-column: text left, live TUI window right */
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 56px;
+  align-items: center;
+}
+.hero-inner { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+.hero-inner .lede { margin-left: 0; margin-right: 0; }
+.hero-inner .hero-actions { justify-content: flex-start; }
+.hero-tui { min-width: 0; }
+.hero-tui .ttui { margin: 0; max-width: 100%; width: 100%; }
+
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+  .hero-inner { align-items: center; text-align: center; }
+  .hero-inner .lede { margin-left: auto; margin-right: auto; }
+  .hero-inner .hero-actions { justify-content: center; }
+  .hero-tui .ttui { max-width: 780px; margin: 0 auto; }
+}
 .badge {
   display: inline-flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 500;
   color: var(--text-dim); background: rgba(139,140,249,0.06); border: 1px solid rgba(139,140,249,0.22);

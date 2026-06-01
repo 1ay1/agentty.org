@@ -8,30 +8,32 @@ export default function Home() {
     <>
       {/* HERO */}
       <section className="hero">
-        <div className="wrap hero-inner">
-          <h1>
-            Blazing-fast <span className="grad">Claude</span>
-            <br /> in your terminal.
-          </h1>
-          <p className="lede">
-            A drop-in alternative to <code>claude-code</code>, written in C++26.{" "}
-            <strong>8.8&nbsp;MB binary</strong>, <strong>sub-millisecond cold start</strong>,{" "}
-            <strong>sandboxed by default</strong>, SSH air-gap in one command — with no Node,
-            Python, Electron, or <code>npm install</code>.
-          </p>
-          <div className="hero-actions">
-            <Link className="btn btn-primary" href="/docs/installation">
-              Get started
-            </Link>
-            <Link className="btn btn-ghost" href="/docs">
-              Read the docs →
-            </Link>
+        <div className="wrap hero-grid">
+          <div className="hero-inner">
+            <h1>
+              Blazing-fast <span className="grad">Claude</span>
+              <br /> in your terminal.
+            </h1>
+            <p className="lede">
+              A drop-in alternative to <code>claude-code</code>, written in C++26.{" "}
+              <strong>8.8&nbsp;MB binary</strong>, <strong>sub-millisecond cold start</strong>,{" "}
+              <strong>sandboxed by default</strong>, SSH air-gap in one command — with no Node,
+              Python, Electron, or <code>npm install</code>.
+            </p>
+            <div className="hero-actions">
+              <Link className="btn btn-primary" href="/docs/installation">
+                Get started
+              </Link>
+              <Link className="btn btn-ghost" href="/docs">
+                Read the docs →
+              </Link>
+            </div>
+            <CopyRow cmd={site.installOneLiner} />
           </div>
-          <CopyRow cmd={site.installOneLiner} />
-        </div>
 
-        <div className="wrap">
-          <AgenttyTui />
+          <div className="hero-tui">
+            <AgenttyTui />
+          </div>
         </div>
       </section>
 
