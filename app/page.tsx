@@ -2,6 +2,7 @@ import Link from "next/link";
 import { site } from "@/lib/site";
 import { CopyRow } from "@/components/CopyRow";
 import { AgenttyTui } from "@/components/AgenttyTui";
+import { AgenttyLogo } from "@/components/AgenttyLogo";
 
 export default function Home() {
   return (
@@ -10,6 +11,9 @@ export default function Home() {
       <section className="hero">
         <div className="wrap hero-grid">
           <div className="hero-inner">
+            <div className="hero-logo">
+              <AgenttyLogo />
+            </div>
             <h1>
               Blazing-fast <span className="grad">Claude</span>
               <br /> in your terminal.

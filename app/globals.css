@@ -141,6 +141,7 @@ pre.code::-webkit-scrollbar,
   align-items: center;
 }
 .hero-inner { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+.hero-logo { margin: 0 0 26px; }
 .hero-inner .lede { margin-left: 0; margin-right: 0; }
 .hero-inner .hero-actions { justify-content: flex-start; }
 .hero-tui { min-width: 0; }
@@ -149,6 +150,7 @@ pre.code::-webkit-scrollbar,
 @media (max-width: 900px) {
   .hero-grid { grid-template-columns: 1fr; gap: 40px; }
   .hero-inner { align-items: center; text-align: center; }
+  .hero-logo { align-self: center; }
   .hero-inner .lede { margin-left: auto; margin-right: auto; }
   .hero-inner .hero-actions { justify-content: center; }
   .hero-tui .ttui { max-width: 780px; margin: 0 auto; }
