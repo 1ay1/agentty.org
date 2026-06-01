@@ -98,12 +98,12 @@
   margin: 2px 0;
 }
 .ttui-status {
-  display: flex; align-items: baseline; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   gap: 12px; font-size: 12px; white-space: pre;
   overflow: hidden;
 }
 .ttui-status-left, .ttui-status-right {
-  display: flex; align-items: baseline; white-space: pre; flex: none;
+  display: flex; align-items: center; white-space: pre; flex: none;
   min-width: 0;
 }
 .ttui-status-right { margin-left: auto; }
