@@ -469,6 +469,9 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
 .stat:hover { background: #11131b; }
 .stat .num { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .stat .lbl { color: var(--text-dim); font-size: 13.5px; margin-top: 6px; }
+.stats-note { text-align: center; color: var(--text-faint); font-size: 12.5px; margin: 14px 0 0; }
+.stats-note a { color: var(--text-dim); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+.stats-note a:hover { color: var(--text); }
 
 /* ---------- QUOTE ---------- */
 .quote {

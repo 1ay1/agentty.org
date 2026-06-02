@@ -65,6 +65,11 @@ export default function Home() {
             <div className="stat" data-reveal><CountUp value="0" /><div className="lbl">Runtime dependencies</div></div>
             <div className="stat" data-reveal><div className="num">C++26</div><div className="lbl">Native, no GC</div></div>
           </div>
+          <p className="stats-note">
+            Size &amp; cold-start are the Linux&nbsp;x86_64 build, measured on each deploy;
+            other platforms vary — see the{" "}
+            <Link href="/docs/installation#latest">per-platform download sizes</Link>.
+          </p>
         </div>
       </section>
 
@@ -76,6 +81,7 @@ export default function Home() {
           <p className="section-sub">
             Measured on the same Arch box, same shell, same day. No JIT warmup, no
             <code> require()</code> graph to walk, no GC ticking while bytes stream in.
+            Figures are the Linux&nbsp;x86_64 build &mdash; <Link href="/docs/installation#latest">other platforms here</Link>.
           </p>
           <div className="tablewrap">
             <table>
