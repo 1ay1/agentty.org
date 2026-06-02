@@ -311,7 +311,7 @@ export function AgenttyTui() {
             <div className="row ttui-head">
               <span className="bmag">✦</span>
               <span> </span>
-              <span className="bmag b">Opus 4.7</span>
+              <span className="bmag b">Opus 4.5</span>
               <span className="ttui-meta dim">
                 {phase === "ready" ? "12:34  ·  4.2s  ·  turn 3" : "12:34  ·  turn 3"}
               </span>
@@ -501,7 +501,7 @@ export function AgenttyTui() {
             </span>
             <span className="dim">{"   ·   "}</span>
             <span className="bmag">● </span>
-            <span className="bmag">Opus 4.7</span>
+            <span className="bmag">Opus 4.5</span>
             <span className="dim">{" · "}</span>
             <span className="green">████</span>
             <span className="dim">░░░░░░ 38%</span>

@@ -23,7 +23,7 @@ export default function Home() {
             </h1>
             <p className="lede">
               A drop-in alternative to <code>claude-code</code>, written in C++26.{" "}
-              <strong>8.8&nbsp;MB binary</strong>, <strong>sub-millisecond cold start</strong>,{" "}
+              <strong>9.4&nbsp;MB binary</strong>, <strong>millisecond cold start</strong>,{" "}
               <strong>sandboxed by default</strong>, SSH air-gap in one command. Signs in with your
               existing <strong>Claude Pro/Max</strong> &mdash; no Node, Python, Electron, or{" "}
               <code>npm install</code>.
@@ -50,7 +50,7 @@ export default function Home() {
           <p className="install-kicker">Install in one line</p>
           <CopyRow cmd={site.installOneLiner} typed />
           <p className="install-note">
-            No Node, no Python, no <code>npm install</code> — just a single 8.8&nbsp;MB static binary.
+            No Node, no Python, no <code>npm install</code> — just a single 9.4&nbsp;MB static binary.
           </p>
         </div>
       </section>
@@ -59,8 +59,8 @@ export default function Home() {
       <section className="block" style={{ paddingTop: 40 }}>
         <div className="wrap">
           <div className="stats">
-            <div className="stat" data-reveal><CountUp value="8.8 MB" /><div className="lbl">Single static binary</div></div>
-            <div className="stat" data-reveal><CountUp value="< 1 ms" /><div className="lbl">Cold start</div></div>
+            <div className="stat" data-reveal><CountUp value="9.4 MB" /><div className="lbl">Single static binary</div></div>
+            <div className="stat" data-reveal><CountUp value="~2 ms" /><div className="lbl">Cold start</div></div>
             <div className="stat" data-reveal><CountUp value="0" /><div className="lbl">Runtime dependencies</div></div>
             <div className="stat" data-reveal><div className="num">C++26</div><div className="lbl">Native, no GC</div></div>
           </div>
@@ -82,9 +82,9 @@ export default function Home() {
                 <tr><th></th><th>agentty (C++26)</th><th>claude-code (Node)</th></tr>
               </thead>
               <tbody>
-                <tr><td>Cold-start <code>--help</code></td><td><span className="win">&lt; 1 ms</span></td><td>~150 ms</td></tr>
-                <tr><td><code>--version</code></td><td><span className="win">&lt; 1 ms</span></td><td>~60 ms</td></tr>
-                <tr><td>Binary on disk</td><td><span className="win">8.8 MB</span></td><td>222 MB (+ Node runtime)</td></tr>
+                <tr><td>Cold-start <code>--help</code></td><td><span className="win">~2 ms</span></td><td>~150 ms</td></tr>
+                <tr><td><code>--version</code></td><td><span className="win">~2 ms</span></td><td>~60 ms</td></tr>
+                <tr><td>Binary on disk</td><td><span className="win">9.4 MB</span></td><td>222 MB (+ Node runtime)</td></tr>
                 <tr><td>Install</td><td><span className="win">curl | chmod +x</span></td><td>npm i -g + Node</td></tr>
                 <tr><td>GC pauses mid-stream</td><td><span className="win">None</span></td><td>V8 GC</td></tr>
               </tbody>
@@ -100,7 +100,7 @@ export default function Home() {
           <h2 className="section-title">Four things the official client doesn&apos;t try to do.</h2>
           <div className="grid grid-3" style={{ marginTop: 28 }}>
             <div className="card tilt" data-reveal><span className="ico">⚡</span><h3>Native speed</h3><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">📦</span><h3>One static binary</h3><p>8.8 MB. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">📦</span><h3>One static binary</h3><p>9.4 MB. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
             <div className="card tilt" data-reveal><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS) / job objects (Windows). An approved bash call still can&apos;t read <code>~/.ssh/id_rsa</code>.</p></div>
             <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays bytes over SOCKS5-over-SSH.</p></div>
             <div className="card tilt" data-reveal><span className="ico">📐</span><h3>Workspace boundary</h3><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>

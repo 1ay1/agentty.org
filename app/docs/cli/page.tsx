@@ -18,8 +18,10 @@ export default function Cli() {
 
       <h2 id="run">Running</h2>
       <Code>{`agentty                                # run in the current directory
-agentty --workspace ~/code/project     # run against another workspace
-agentty -k sk-ant-…                     # single-session key, never written to disk`}</Code>
+agentty -w ~/code/project              # run against another workspace
+agentty -m claude-opus-4-5             # pick a model for the session
+agentty -k sk-ant-…                     # single-session key, never written to disk
+agentty --sandbox on                   # require an OS sandbox for bash/diagnostics`}</Code>
 
       <h2 id="subcommands">Subcommands</h2>
       <div className="tablewrap" style={{ marginBottom: 24 }}>
@@ -37,16 +39,30 @@ agentty -k sk-ant-…                     # single-session key, never written to
         </table>
       </div>
 
-      <h2 id="flags">Common flags</h2>
+      <h2 id="flags">Options</h2>
+      <p>These mirror <code>agentty --help</code> exactly.</p>
       <div className="tablewrap">
         <table>
           <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
           <tbody>
-            <tr><td className="mono"><code>-k</code>, <code>--key &lt;key&gt;</code></td><td>Use this API key for one session; never written to disk.</td></tr>
-            <tr><td className="mono"><code>--workspace &lt;path&gt;</code></td><td>Set the workspace root without <code>cd</code>.</td></tr>
-            <tr><td className="mono"><code>-V</code>, <code>--version</code></td><td>Print the build version and exit.</td></tr>
-            <tr><td className="mono"><code>--setup</code></td><td>(airgap) Copy credentials to the remote on first run.</td></tr>
-            <tr><td className="mono"><code>--remote-agentty &lt;path&gt;</code></td><td>(airgap) Path to agentty on the remote if not on PATH.</td></tr>
+            <tr><td className="mono"><code>-k</code>, <code>--key &lt;key&gt;</code></td><td>API-key override for this session; never written to disk.</td></tr>
+            <tr><td className="mono"><code>-m</code>, <code>--model &lt;id&gt;</code></td><td>Model id for the session (e.g. <code>claude-opus-4-5</code>).</td></tr>
+            <tr><td className="mono"><code>-w</code>, <code>--workspace &lt;dir&gt;</code></td><td>Sandbox filesystem tools to this directory (default: cwd). Tools refuse paths outside it.</td></tr>
+            <tr><td className="mono"><code>--sandbox &lt;mode&gt;</code></td><td>Wrap <code>bash</code>/<code>diagnostics</code> in an OS-native sandbox. <code>auto</code> (default) · <code>on</code> (require a backend) · <code>off</code> (disable).</td></tr>
+            <tr><td className="mono"><code>-V</code>, <code>--version</code></td><td>Print the agentty version and exit.</td></tr>
+            <tr><td className="mono"><code>-h</code>, <code>--help</code></td><td>Show usage and exit.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="airgap-flags">Air-gap flags</h2>
+      <p>Passed to <code>agentty airgap</code> — see <code>agentty airgap --help</code>.</p>
+      <div className="tablewrap">
+        <table>
+          <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td className="mono"><code>--setup</code></td><td>Copy credentials to the remote on first run.</td></tr>
+            <tr><td className="mono"><code>--remote-agentty &lt;path&gt;</code></td><td>Path to agentty on the remote if it isn&apos;t on <code>PATH</code>.</td></tr>
           </tbody>
         </table>
       </div>

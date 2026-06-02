@@ -71,7 +71,7 @@ export default function OpengraphImage() {
             maxWidth: "1000px",
           }}
         >
-          A C++26 alternative to claude-code. 8.8 MB static binary · sub-ms cold
+          A C++26 alternative to claude-code. 9.4 MB static binary · millisecond cold
           start · sandboxed by default · SSH air-gap in one command.
         </div>
 
