@@ -5,6 +5,7 @@
   "description": "Documentation and homepage for agentty — blazing-fast Claude in your terminal.",
   "scripts": {
     "dev": "next dev",
+    "measure": "node scripts/measure-stats.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

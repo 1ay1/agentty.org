@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DocNav } from "@/components/DocNav";
-import { Note } from "@/components/Doc";
 import { Breadcrumb, EditThisPage } from "@/components/DocMeta";
+import { Note } from "@/components/Doc";
+import { DocNav } from "@/components/DocNav";
+import { stats } from "@/lib/stats";
 
 export const metadata: Metadata = {
   title: "Introduction",
@@ -17,7 +18,7 @@ export default function DocsIndex() {
       <h1>Introduction</h1>
       <p className="lead">
         agentty is a native C++26 terminal coding agent — a drop-in alternative to
-        <code> claude-code</code> that ships as a single 9.4&nbsp;MB static binary.
+        <code> claude-code</code> that ships as a single {stats.sizeMB} static binary.
       </p>
 
       <p>
@@ -43,7 +44,7 @@ export default function DocsIndex() {
       <h2 id="principles">Design principles</h2>
       <ul>
         <li><strong>Native speed.</strong> C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream.</li>
-        <li><strong>One static binary.</strong> 9.4 MB. <code>curl | chmod +x | run</code>. No version drift between machines.</li>
+        <li><strong>One static binary.</strong> {stats.sizeMB}. <code>curl | chmod +x | run</code>. No version drift between machines.</li>
         <li><strong>Sandbox by default.</strong> Every shell/build runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS). <code>~/.ssh</code>, <code>/etc</code>, other projects stay read-only.</li>
         <li><strong>One-command SSH air-gap.</strong> Relay bytes over SOCKS5-over-SSH; TLS pins end-to-end on the real upstreams.</li>
         <li><strong>Reads like a single function.</strong> The reducer is one <code>std::visit</code> over a closed event sum; the permission matrix is a <code>constexpr</code> with <code>static_assert</code>s — change a policy cell and the build breaks.</li>

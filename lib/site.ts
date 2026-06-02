@@ -2,7 +2,7 @@ export const site = {
   name: "agentty",
   tagline: "Blazing-fast Claude in your terminal.",
   description:
-    "A native C++26 terminal coding agent. A 9.4 MB static binary with millisecond cold start, sandboxed by default, and one-command SSH air-gap. A drop-in alternative to claude-code with no Node, Python, or Electron.",
+    "A native C++26 terminal coding agent. A single static binary with millisecond cold start, sandboxed by default, and one-command SSH air-gap. A drop-in alternative to claude-code with no Node, Python, or Electron.",
   url: "https://agentty.org",
   github: "https://github.com/1ay1/agentty",
   releases: "https://github.com/1ay1/agentty/releases",

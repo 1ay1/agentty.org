@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { stats } from "@/lib/stats";
 
 export const dynamic = "force-static";
 export const alt = "agentty — blazing-fast Claude in your terminal";
@@ -71,8 +72,7 @@ export default function OpengraphImage() {
             maxWidth: "1000px",
           }}
         >
-          A C++26 alternative to claude-code. 9.4 MB static binary · millisecond cold
-          start · sandboxed by default · SSH air-gap in one command.
+          {`A C++26 alternative to claude-code. ${stats.sizeMB} static binary · millisecond cold start · sandboxed by default · SSH air-gap in one command.`}
         </div>
 
         <div

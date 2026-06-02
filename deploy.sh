@@ -10,6 +10,13 @@ DOMAIN="agentty.org"
 
 echo "==> Building static site"
 cd "$PROJECT"
+
+echo "==> Measuring the real agentty binary (size + cold-start)"
+# Regenerates lib/stats.generated.ts so the site's numbers always match the
+# binary that's actually installed. Never fails the deploy if the binary is
+# absent — it just keeps the last committed measurement.
+node scripts/measure-stats.mjs || echo "   (measurement skipped; using committed stats)"
+
 npm run build
 
 echo "==> Pre-compressing static assets (gzip) for gzip_static"
