@@ -1,4 +1,5 @@
 @import "./page.css";
+@import "../components/hero-background.css";
 
 :root, html[data-theme="dark"] {
   --bg: #08090c;

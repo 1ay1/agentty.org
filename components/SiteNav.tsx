@@ -27,11 +27,12 @@ export function SiteNav() {
           <button
             className="cmdk-trigger"
             aria-label="Open command palette"
-            onClick={() =>
+            onClick={() => {
+              window.dispatchEvent(new Event("agentty:open-palette"));
               window.dispatchEvent(
                 new KeyboardEvent("keydown", { key: "k", metaKey: true }),
-              )
-            }
+              );
+            }}
           >
             <span className="cmdk-trigger-ico">⌘</span>
             <span className="cmdk-trigger-label">Jump to…</span>

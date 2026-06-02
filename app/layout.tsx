@@ -4,8 +4,8 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
-import { SiteFX } from "@/components/SiteFX";
-import { CommandPalette } from "@/components/CommandPalette";
+import { DeferredFX } from "@/components/DeferredFX";
+import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { site } from "@/lib/site";
 
 const inter = Inter({
@@ -179,11 +179,11 @@ export default function RootLayout({
       </head>
       <body>
         <a className="skip" href="#main">Skip to content</a>
-        <SiteFX />
-        <CommandPalette />
         <SiteNav />
         <main id="main">{children}</main>
         <SiteFooter />
+        <DeferredFX />
+        <CommandPaletteLazy />
       </body>
     </html>
   );

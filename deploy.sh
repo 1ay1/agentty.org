@@ -12,6 +12,16 @@ echo "==> Building static site"
 cd "$PROJECT"
 npm run build
 
+echo "==> Pre-compressing static assets (gzip) for gzip_static"
+# Build .gz siblings for the hashed, long-cached assets so nginx can serve
+# them with zero per-request CPU. Skips already-tiny / already-compressed files.
+find "$PROJECT/out" -type f \
+  \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.svg' \
+     -o -name '*.json' -o -name '*.txt' -o -name '*.xml' -o -name '*.webmanifest' \) \
+  -size +1024c -print0 | while IFS= read -r -d '' f; do
+  gzip -9 -kf "$f"
+done
+
 echo "==> Deploying to $WEBROOT"
 sudo mkdir -p "$WEBROOT"
 sudo rsync -a --delete "$PROJECT/out/" "$WEBROOT/"

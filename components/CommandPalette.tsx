@@ -38,8 +38,8 @@ function score(q: string, t: string): number {
   return qi === q.length ? sc : 0;
 }
 
-export function CommandPalette() {
-  const [open, setOpen] = useState(false);
+export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
+  const [open, setOpen] = useState(startOpen);
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
   const router = useRouter();

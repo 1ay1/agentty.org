@@ -80,7 +80,16 @@ server {
     gzip on;
     gzip_vary on;
     gzip_comp_level 6;
-    gzip_types text/plain text/css application/json application/javascript application/xml image/svg+xml;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_types
+        text/plain text/css text/javascript
+        application/javascript application/x-javascript application/json
+        application/xml application/manifest+json application/wasm
+        image/svg+xml font/woff2;
+    # Serve pre-compressed .gz / .br siblings when the build produced them
+    # (zero CPU at request time, smaller than on-the-fly gzip level 6).
+    gzip_static on;
 
     location / {
         try_files $uri $uri/ $uri.html $uri/index.html =404;

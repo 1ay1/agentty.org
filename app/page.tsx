@@ -4,14 +4,14 @@ import { CopyRow } from "@/components/CopyRow";
 import { CountUp } from "@/components/CountUp";
 import { AgenttyTui } from "@/components/AgenttyTui";
 import { AgenttyLogo } from "@/components/AgenttyLogo";
-import { HeroBackground } from "@/components/HeroBackground";
+import { HeroBackgroundLazy } from "@/components/HeroBackgroundLazy";
 
 export default function Home() {
   return (
     <>
       {/* HERO */}
       <section className="hero">
-        <HeroBackground />
+      <HeroBackgroundLazy />
         <div className="wrap hero-grid">
           <div className="hero-inner">
             <div className="hero-logo">

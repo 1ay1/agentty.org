@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import "./hero-background.css";
 
 /**
  * A geeky, GPU-cheap hero backdrop:

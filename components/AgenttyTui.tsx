@@ -107,6 +107,11 @@ export function AgenttyTui() {
   const [phase, setPhase] = useState<"idle" | "stream" | "ready">("idle");
   const [userTyped, setUserTyped] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  // Animation only runs once the TUI is on-screen AND the browser has gone
+  // idle after first paint — so it never competes with hydration / first input
+  // and stays paused while scrolled out of view. The initial static frame is
+  // always rendered, so the hero looks complete immediately.
+  const [started, setStarted] = useState(false);
 
   // ── interactive 3D tilt: the window leans toward the cursor and a glare
   //    sheen tracks the pointer, like a pane of smoked glass floating off
@@ -158,8 +163,37 @@ export function AgenttyTui() {
     };
   }, []);
 
+  // arm the animation: visible in viewport + browser idle
+  useEffect(() => {
+    const el = tiltRef.current;
+    if (!el) return;
+    let idleHandle: number | null = null;
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+    };
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        const go = () => setStarted(true);
+        if (typeof w.requestIdleCallback === "function") {
+          idleHandle = w.requestIdleCallback(go, { timeout: 1800 });
+        } else {
+          idleHandle = window.setTimeout(go, 900);
+        }
+      },
+      { threshold: 0.25 },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      if (idleHandle != null) window.clearTimeout(idleHandle);
+    };
+  }, []);
+
   // master loop — clears + reschedules everything each cycle
   useEffect(() => {
+    if (!started) return;
     let cancelled = false;
     const clearAll = () => {
       timers.current.forEach(clearTimeout);
@@ -197,10 +231,19 @@ export function AgenttyTui() {
       const proseEnd = proseStart + PROSE.length * 11;
       push(proseEnd + 150, () => setPhase("ready"));
 
-      // hold, then loop
+      // hold, then loop — but only while the tab is visible
       push(proseEnd + 4200, () => {
         clearAll();
-        run();
+        if (!document.hidden) run();
+        else {
+          const resume = () => {
+            if (!document.hidden) {
+              document.removeEventListener("visibilitychange", resume);
+              run();
+            }
+          };
+          document.addEventListener("visibilitychange", resume);
+        }
       });
     };
 
@@ -209,7 +252,7 @@ export function AgenttyTui() {
       cancelled = true;
       clearAll();
     };
-  }, []);
+  }, [started]);
 
   // spinner ticker — only while anything is in flight
   const anyRunning = running >= 0 && done < EVENTS.length - 1;
