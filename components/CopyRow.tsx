@@ -45,7 +45,20 @@ export function CopyRow({ cmd, typed = false }: { cmd: string; typed?: boolean }
       { threshold: 0.5 },
     );
     io.observe(el);
-    return () => io.disconnect();
+    // Safety net: never leave the command blank if the typing observer doesn't
+    // fire (deferred mount, IO edge cases) — settle to the full command.
+    const fallback = window.setTimeout(() => {
+      if (!ran.current) {
+        ran.current = true;
+        io.disconnect();
+        setShown(cmd);
+        setCaret(false);
+      }
+    }, 3500);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(fallback);
+    };
   }, [cmd, typed]);
 
   const copy = () => {

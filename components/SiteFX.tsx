@@ -39,13 +39,21 @@ export function SiteFX() {
       document.querySelectorAll<HTMLElement>("[data-reveal]"),
     );
     if (reduce) {
-      revealEls.forEach((el) => el.classList.add("revealed"));
+      // reduced-motion: leave everything visible (CSS default), do nothing.
     } else {
       revealEls.forEach((el, i) => {
         // stagger siblings sharing a parent group
         const delay = el.dataset.revealDelay ?? `${(i % 6) * 60}ms`;
         el.style.setProperty("--reveal-delay", delay);
       });
+      // Arm the hide-then-reveal styling ONLY now that JS is running and we're
+      // about to observe. Until this class lands, [data-reveal] is fully
+      // visible (see globals.css), so content never depends on this bundle.
+      document.documentElement.classList.add("fx-ready");
+      // Immediately reveal anything already in or above the viewport — covers
+      // the case where SiteFX mounts late (deferred to idle) after the user
+      // has already scrolled past a section.
+      const vh = window.innerHeight || document.documentElement.clientHeight;
       io = new IntersectionObserver(
         (entries) => {
           entries.forEach((e) => {
@@ -57,7 +65,15 @@ export function SiteFX() {
         },
         { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
       );
-      revealEls.forEach((el) => io!.observe(el));
+      revealEls.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.top < vh * 0.92) {
+          // already visible at mount time → reveal without waiting for the IO
+          el.classList.add("revealed");
+        } else {
+          io!.observe(el);
+        }
+      });
     }
 
     // ── magnetic buttons ──
@@ -138,6 +154,7 @@ export function SiteFX() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("keydown", onKey);
       io?.disconnect();
+      document.documentElement.classList.remove("fx-ready");
       magCleanups.forEach((fn) => fn());
       bar.remove();
       if (rafP) cancelAnimationFrame(rafP);

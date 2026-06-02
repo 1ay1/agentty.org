@@ -53,7 +53,23 @@ export function CountUp({ value }: { value: string }) {
       { threshold: 0.4 },
     );
     io.observe(el);
-    return () => io.disconnect();
+
+    // Safety net: if the observer never fires (element rendered off the normal
+    // scroll path, or IO unsupported edge cases), never leave it stuck at the
+    // placeholder "0". This fires well after the IO would have, so the normal
+    // count-up animation still wins when it's actually scrolled into view.
+    const fallback = window.setTimeout(() => {
+      if (!started.current) {
+        started.current = true;
+        io.disconnect();
+        setDisplay(value);
+      }
+    }, 3500);
+
+    return () => {
+      io.disconnect();
+      window.clearTimeout(fallback);
+    };
   }, [value]);
 
   return (
