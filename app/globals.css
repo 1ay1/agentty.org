@@ -43,7 +43,7 @@ html[data-theme="light"] {
   --text-faint: #5c6370;
   --accent: #5b5cf0;
   --accent-hover: #4a4be0;
-  --accent-2: #0ea5a5;
+  --accent-2: #0c7878;
   --accent-warm: #d97706;
   --green: #16a34a;
   --red: #dc2626;
@@ -619,6 +619,7 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
     radial-gradient(38% 46% at 80% 25%, rgba(94,234,212,0.14), transparent 60%),
     radial-gradient(45% 50% at 60% 80%, rgba(163,164,251,0.16), transparent 62%);
   filter: blur(28px);
+  will-change: transform;
   animation: mesh-drift 18s ease-in-out infinite alternate;
 }
 .cta > .wrap { position: relative; z-index: 1; }

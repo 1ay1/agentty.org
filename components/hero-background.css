@@ -40,6 +40,8 @@
   left: 8%;
   background: radial-gradient(circle, rgba(139, 140, 249, 0.16), transparent 62%);
   filter: blur(8px);
+  will-change: transform, opacity;
+  transform: translateZ(0);
   animation: hero-glow-drift 14s ease-in-out infinite alternate;
 }
 
