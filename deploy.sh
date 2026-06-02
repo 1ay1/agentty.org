@@ -17,6 +17,11 @@ echo "==> Measuring the real agentty binary (size + cold-start)"
 # absent — it just keeps the last committed measurement.
 node scripts/measure-stats.mjs || echo "   (measurement skipped; using committed stats)"
 
+echo "==> Fetching the latest GitHub release (version + per-platform sizes)"
+# Regenerates lib/release.generated.ts from the Releases API. Never fails the
+# deploy on a network error / rate-limit — keeps the committed release data.
+node scripts/fetch-release.mjs || echo "   (release fetch skipped; using committed data)"
+
 npm run build
 
 echo "==> Pre-compressing static assets (gzip) for gzip_static"

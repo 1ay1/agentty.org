@@ -4,6 +4,7 @@ import { Breadcrumb, EditThisPage } from "@/components/DocMeta";
 import { Code, Note } from "@/components/Doc";
 import { CopyRow } from "@/components/CopyRow";
 import { site } from "@/lib/site";
+import { release, versionLabel } from "@/lib/release";
 
 export const metadata: Metadata = {
   title: "Installation",
@@ -20,6 +21,38 @@ export default function Installation() {
         One line installs it. The same line updates it. Or use your package manager —
         deb, rpm, AUR, Homebrew, and Scoop are all published per release.
       </p>
+
+      <h2 id="latest">Latest release</h2>
+      <p>
+        <strong>{versionLabel}</strong>
+        {release.publishedAt && (
+          <> · published {new Date(release.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</>
+        )}{" "}
+        · <a href={release.url} target="_blank" rel="noopener noreferrer">release notes &amp; checksums ↗</a>
+      </p>
+      {release.platforms.length > 0 && (
+        <div className="tablewrap" style={{ marginBottom: 24 }}>
+          <table>
+            <thead>
+              <tr><th>Platform</th><th>Binary</th><th>Size</th><th>SHA-256</th></tr>
+            </thead>
+            <tbody>
+              {release.platforms.map((p) => (
+                <tr key={p.key}>
+                  <td>{p.label}</td>
+                  <td className="mono">
+                    <a href={p.url} target="_blank" rel="noopener noreferrer"><code>{p.name}</code></a>
+                  </td>
+                  <td className="mono"><span className="win">{p.sizeMB}</span></td>
+                  <td className="mono" style={{ fontSize: 11 }}>
+                    {p.sha256 ? <code>{p.sha256.slice(0, 16)}…</code> : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <h2 id="one-line">One-line install (recommended)</h2>
       <CopyRow cmd={site.installOneLiner} />

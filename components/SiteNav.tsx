@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { site, topNav } from "@/lib/site";
+import { versionLabel } from "@/lib/release";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { track } from "@/lib/analytics";
 
@@ -14,6 +15,7 @@ export function SiteNav() {
         <Link className="brand" href="/" aria-label="agentty home" onClick={() => setOpen(false)}>
           <span className="brand-mark" aria-hidden="true">▌</span>
           <span className="brand-name">agentty</span>
+          <span className="brand-ver" aria-label={`version ${versionLabel}`}>{versionLabel}</span>
         </Link>
         <nav className="nav-links" aria-label="Primary">
           {topNav.map((n) => (
