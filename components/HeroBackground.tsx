@@ -44,6 +44,16 @@ export function HeroBackground() {
       getComputedStyle(document.documentElement)
         .getPropertyValue("--font-mono")
         .trim() || "monospace";
+    // Cache the trail-fade color once per resize/theme instead of calling
+    // getComputedStyle every frame (that read forces a style/layout reflow).
+    let fade = "rgba(8, 9, 12, 0.10)";
+    function readFade() {
+      fade =
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--matrix-fade")
+          .trim() || "rgba(8, 9, 12, 0.10)";
+    }
+    readFade();
 
     function resize() {
       if (!canvas || !ctx) return;
@@ -65,11 +75,7 @@ export function HeroBackground() {
       const h = canvas.clientHeight;
 
       // translucent wipe → motion trails (the classic rain fade).
-      // Pull the wipe color from a CSS var so it adapts to light/dark.
-      const fade =
-        getComputedStyle(document.documentElement)
-          .getPropertyValue("--matrix-fade")
-          .trim() || "rgba(8, 9, 12, 0.10)";
+      // `fade` is cached (see readFade) so this loop never reads layout.
       ctx.fillStyle = fade;
       ctx.fillRect(0, 0, w, h);
 
@@ -92,6 +98,9 @@ export function HeroBackground() {
 
     resize();
     window.addEventListener("resize", resize);
+    // re-read theme-dependent colors when the user toggles light/dark
+    const themeObs = new MutationObserver(readFade);
+    themeObs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
     let raf = 0;
     let last = 0;
@@ -130,6 +139,7 @@ export function HeroBackground() {
     return () => {
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVisibility);
+      themeObs.disconnect();
       io.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };

@@ -1,17 +1,35 @@
 /* agentty pixel-art wordmark — half-block cells, monospace grid.
-   Mirrors maya/widget/welcome_screen.hpp rendering. */
+   Mirrors maya/widget/welcome_screen.hpp rendering. All motion is CSS-driven
+   (composited transform + color) so the main thread stays idle. */
 .agentty-logo {
   --logo-mag: #e29be0; /* bright_magenta (role_brand_alt) */
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   line-height: 1;
   letter-spacing: 0;
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: row;        /* letters sit side by side */
+  align-items: flex-start;
+  color: var(--logo-mag);
   user-select: none;
-  /* the half-block glyphs paint on transparent bg → terminal-clean look */
   text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
-  transition: color 0.05s linear;
+  /* heartbeat — periodic white flash of the whole mark */
+  animation: logo-pulse 3.2s ease-in-out 1.3s infinite;
 }
+
+/* one letter = a vertical stack of half-block rows, animated as a unit */
+.logo-letter {
+  display: inline-flex;
+  flex-direction: column;
+  margin-right: 1ch;          /* SPACER between glyphs */
+  will-change: transform;
+  /* drop-in cascade then a perpetual bob; delay staggers per letter.
+     The drop runs once; the bob loops forever afterward. */
+  animation:
+    logo-drop 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) both var(--delay),
+    logo-bob 2.2s ease-in-out infinite calc(var(--delay) + 0.5s);
+}
+.logo-letter:last-child { margin-right: 0; }
+
 .logo-row {
   display: flex;
   white-space: pre;
@@ -30,14 +48,29 @@
 .agentty-logo.md { font-size: 15px; }
 .agentty-logo.sm { font-size: 11px; }
 
-/* the wordmark is a fixed 55-cell-wide monospace grid (~33ch). On narrow
-   screens a fixed font-size overflows the viewport, so scale it fluidly to
-   the available width — capped at the desktop size, floored so it stays legible. */
 @media (max-width: 720px) {
   .agentty-logo.lg { font-size: clamp(9px, 2.7vw, 22px); }
 }
 
+@keyframes logo-drop {
+  from { transform: translateY(-1.6em); opacity: 0; }
+  to   { transform: translateY(0);      opacity: 1; }
+}
+
+/* ±0.07em vertical bob; the per-letter delay makes the wave travel L→R */
+@keyframes logo-bob {
+  0%, 100% { transform: translateY(-0.07em); }
+  50%      { transform: translateY(0.07em); }
+}
+
+@keyframes logo-pulse {
+  0%, 4%, 100% { color: var(--logo-mag); }
+  2%           { color: #ffffff; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  /* component still mounts at age 0; the RAF loop drives motion. The
-     reduced-motion path is handled in JS via this flag if needed. */
+  .agentty-logo,
+  .logo-letter {
+    animation: none;
+  }
 }
