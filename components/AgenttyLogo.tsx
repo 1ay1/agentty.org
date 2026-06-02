@@ -136,9 +136,18 @@ export function AgenttyLogo() {
   const raf = useRef<number>(0);
 
   useEffect(() => {
+    // Respect reduced-motion: render the fully-settled logo (no rAF loop, no
+    // per-frame React re-renders) so there's zero ongoing main-thread cost.
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      setAge(PHASE1_END + 1);
+      return;
+    }
+
     const tick = (now: number) => {
       if (start.current === null) start.current = now;
-      setAge(now - start.current);
+      // Only pay the re-render cost while the tab is visible.
+      if (!document.hidden) setAge(now - start.current);
       raf.current = requestAnimationFrame(tick);
     };
     raf.current = requestAnimationFrame(tick);

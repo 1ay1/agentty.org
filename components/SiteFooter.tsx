@@ -8,8 +8,8 @@ export function SiteFooter() {
       <div className="wrap">
         <div className="foot-grid">
           <div>
-            <Link className="brand" href="/">
-              <span className="brand-mark">▌</span>
+            <Link className="brand" href="/" aria-label="agentty home">
+              <span className="brand-mark" aria-hidden="true">▌</span>
               <span className="brand-name">agentty</span>
             </Link>
             <p className="foot-blurb">
@@ -18,7 +18,7 @@ export function SiteFooter() {
             </p>
           </div>
           <div>
-            <h4>Docs</h4>
+            <h2 className="foot-h">Docs</h2>
             <Link href="/docs">Introduction</Link>
             <Link href="/docs/installation">Installation</Link>
             <Link href="/docs/quick-start">Quick Start</Link>
@@ -26,14 +26,14 @@ export function SiteFooter() {
             <Link href="/docs/airgap">SSH Air-gap</Link>
           </div>
           <div>
-            <h4>Project</h4>
+            <h2 className="foot-h">Project</h2>
             <a href={site.github} target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href={site.releasesLatest} target="_blank" rel="noopener noreferrer">Releases</a>
             <Link href="/contributing">Contributing</Link>
             <Link href="/security">Security</Link>
           </div>
           <div>
-            <h4>Community</h4>
+            <h2 className="foot-h">Community</h2>
             <Link href="/community">Get Involved</Link>
             <a href={site.issues} target="_blank" rel="noopener noreferrer">Report a Bug</a>
             <Link href="/acknowledgements">Acknowledgements</Link>

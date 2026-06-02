@@ -108,6 +108,56 @@ export function AgenttyTui() {
   const [userTyped, setUserTyped] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  // ── interactive 3D tilt: the window leans toward the cursor and a glare
+  //    sheen tracks the pointer, like a pane of smoked glass floating off
+  //    the page. Pure CSS-var driven + rAF-throttled; no-ops on touch and
+  //    when the user prefers reduced motion. ──
+  const tiltRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = tiltRef.current;
+    if (!el) return;
+    const fine = window.matchMedia("(pointer: fine)").matches;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!fine || reduce) return;
+
+    let raf = 0;
+    let tx = 0, ty = 0, gx = 50, gy = 0, active = 0;
+    const apply = () => {
+      raf = 0;
+      el.style.setProperty("--rx", `${ty.toFixed(2)}deg`);
+      el.style.setProperty("--ry", `${tx.toFixed(2)}deg`);
+      el.style.setProperty("--gx", `${gx.toFixed(1)}%`);
+      el.style.setProperty("--gy", `${gy.toFixed(1)}%`);
+      el.style.setProperty("--glare", active.toFixed(2));
+    };
+    const queue = () => { if (!raf) raf = requestAnimationFrame(apply); };
+
+    const onMove = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width;  // 0..1
+      const py = (e.clientY - r.top) / r.height;  // 0..1
+      const MAX = 7; // degrees of lean
+      tx = (px - 0.5) * 2 * MAX;       // rotateY
+      ty = -(py - 0.5) * 2 * MAX;      // rotateX
+      gx = px * 100;
+      gy = py * 100;
+      active = 1;
+      queue();
+    };
+    const onLeave = () => {
+      tx = 0; ty = 0; gx = 50; gy = 0; active = 0;
+      queue();
+    };
+
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerleave", onLeave);
+    return () => {
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerleave", onLeave);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   // master loop — clears + reschedules everything each cycle
   useEffect(() => {
     let cancelled = false;
@@ -185,7 +235,9 @@ export function AgenttyTui() {
   const prose = PROSE.slice(0, proseLen);
 
   return (
+    <div className="ttui-stage" ref={tiltRef}>
     <div className="ttui" role="img" aria-label="agentty terminal interface showing a live coding session">
+      <span className="ttui-glare" aria-hidden />
       <div className="ttui-bar">
         <span className="ttui-dot r" />
         <span className="ttui-dot y" />
@@ -416,6 +468,7 @@ export function AgenttyTui() {
         <div className={`ttui-accent ${phase === "stream" ? "bcyan" : "dim"}`} aria-hidden />
         </div>
       </div>
+    </div>
     </div>
   );
 }

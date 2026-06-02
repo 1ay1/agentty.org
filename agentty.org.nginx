@@ -48,7 +48,34 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+    # Cross-origin isolation (Lighthouse "COOP" / origin-isolation audits).
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
+    add_header Cross-Origin-Resource-Policy "same-origin" always;
+    add_header X-Permitted-Cross-Domain-Policies "none" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), browsing-topics=()" always;
+
+    # Content-Security-Policy. The site is a static Next.js export; the only
+    # inline scripts are the pre-paint theme setter and the JSON-LD block, so
+    # we allow 'unsafe-inline' for scripts. Umami is loaded from our own
+    # analytics subdomain. Trusted Types is advertised in report-only mode so
+    # the main policy never breaks Next.js client-side navigation.
+    set $csp "default-src 'self'; ";
+    set $csp "${csp}base-uri 'self'; ";
+    set $csp "${csp}object-src 'none'; ";
+    set $csp "${csp}frame-ancestors 'self'; ";
+    set $csp "${csp}form-action 'self'; ";
+    set $csp "${csp}img-src 'self' data:; ";
+    set $csp "${csp}font-src 'self' data:; ";
+    set $csp "${csp}style-src 'self' 'unsafe-inline'; ";
+    set $csp "${csp}script-src 'self' 'unsafe-inline' https://analytics.agentty.org; ";
+    set $csp "${csp}connect-src 'self' https://analytics.agentty.org; ";
+    set $csp "${csp}upgrade-insecure-requests;";
+    add_header Content-Security-Policy $csp always;
+    # Trusted Types in report-only — satisfies the DOM-XSS audit without risking
+    # a hard break of the SPA router. Promote to enforcing once verified clean.
+    add_header Content-Security-Policy-Report-Only "require-trusted-types-for 'script'; trusted-types 'allow-duplicates'" always;
 
     gzip on;
     gzip_vary on;

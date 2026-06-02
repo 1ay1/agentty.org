@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { site, topNav } from "@/lib/site";
-import { Search } from "@/components/Search";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { track } from "@/lib/analytics";
 
 export function SiteNav() {
@@ -11,8 +11,8 @@ export function SiteNav() {
   return (
     <header className="nav" id="top">
       <div className="wrap nav-inner">
-        <Link className="brand" href="/" onClick={() => setOpen(false)}>
-          <span className="brand-mark">▌</span>
+        <Link className="brand" href="/" aria-label="agentty home" onClick={() => setOpen(false)}>
+          <span className="brand-mark" aria-hidden="true">▌</span>
           <span className="brand-name">agentty</span>
         </Link>
         <nav className="nav-links" aria-label="Primary">
@@ -24,7 +24,20 @@ export function SiteNav() {
         </nav>
         <span className="nav-spacer" />
         <div className="nav-cta">
-          <Search />
+          <button
+            className="cmdk-trigger"
+            aria-label="Open command palette"
+            onClick={() =>
+              window.dispatchEvent(
+                new KeyboardEvent("keydown", { key: "k", metaKey: true }),
+              )
+            }
+          >
+            <span className="cmdk-trigger-ico">⌘</span>
+            <span className="cmdk-trigger-label">Jump to…</span>
+            <kbd className="cmdk-trigger-kbd">⌘K</kbd>
+          </button>
+          <ThemeToggle />
           <a
             className="ghbtn"
             href={site.github}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
 import { CopyRow } from "@/components/CopyRow";
+import { CountUp } from "@/components/CountUp";
 import { AgenttyTui } from "@/components/AgenttyTui";
 import { AgenttyLogo } from "@/components/AgenttyLogo";
 import { HeroBackground } from "@/components/HeroBackground";
@@ -28,10 +29,10 @@ export default function Home() {
               <code>npm install</code>.
             </p>
             <div className="hero-actions">
-              <Link className="btn btn-primary" href="/docs/installation">
+              <Link className="btn btn-primary" href="/docs/installation" data-magnetic>
                 Get started
               </Link>
-              <Link className="btn btn-ghost" href="/docs">
+              <Link className="btn btn-ghost" href="/docs" data-magnetic>
                 Read the docs →
               </Link>
             </div>
@@ -47,7 +48,7 @@ export default function Home() {
       <section className="install-band">
         <div className="wrap install-inner">
           <p className="install-kicker">Install in one line</p>
-          <CopyRow cmd={site.installOneLiner} />
+          <CopyRow cmd={site.installOneLiner} typed />
           <p className="install-note">
             No Node, no Python, no <code>npm install</code> — just a single 8.8&nbsp;MB static binary.
           </p>
@@ -58,10 +59,10 @@ export default function Home() {
       <section className="block" style={{ paddingTop: 40 }}>
         <div className="wrap">
           <div className="stats">
-            <div className="stat"><div className="num">8.8 MB</div><div className="lbl">Single static binary</div></div>
-            <div className="stat"><div className="num">&lt; 1 ms</div><div className="lbl">Cold start</div></div>
-            <div className="stat"><div className="num">0</div><div className="lbl">Runtime dependencies</div></div>
-            <div className="stat"><div className="num">C++26</div><div className="lbl">Native, no GC</div></div>
+            <div className="stat" data-reveal><CountUp value="8.8 MB" /><div className="lbl">Single static binary</div></div>
+            <div className="stat" data-reveal><CountUp value="< 1 ms" /><div className="lbl">Cold start</div></div>
+            <div className="stat" data-reveal><CountUp value="0" /><div className="lbl">Runtime dependencies</div></div>
+            <div className="stat" data-reveal><div className="num">C++26</div><div className="lbl">Native, no GC</div></div>
           </div>
         </div>
       </section>
@@ -98,12 +99,12 @@ export default function Home() {
           <p className="eyebrow">Why agentty</p>
           <h2 className="section-title">Four things the official client doesn&apos;t try to do.</h2>
           <div className="grid grid-3" style={{ marginTop: 28 }}>
-            <div className="card"><span className="ico">⚡</span><h3>Native speed</h3><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup.</p></div>
-            <div className="card"><span className="ico">📦</span><h3>One static binary</h3><p>8.8 MB. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
-            <div className="card"><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS) / job objects (Windows). An approved bash call still can&apos;t read <code>~/.ssh/id_rsa</code>.</p></div>
-            <div className="card"><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays bytes over SOCKS5-over-SSH.</p></div>
-            <div className="card"><span className="ico">📐</span><h3>Workspace boundary</h3><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>
-            <div className="card"><span className="ico">📜</span><h3>Inline render</h3><p>Lives at the bottom of your terminal, preserves scrollback, never takes over the screen.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">⚡</span><h3>Native speed</h3><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">📦</span><h3>One static binary</h3><p>8.8 MB. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS) / job objects (Windows). An approved bash call still can&apos;t read <code>~/.ssh/id_rsa</code>.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays bytes over SOCKS5-over-SSH.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">📐</span><h3>Workspace boundary</h3><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">📜</span><h3>Inline render</h3><p>Lives at the bottom of your terminal, preserves scrollback, never takes over the screen.</p></div>
           </div>
         </div>
       </section>
@@ -176,15 +177,15 @@ export default function Home() {
           <p className="eyebrow">Open source</p>
           <h2 className="section-title">Built in the open, MIT licensed.</h2>
           <div className="boxrow" style={{ marginTop: 28 }}>
-            <div className="bigbox">
+            <div className="bigbox tilt" data-reveal>
               <h3>Read the source</h3>
               <p>One <code>std::visit</code> reducer, a single render function, and a permission matrix you can audit. It reads like a single function.</p>
-              <a className="btn btn-ghost" href={site.github} target="_blank" rel="noopener noreferrer">Browse the repo →</a>
+              <a className="btn btn-ghost" href={site.github} target="_blank" rel="noopener noreferrer" data-magnetic>Browse the repo →</a>
             </div>
-            <div className="bigbox">
+            <div className="bigbox tilt" data-reveal>
               <h3>Get involved</h3>
               <p>Bug reports, fixes, and well-scoped features are all welcome. Start with the contributing guide.</p>
-              <Link className="btn btn-ghost" href="/contributing">How to contribute →</Link>
+              <Link className="btn btn-ghost" href="/contributing" data-magnetic>How to contribute →</Link>
             </div>
           </div>
         </div>
@@ -192,6 +193,7 @@ export default function Home() {
 
       {/* CTA */}
       <section className="cta">
+        <div className="cta-mesh" aria-hidden />
         <div className="wrap">
           <h2>Ready in one line.</h2>
           <p>Linux, macOS &amp; Windows · x86_64 &amp; aarch64. The same line updates it.</p>
@@ -199,8 +201,8 @@ export default function Home() {
             <CopyRow cmd={site.installOneLiner} />
           </div>
           <div className="hero-actions" style={{ justifyContent: "center", marginTop: 26 }}>
-            <Link className="btn btn-primary" href="/docs/quick-start">Quick start guide</Link>
-            <a className="btn btn-ghost" href={site.github} target="_blank" rel="noopener noreferrer">Star on GitHub →</a>
+            <Link className="btn btn-primary" href="/docs/quick-start" data-magnetic>Quick start guide</Link>
+            <a className="btn btn-ghost" href={site.github} target="_blank" rel="noopener noreferrer" data-magnetic>Star on GitHub →</a>
           </div>
         </div>
       </section>

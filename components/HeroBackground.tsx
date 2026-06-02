@@ -64,8 +64,13 @@ export function HeroBackground() {
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
 
-      // translucent wipe → motion trails (the classic rain fade)
-      ctx.fillStyle = "rgba(8, 9, 12, 0.10)";
+      // translucent wipe → motion trails (the classic rain fade).
+      // Pull the wipe color from a CSS var so it adapts to light/dark.
+      const fade =
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--matrix-fade")
+          .trim() || "rgba(8, 9, 12, 0.10)";
+      ctx.fillStyle = fade;
       ctx.fillRect(0, 0, w, h);
 
       for (let i = 0; i < cols; i++) {

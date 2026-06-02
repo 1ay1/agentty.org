@@ -4,6 +4,8 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
+import { SiteFX } from "@/components/SiteFX";
+import { CommandPalette } from "@/components/CommandPalette";
 import { site } from "@/lib/site";
 
 const inter = Inter({
@@ -150,8 +152,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
+        {/* Set the theme before first paint to avoid a flash. Reads the saved
+            choice, else falls back to the OS preference. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -168,6 +177,8 @@ export default function RootLayout({
       </head>
       <body>
         <a className="skip" href="#main">Skip to content</a>
+        <SiteFX />
+        <CommandPalette />
         <SiteNav />
         <main id="main">{children}</main>
         <SiteFooter />
