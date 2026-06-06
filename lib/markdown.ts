@@ -158,10 +158,24 @@ export function markdownToHtml(md: string): string {
       const tag = ordered ? "ol" : "ul";
       const items: string[] = [];
       const itemRe = ordered ? /^\s*\d+\.\s+(.*)$/ : /^\s*[-*+]\s+(.*)$/;
-      while (i < lines.length && itemRe.test(lines[i])) {
+      const isItem = (l: string) => itemRe.test(l);
+      const startsBlock = (l: string) =>
+        l.trim() === "" ||
+        /^```/.test(l) ||
+        /^#{1,4}\s/.test(l) ||
+        /^>\s?/.test(l) ||
+        /^\s*\|.*\|\s*$/.test(l);
+      while (i < lines.length && isItem(lines[i])) {
         const m = lines[i].match(itemRe)!;
-        items.push(`<li>${inline(esc(m[1]))}</li>`);
+        let text = m[1];
         i++;
+        // Fold soft-wrapped continuation lines (non-blank, not a new item or
+        // block start) into the current item so one bullet stays one <li>.
+        while (i < lines.length && !isItem(lines[i]) && !startsBlock(lines[i])) {
+          text += " " + lines[i].trim();
+          i++;
+        }
+        items.push(`<li>${inline(esc(text.trim()))}</li>`);
       }
       html.push(`<${tag}>${items.join("")}</${tag}>`);
       continue;
