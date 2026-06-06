@@ -6,3 +6,7 @@ out
 .env*.local
 analytics/.env
 next-env.d.ts
+
+# automation: deploy state + secrets (never committed)
+.last-deployed-tag
+deploy/.env

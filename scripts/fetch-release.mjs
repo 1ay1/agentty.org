@@ -30,26 +30,6 @@ const headers = {
 };
 if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
 
-let rel;
-try {
-  const ctrl = new AbortController();
-  const to = setTimeout(() => ctrl.abort(), 10000);
-  const res = await fetch(API, { headers, signal: ctrl.signal });
-  clearTimeout(to);
-  if (!res.ok) bail(`GitHub API returned ${res.status}`);
-  rel = await res.json();
-} catch (e) {
-  bail(`fetch failed: ${e?.message ?? e}`);
-}
-
-const assets = Array.isArray(rel.assets) ? rel.assets : [];
-if (assets.length === 0) bail("release has no assets");
-
-const mb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
-
-// Classify each raw (non-package) executable asset by platform/arch. We match
-// the standalone binaries (agentty-<os>-<arch>), which are the curl-installed
-// artifacts — not the .rpm/.deb/.pkg/.tar.gz wrappers.
 const PLATFORMS = [
   { key: "linux-x86_64", label: "Linux · x86_64", re: /linux-(x86_64|amd64)$/i },
   { key: "linux-aarch64", label: "Linux · aarch64", re: /linux-(aarch64|arm64)$/i },
@@ -57,6 +37,55 @@ const PLATFORMS = [
   { key: "macos-x86_64", label: "macOS · Intel", re: /(macos|darwin)-(x86_64|amd64)$/i },
   { key: "windows-x86_64", label: "Windows · x86_64", re: /(windows|win)-(x86_64|amd64).*(\.exe)?$/i },
 ];
+
+const mb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
+
+// True only for the raw standalone binaries (agentty-<os>-<arch>) that the
+// curl|sh installer pulls — not the .deb/.rpm/.pkg/.tar.gz wrappers. A release
+// that has uploaded ONLY a source tarball (binary build jobs still running, or
+// failed) has none of these, and we must not let it blank the site.
+const hasBinaries = (rel) => {
+  const assets = Array.isArray(rel?.assets) ? rel.assets : [];
+  return PLATFORMS.some((p) => assets.some((a) => p.re.test(a.name)));
+};
+
+async function fetchJson(url) {
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const res = await fetch(url, { headers, signal: ctrl.signal });
+    if (!res.ok) return { error: `GitHub API returned ${res.status}` };
+    return { data: await res.json() };
+  } catch (e) {
+    return { error: `fetch failed: ${e?.message ?? e}` };
+  } finally {
+    clearTimeout(to);
+  }
+}
+
+// Prefer the GitHub-designated "latest" release. If it hasn't uploaded its
+// per-platform binaries yet (streaming release: source tarball lands first),
+// walk the recent releases and use the newest one that actually has binaries,
+// so the install page never loses its download table mid-publish.
+let rel;
+const latest = await fetchJson(API);
+if (latest.error) bail(latest.error);
+if (hasBinaries(latest.data)) {
+  rel = latest.data;
+} else {
+  console.warn(
+    `[fetch-release] latest (${latest.data?.tag_name ?? "?"}) has no standalone binaries yet — ` +
+      `looking back for the newest release that does.`,
+  );
+  const list = await fetchJson(
+    `https://api.github.com/repos/${REPO}/releases?per_page=20`,
+  );
+  const releases = Array.isArray(list.data) ? list.data : [];
+  rel =
+    releases.find((r) => !r.draft && hasBinaries(r)) || latest.data;
+}
+
+const assets = Array.isArray(rel.assets) ? rel.assets : [];
 
 const platforms = [];
 for (const p of PLATFORMS) {
