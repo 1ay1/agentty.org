@@ -814,6 +814,10 @@ html[data-theme="light"] .cmdk { background: #fff; }
 .blog-body img { max-width: 100%; border-radius: 12px; border: 1px solid var(--border); }
 .blog-body hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .blog-body table { font-size: 14.5px; }
+.blog-body .tablewrap { margin: 0 0 24px; }
+/* empty top-left corner cell (row-label column header) reads as blank, not a gap */
+.blog-body thead th:empty { background: transparent; }
+.blog-body tbody td:first-child { color: var(--text-dim); font-weight: 500; }
 .blog-post-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   margin-top: 48px; padding-top: 26px; border-top: 1px solid var(--border); flex-wrap: wrap;

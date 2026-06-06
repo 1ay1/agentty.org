@@ -112,8 +112,30 @@ export function markdownToHtml(md: string): string {
     // table: header row | --- | rows
     if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
       flushParagraph(para);
-      const cells = (row: string) =>
-        row.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+      // Split on `|` but not inside `code` spans and not on escaped `\|`.
+      const cells = (row: string) => {
+        const inner = row.trim().replace(/^\||\|$/g, "");
+        const out: string[] = [];
+        let cur = "";
+        let inCode = false;
+        for (let k = 0; k < inner.length; k++) {
+          const ch = inner[k];
+          if (ch === "\\" && inner[k + 1] === "|") {
+            cur += "|";
+            k++;
+            continue;
+          }
+          if (ch === "`") inCode = !inCode;
+          if (ch === "|" && !inCode) {
+            out.push(cur.trim());
+            cur = "";
+            continue;
+          }
+          cur += ch;
+        }
+        out.push(cur.trim());
+        return out;
+      };
       const head = cells(line);
       i += 2; // skip header + separator
       const rows: string[][] = [];
