@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 /**
  * Site-wide flourishes, all opt-out under prefers-reduced-motion:
@@ -12,6 +13,14 @@ import { useEffect } from "react";
  * Pure DOM + rAF; no React re-renders, so it stays buttery.
  */
 export function SiteFX() {
+  // Re-arm on every client-side navigation. SiteFX is mounted once in the
+  // layout and persists across route changes, but each new page renders a
+  // fresh set of [data-reveal] elements. Because `fx-ready` is already on
+  // <html> from the first mount, CSS hides those new elements at opacity:0 —
+  // and without re-running, nothing ever observes them, so whole sections stay
+  // blank after clicking e.g. the nav brand. Keying the effect on pathname
+  // tears down + re-runs the full setup (re-querying [data-reveal]) per route.
+  const pathname = usePathname();
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -189,7 +198,7 @@ export function SiteFX() {
       bar.remove();
       if (rafP) cancelAnimationFrame(rafP);
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }
