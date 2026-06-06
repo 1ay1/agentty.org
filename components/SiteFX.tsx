@@ -12,14 +12,19 @@ import { usePathname } from "next/navigation";
  *
  * Pure DOM + rAF; no React re-renders, so it stays buttery.
  */
+
+// The hide-then-reveal entrance animation is a FIRST-LOAD flourish. Replaying
+// it on every client-side navigation is what made sections blank out: the new
+// page's [data-reveal] nodes get hidden by `fx-ready`, but the per-mount
+// observer/sweep races the route transition and can miss them. So we arm the
+// animation exactly once (module-scoped, survives SiteFX re-mounts); after the
+// first page, navigations reveal content immediately with no re-hide.
+let animationArmed = false;
+
 export function SiteFX() {
-  // Re-arm on every client-side navigation. SiteFX is mounted once in the
-  // layout and persists across route changes, but each new page renders a
-  // fresh set of [data-reveal] elements. Because `fx-ready` is already on
-  // <html> from the first mount, CSS hides those new elements at opacity:0 —
-  // and without re-running, nothing ever observes them, so whole sections stay
-  // blank after clicking e.g. the nav brand. Keying the effect on pathname
-  // tears down + re-runs the full setup (re-querying [data-reveal]) per route.
+  // Re-run on every client-side navigation so freshly-rendered [data-reveal]
+  // elements are handled. On the first load this plays the entrance animation;
+  // on later navigations it just makes sure everything is visible.
   const pathname = usePathname();
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -45,13 +50,21 @@ export function SiteFX() {
     // ── scroll reveal ──
     let io: IntersectionObserver | null = null;
     let sweepTimer = 0;
+    let revealSweep: (() => void) | null = null;
     let onPageShow: ((e: PageTransitionEvent) => void) | null = null;
     const revealEls = Array.from(
       document.querySelectorAll<HTMLElement>("[data-reveal]"),
     );
     if (reduce) {
       // reduced-motion: leave everything visible (CSS default), do nothing.
+    } else if (animationArmed) {
+      // Subsequent navigation: the entrance animation already played once. Do
+      // NOT re-hide — just make sure every [data-reveal] on this new page is
+      // shown. `fx-ready` stays on <html>, but `.revealed` (added below) wins,
+      // so there's no flash and nothing can get stuck hidden.
+      revealEls.forEach((el) => el.classList.add("revealed"));
     } else {
+      animationArmed = true;
       revealEls.forEach((el, i) => {
         // stagger siblings sharing a parent group
         const delay = el.dataset.revealDelay ?? `${(i % 6) * 60}ms`;
@@ -107,6 +120,21 @@ export function SiteFX() {
       };
       // Run once after layout settles, and again on bfcache restore.
       sweepTimer = window.setTimeout(sweep, 400);
+      // Also sweep on the next two frames: after a client-side navigation the
+      // new page's layout (and the scroll-to-top) isn't settled when this
+      // effect first runs, so the initial in-viewport check above can miss
+      // everything. A couple of rAF-deferred sweeps catch the now-correct
+      // geometry without waiting the full 400 ms.
+      requestAnimationFrame(() => {
+        sweep();
+        requestAnimationFrame(sweep);
+      });
+      // Cheap continuous safety net: every scroll re-checks for any unrevealed
+      // element that has entered the viewport. This is independent of the IO
+      // (which can miss elements observed mid-transition) and self-disarms as
+      // elements get revealed.
+      window.addEventListener("scroll", sweep, { passive: true });
+      revealSweep = sweep;
       onPageShow = (e: PageTransitionEvent) => {
         if (e.persisted) sweep();
       };
@@ -192,6 +220,7 @@ export function SiteFX() {
       window.removeEventListener("keydown", onKey);
       io?.disconnect();
       if (sweepTimer) window.clearTimeout(sweepTimer);
+      if (revealSweep) window.removeEventListener("scroll", revealSweep);
       if (onPageShow) window.removeEventListener("pageshow", onPageShow);
       document.documentElement.classList.remove("fx-ready");
       magCleanups.forEach((fn) => fn());
