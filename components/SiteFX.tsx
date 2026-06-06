@@ -35,6 +35,8 @@ export function SiteFX() {
 
     // ── scroll reveal ──
     let io: IntersectionObserver | null = null;
+    let sweepTimer = 0;
+    let onPageShow: ((e: PageTransitionEvent) => void) | null = null;
     const revealEls = Array.from(
       document.querySelectorAll<HTMLElement>("[data-reveal]"),
     );
@@ -74,6 +76,32 @@ export function SiteFX() {
           io!.observe(el);
         }
       });
+
+      // Safety net: an element that is actually within the viewport must never
+      // stay hidden. The IntersectionObserver can miss it when layout shifts
+      // after mount (late fonts/hero image make the initial rect stale), when
+      // SiteFX mounts on a bfcache restore, or when the `-8%` rootMargin trims
+      // an element the user never scrolls past. Sweep any still-unrevealed
+      // [data-reveal] that overlaps the viewport and reveal it directly. This
+      // mirrors the CountUp fallback: the normal scroll animation still wins
+      // for anything genuinely below the fold.
+      const sweep = () => {
+        const h = window.innerHeight || document.documentElement.clientHeight;
+        revealEls.forEach((el) => {
+          if (el.classList.contains("revealed")) return;
+          const r = el.getBoundingClientRect();
+          if (r.top < h && r.bottom > 0) {
+            el.classList.add("revealed");
+            io?.unobserve(el);
+          }
+        });
+      };
+      // Run once after layout settles, and again on bfcache restore.
+      sweepTimer = window.setTimeout(sweep, 400);
+      onPageShow = (e: PageTransitionEvent) => {
+        if (e.persisted) sweep();
+      };
+      window.addEventListener("pageshow", onPageShow);
     }
 
     // ── magnetic buttons ──
@@ -154,6 +182,8 @@ export function SiteFX() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("keydown", onKey);
       io?.disconnect();
+      if (sweepTimer) window.clearTimeout(sweepTimer);
+      if (onPageShow) window.removeEventListener("pageshow", onPageShow);
       document.documentElement.classList.remove("fx-ready");
       magCleanups.forEach((fn) => fn());
       bar.remove();
