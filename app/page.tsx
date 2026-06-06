@@ -108,8 +108,8 @@ export default function Home() {
           <div className="grid grid-3" style={{ marginTop: 28 }}>
             <div className="card tilt" data-reveal><span className="ico">⚡</span><h3>Native speed</h3><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup.</p></div>
             <div className="card tilt" data-reveal><span className="ico">📦</span><h3>One static binary</h3><p>{stats.sizeMB}. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS) / job objects (Windows). An approved bash call still can&apos;t read <code>~/.ssh/id_rsa</code>.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays bytes over SOCKS5-over-SSH.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS). Workspace, system libs, and network stay reachable; <code>~/.ssh</code>, <code>/etc</code>, and other projects are read-only. An approved bash call still can&apos;t <code>cat ~/.ssh/id_rsa</code>.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays the bytes over SOCKS5-over-SSH. TLS pins on the real upstreams end-to-end, so the network in between can&apos;t MITM you.</p></div>
             <div className="card tilt" data-reveal><span className="ico">📐</span><h3>Workspace boundary</h3><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>
             <div className="card tilt" data-reveal><span className="ico">📜</span><h3>Inline render</h3><p>Lives at the bottom of your terminal, preserves scrollback, never takes over the screen.</p></div>
           </div>
@@ -186,7 +186,7 @@ export default function Home() {
           <div className="boxrow" style={{ marginTop: 28 }}>
             <div className="bigbox tilt" data-reveal>
               <h3>Read the source</h3>
-              <p>One <code>std::visit</code> reducer, a single render function, and a permission matrix you can audit. It reads like a single function.</p>
+              <p>The reducer is one <code>std::visit</code> over a closed event sum; the view is a single <code>Model &rarr; Element</code> function; the permission matrix is a <code>constexpr</code> with <code>static_assert</code>s. Change a policy cell and the build breaks — not a test nobody runs.</p>
               <a className="btn btn-ghost" href={site.github} target="_blank" rel="noopener noreferrer" data-magnetic>Browse the repo →</a>
             </div>
             <div className="bigbox tilt" data-reveal>
