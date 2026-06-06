@@ -25,7 +25,8 @@ export default function Home() {
             <p className="lede">
               A drop-in alternative to <code>claude-code</code>, written in C++26.{" "}
               <strong>{stats.sizeMB}&nbsp;binary</strong>, <strong>millisecond cold start</strong>,{" "}
-              <strong>sandboxed by default</strong>, SSH air-gap in one command. Signs in with your
+              <strong>sandboxed by default</strong>, SSH air-gap in one command, and{" "}
+              <strong>runs inside Zed</strong> over ACP. Signs in with your
               existing <strong>Claude Pro/Max</strong> &mdash; no Node, Python, Electron, or{" "}
               <code>npm install</code>.
             </p>
@@ -112,6 +113,7 @@ export default function Home() {
             <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays the bytes over SOCKS5-over-SSH. TLS pins on the real upstreams end-to-end, so the network in between can&apos;t MITM you.</p></div>
             <div className="card tilt" data-reveal><span className="ico">📐</span><h3>Workspace boundary</h3><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>
             <div className="card tilt" data-reveal><span className="ico">📜</span><h3>Inline render</h3><p>Lives at the bottom of your terminal, preserves scrollback, never takes over the screen.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🧩</span><h3>Runs inside Zed (ACP)</h3><p><code>agentty acp</code> speaks the Agent Client Protocol, so agentty becomes a first-class agent panel in Zed — streaming text, inline diffs, native permission prompts, session reload. Same engine as the TUI. <Link href="/docs/acp">Set it up &rarr;</Link></p></div>
           </div>
         </div>
       </section>
@@ -131,6 +133,7 @@ export default function Home() {
                 <tr><td>Footprint</td><td><span className="win">~9 MB</span></td><td>npm + Node runtime</td><td>pip + Python runtime</td></tr>
                 <tr><td>Platforms</td><td><span className="win">Linux · macOS · Windows</span></td><td>Linux · macOS · Windows</td><td>Linux · macOS · Windows</td></tr>
                 <tr><td>Air-gapped mode</td><td><span className="win">Yes (SOCKS5/SSH)</span></td><td>No</td><td>No</td></tr>
+                <tr><td>Editor integration (ACP)</td><td><span className="win">Yes (Zed)</span></td><td>Yes (Zed)</td><td>No</td></tr>
                 <tr><td>Auth</td><td>OAuth (Pro/Max) + API key</td><td>OAuth + API key</td><td>per-provider env vars</td></tr>
                 <tr><td>Models</td><td>Claude (Anthropic)</td><td>Claude (Anthropic)</td><td>many providers</td></tr>
               </tbody>

@@ -35,6 +35,10 @@ const faqPlain: [string, string][] = [
     "Yes. agentty airgap user@host relays traffic from your laptop over SOCKS5-over-SSH, with TLS pinned end-to-end.",
   ],
   [
+    "Can I use it inside my editor?",
+    "Yes. agentty acp runs agentty as an Agent Client Protocol agent inside Zed — streaming responses, inline diffs, native permission prompts, and session reload. Any ACP client works; it's the same engine as the TUI, just driven over JSON-RPC on stdio.",
+  ],
+  [
     "Where are my conversations stored?",
     "As plain JSON, one file per thread, under ~/.agentty/threads/<workspace-hash>/. Safe to inspect, back up, or delete.",
   ],
@@ -82,6 +86,10 @@ const faqs: [string, React.ReactNode][] = [
   [
     "Can I run it on a machine with no internet?",
     <>Yes. <code>agentty airgap user@host</code> relays traffic from your laptop over SOCKS5-over-SSH, with TLS pinned end-to-end. See the <a href="/docs/airgap">air-gap guide</a>.</>,
+  ],
+  [
+    "Can I use it inside my editor?",
+    <>Yes. <code>agentty acp</code> runs agentty as an <a href="/docs/acp">Agent Client Protocol</a> agent inside Zed — streaming responses, inline diffs, native permission prompts, and session reload. Any ACP client works; it&apos;s the same engine as the TUI, just over JSON-RPC on stdio.</>,
   ],
   [
     "Where are my conversations stored?",

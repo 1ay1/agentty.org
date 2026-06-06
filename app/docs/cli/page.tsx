@@ -33,6 +33,7 @@ agentty --sandbox on                   # require an OS sandbox for bash/diagnost
             <tr><td className="mono"><code>agentty logout</code></td><td>Clear stored credentials.</td></tr>
             <tr><td className="mono"><code>agentty status</code></td><td>Print which auth source will be used.</td></tr>
             <tr><td className="mono"><code>agentty airgap user@host</code></td><td>Run the agent on a remote host through an SSH SOCKS tunnel.</td></tr>
+            <tr><td className="mono"><code>agentty acp</code></td><td>Run headless as an <a href="/docs/acp">Agent Client Protocol</a> agent for Zed (JSON-RPC over stdio).</td></tr>
             <tr><td className="mono"><code>agentty --version</code></td><td>Print <code>agentty &lt;version&gt;</code> and exit.</td></tr>
             <tr><td className="mono"><code>agentty --help</code></td><td>Print usage and exit.</td></tr>
           </tbody>
@@ -62,6 +63,7 @@ agentty --sandbox on                   # require an OS sandbox for bash/diagnost
           <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
           <tbody>
             <tr><td className="mono"><code>--setup</code></td><td>Copy credentials to the remote on first run.</td></tr>
+            <tr><td className="mono"><code>--acp</code></td><td>Print a ready-to-paste Zed <code>agent_servers</code> config that tunnels <code>agentty acp</code> over ssh stdio. Flags after it are forwarded to the remote agent. See <a href="/docs/acp#airgap">Zed / ACP</a>.</td></tr>
             <tr><td className="mono"><code>--remote-agentty &lt;path&gt;</code></td><td>Path to agentty on the remote if it isn&apos;t on <code>PATH</code>.</td></tr>
           </tbody>
         </table>

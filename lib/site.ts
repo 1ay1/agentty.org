@@ -2,7 +2,7 @@ export const site = {
   name: "agentty",
   tagline: "Blazing-fast Claude in your terminal.",
   description:
-    "A native C++26 terminal coding agent. A single static binary with millisecond cold start, sandboxed by default, and one-command SSH air-gap. A drop-in alternative to claude-code with no Node, Python, or Electron.",
+    "A native C++26 terminal coding agent. A single static binary with millisecond cold start, sandboxed by default, one-command SSH air-gap, and runs inside Zed over ACP. A drop-in alternative to claude-code with no Node, Python, or Electron.",
   url: "https://agentty.org",
   github: "https://github.com/1ay1/agentty",
   releases: "https://github.com/1ay1/agentty/releases",
@@ -52,6 +52,7 @@ export const docsNav: NavSection[] = [
     title: "Advanced",
     items: [
       { title: "SSH Air-gap", href: "/docs/airgap" },
+      { title: "Zed / ACP", href: "/docs/acp" },
       { title: "Corporate Proxies", href: "/docs/proxies" },
       { title: "Building from Source", href: "/docs/building" },
       { title: "Architecture", href: "/docs/architecture" },
