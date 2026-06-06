@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAllPosts, getPost, formatDate } from "@/lib/blog";
+import { getAllPosts, getPost, getAdjacent, formatDate } from "@/lib/blog";
 import { site } from "@/lib/site";
+import { BlogSidebar } from "@/components/BlogSidebar";
 
 export function generateStaticParams() {
   return getAllPosts().map((p) => ({ slug: p.slug }));
@@ -38,6 +39,8 @@ export default async function BlogPost({
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) notFound();
+  const { next } = getAdjacent(slug);
+  const postUrl = `${site.url}/blog/${slug}/`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -46,16 +49,18 @@ export default async function BlogPost({
     datePublished: post.date,
     author: { "@type": "Organization", name: post.author },
     description: post.excerpt,
-    url: `${site.url}/blog/${slug}/`,
+    url: postUrl,
   };
 
   return (
-    <article className="block blog-post">
+    <div className="blog-post-shell">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="wrap" style={{ maxWidth: 760 }}>
+
+      <article className="blog-post">
         <Link href="/blog" className="blog-back">
           ← All posts
         </Link>
+
         <header className="blog-post-head">
           <div className="blog-card-meta">
             <time dateTime={post.date}>{formatDate(post.date)}</time>
@@ -65,6 +70,7 @@ export default async function BlogPost({
             <span>{post.author}</span>
           </div>
           <h1 className="blog-post-title">{post.title}</h1>
+          <p className="blog-post-lede">{post.excerpt}</p>
           {post.tags.length > 0 && (
             <div className="blog-tags">
               {post.tags.map((t) => (
@@ -79,14 +85,24 @@ export default async function BlogPost({
         <div className="blog-body" dangerouslySetInnerHTML={{ __html: post.html }} />
 
         <footer className="blog-post-foot">
-          <Link href="/blog" className="blog-back">
-            ← All posts
-          </Link>
-          <a className="btn btn-ghost" href={site.github} target="_blank" rel="noopener noreferrer" data-magnetic>
-            Star on GitHub →
+          {next ? (
+            <Link href={`/blog/${next.slug}`} className="blog-next">
+              <span className="blog-next-dir">Next post →</span>
+              <span className="blog-next-title">{next.title}</span>
+            </Link>
+          ) : (
+            <Link href="/blog" className="blog-next">
+              <span className="blog-next-dir">← Back</span>
+              <span className="blog-next-title">All posts</span>
+            </Link>
+          )}
+          <a className="btn btn-primary" href={site.installOneLiner ? "/docs/installation" : site.github}>
+            Install agentty →
           </a>
         </footer>
-      </div>
-    </article>
+      </article>
+
+      <BlogSidebar title={post.title} url={postUrl} />
+    </div>
   );
 }

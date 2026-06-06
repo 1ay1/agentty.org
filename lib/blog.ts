@@ -94,6 +94,14 @@ export function getPost(slug: string): Post | undefined {
   return getAllPosts().find((p) => p.slug === slug);
 }
 
+// The next (older) post after the given slug, for the end-of-article CTA.
+export function getAdjacent(slug: string): { next?: PostMeta; prev?: PostMeta } {
+  const all = getAllPosts();
+  const i = all.findIndex((p) => p.slug === slug);
+  if (i === -1) return {};
+  return { prev: all[i - 1], next: all[i + 1] };
+}
+
 export function formatDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
