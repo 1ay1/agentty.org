@@ -813,6 +813,35 @@ html[data-theme="light"] .cmdk { background: #fff; }
 }
 .blog-body img { max-width: 100%; border-radius: 12px; border: 1px solid var(--border); }
 .blog-body hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+/* ---------- magnum-opus reading flourishes ---------- */
+/* Drop cap on the first paragraph of the article body — sets a confident,
+   long-read tone without touching the markdown pipeline. */
+.blog-body > p:first-of-type::first-letter {
+  float: left; font-family: var(--sans); font-weight: 700; font-size: 3.1em;
+  line-height: 0.82; padding: 6px 12px 0 0; color: var(--accent);
+}
+/* A blockquote that is ITS OWN paragraph (no inline lead-in) reads as a
+   pull-quote: bigger, centered emphasis between sections. */
+.blog-body blockquote {
+  position: relative; font-size: 19px; line-height: 1.5;
+}
+.blog-body blockquote strong { color: var(--accent); }
+/* code blocks get a faint accent rail + soft glow so they feel like terminals,
+   matching the hero TUI window without restyling the existing token colors. */
+.blog-body pre.code {
+  position: relative; border: 1px solid var(--border); border-left: 2px solid var(--accent);
+  border-radius: 12px; margin: 0 0 22px; padding: 16px 18px; overflow-x: auto;
+  background: linear-gradient(180deg, rgba(139,140,249,0.04), transparent 60%), var(--bg-elev);
+  box-shadow: 0 12px 34px -26px rgba(0,0,0,0.7);
+}
+.blog-body pre.code code { font-family: var(--mono); font-size: 13.5px; line-height: 1.7; color: var(--text); }
+/* inline code: chip-like, distinct from prose */
+.blog-body p code, .blog-body li code, .blog-body td code {
+  font-family: var(--mono); font-size: 0.86em; padding: 1.5px 6px;
+  background: rgba(139,140,249,0.08); border: 1px solid var(--border-soft);
+  border-radius: 6px; color: var(--text);
+}
 .blog-body table { font-size: 14.5px; }
 .blog-body .tablewrap { margin: 0 0 24px; }
 /* empty top-left corner cell (row-label column header) reads as blank, not a gap */
