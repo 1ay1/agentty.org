@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { DeferredFX } from "@/components/DeferredFX";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { site } from "@/lib/site";
+import { stats } from "@/lib/stats";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -114,7 +115,7 @@ const jsonLd = {
       description: site.description,
       url: site.url,
       downloadUrl: site.releasesLatest,
-      softwareVersion: "0.1.0",
+      softwareVersion: stats.version,
       license: "https://opensource.org/licenses/MIT",
       programmingLanguage: "C++",
       isAccessibleForFree: true,

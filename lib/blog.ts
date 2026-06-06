@@ -17,6 +17,7 @@ export type PostMeta = {
   author: string;
   tags: string[];
   readingMinutes: number;
+  wordCount: number;
 };
 
 export type Post = PostMeta & { html: string };
@@ -77,6 +78,7 @@ function loadPost(filename: string): Post {
     author: data.author || "agentty",
     tags: parseTags(data.tags),
     readingMinutes: readingTime(body),
+    wordCount: body.trim().split(/\s+/).filter(Boolean).length,
     html,
   };
 }
