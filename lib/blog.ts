@@ -57,7 +57,10 @@ function loadPost(filename: string): Post {
   const slug = filename.replace(/\.md$/, "");
   const raw = readFileSync(join(BLOG_DIR, filename), "utf8");
   const { data, body } = parseFrontmatter(raw);
-  const html = markdownToHtml(body);
+  // The page header renders the title from frontmatter, so drop a leading H1 in
+  // the body to avoid showing the headline twice.
+  const bodyNoTitle = body.replace(/^\s*#\s+.*(?:\n|$)/, "");
+  const html = markdownToHtml(bodyNoTitle);
   const excerpt =
     data.excerpt ||
     body
