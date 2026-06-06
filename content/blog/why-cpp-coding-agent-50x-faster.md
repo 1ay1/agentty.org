@@ -1,12 +1,12 @@
 ---
-title: "We rewrote the Claude terminal agent in C++ and it cold-starts 50× faster"
+title: "I rewrote the Claude terminal agent in C++ and it cold-starts 50× faster"
 date: 2026-06-07
 author: agentty
 tags: [performance, c++, deep-dive]
 excerpt: "claude-code spends ~150 ms and 222 MB of Node just to print its version. agentty is one 9.6 MB binary that does it in ~3 ms. Here's exactly where the time goes, why a coding agent is a surprisingly good fit for C++26, and the numbers you can reproduce yourself."
 ---
 
-# We rewrote the Claude terminal agent in C++ and it cold-starts 50× faster
+# I rewrote the Claude terminal agent in C++ and it cold-starts 50× faster
 
 Run this against the official client:
 
@@ -14,7 +14,7 @@ Run this against the official client:
 time claude --version
 ```
 
-On our box that's about **150 ms** — and behind it sits a **222 MB** install
+On my box that's about **150 ms** — and behind it sits a **222 MB** install
 plus a Node runtime that has to spin up V8, walk a `require()` graph, and JIT
 its way to printing six characters and a newline.
 
@@ -36,7 +36,7 @@ every number here you can reproduce on your own machine in under a minute.
 
 ## The benchmark, in full
 
-Same Arch box, same shell, same day:
+Same Arch box, same shell, same day, on my machine:
 
 | | agentty (C++26) | claude-code (Node) |
 |---|---|---|
@@ -117,7 +117,7 @@ Two things fall out of "single static binary" almost for free:
 
 ## Reproduce it yourself
 
-Don't take our word for the 50×. Install it (this is the literal install
+Don't take my word for the 50×. Install it (this is the literal install
 command, not a curated demo):
 
 ```
