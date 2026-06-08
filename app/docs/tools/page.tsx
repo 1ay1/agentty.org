@@ -22,6 +22,8 @@ const tools: [string, string, string][] = [
   ["web_search", "Network", "Search the web and return result snippets."],
   ["todo", "Pure", "Maintain a session todo / plan list, rendered as a checklist."],
   ["diagnostics", "Shell", "Run the project's build/lint and surface errors and warnings."],
+  ["skill", "Read", "Load a named skill's full instructions from .agentty/skills/ before attempting a task it covers."],
+  ["task", "Shell", "Spawn an autonomous subagent with its own context and tool budget; returns one condensed report."],
   ["git_status", "Read", "Show branch, staged/unstaged changes, untracked files."],
   ["git_diff", "Read", "Show a diff (unstaged, staged, or a ref range)."],
   ["git_log", "Read", "Show commit history."],

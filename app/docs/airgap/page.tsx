@@ -53,6 +53,17 @@ agentty airgap user@airgapped-host            # every time after`}</Code>
         hosts you&apos;d already trust with the same secret.
       </Note>
 
+      <h2 id="acp">Run it inside Zed (ACP over airgap)</h2>
+      <p>
+        The same tunnel drives agentty as an editor agent.{" "}
+        <code>agentty airgap user@remote --acp [flags…]</code> prints a ready-to-paste Zed{" "}
+        <code>agent_servers</code> block whose <code>command</code> is <code>ssh</code> itself —
+        one process is the SOCKS tunnel, the remote <code>agentty acp</code>, and the JSON-RPC
+        transport, all owned by Zed. Full walkthrough — roles, prerequisites, the one paste, and
+        troubleshooting — lives in{" "}
+        <a href="/docs/acp#airgap">Use agentty inside Zed → air-gapped remote</a>.
+      </p>
+
       <DocNav current="/docs/airgap" />
       <EditThisPage path="app/docs/airgap/page.tsx" />
     </>

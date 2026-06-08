@@ -130,7 +130,7 @@ export default function Home() {
               </thead>
               <tbody>
                 <tr><td>Language / runtime</td><td><span className="win">C++26 — static binary</span></td><td>TypeScript / Node</td><td>Python</td></tr>
-                <tr><td>Footprint</td><td><span className="win">~9 MB</span></td><td>npm + Node runtime</td><td>pip + Python runtime</td></tr>
+                <tr><td>Footprint</td><td><span className="win">{stats.sizeMB}</span></td><td>npm + Node runtime</td><td>pip + Python runtime</td></tr>
                 <tr><td>Platforms</td><td><span className="win">Linux · macOS · Windows</span></td><td>Linux · macOS · Windows</td><td>Linux · macOS · Windows</td></tr>
                 <tr><td>Air-gapped mode</td><td><span className="win">Yes (SOCKS5/SSH)</span></td><td>No</td><td>No</td></tr>
                 <tr><td>Editor integration (ACP)</td><td><span className="win">Yes (Zed)</span></td><td>Yes (Zed)</td><td>No</td></tr>
@@ -159,6 +159,7 @@ export default function Home() {
                 <tr><td className="mono"><code>bash · diagnostics</code></td><td>Sandboxed shell and build, with exit codes</td></tr>
                 <tr><td className="mono"><code>git_status · git_diff · git_log · git_commit</code></td><td>Version control, rendered natively</td></tr>
                 <tr><td className="mono"><code>web_fetch · web_search</code></td><td>Reach the web for docs and APIs</td></tr>
+                <tr><td className="mono"><code>skill · task</code></td><td>Load on-demand skills and spawn isolated subagents</td></tr>
                 <tr><td className="mono"><code>todo · remember · forget</code></td><td>Planning and durable cross-session memory</td></tr>
               </tbody>
             </table>

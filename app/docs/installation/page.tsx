@@ -63,7 +63,7 @@ export default function Installation() {
         newest release. No <code>apt</code>, no <code>brew</code>, no version drift.
       </p>
       <Note>
-        Flags: <code>--prefix ~/somewhere</code>, <code>--version v0.1.0</code>,{" "}
+        Flags: <code>--prefix ~/somewhere</code>, <code>--version {versionLabel}</code>,{" "}
         <code>--no-verify</code>, <code>--build</code> (force a source build). Prebuilt
         binaries for Linux (x86_64, i686), macOS (Apple&nbsp;Silicon &amp; Intel), and
         Windows (x86_64). On any other platform the script builds from source
@@ -71,12 +71,12 @@ export default function Installation() {
       </Note>
 
       <h2 id="debian">Debian / Ubuntu</h2>
-      <Code>{`curl -fsSLO https://github.com/1ay1/agentty/releases/latest/download/agentty_0.1.0_amd64.deb
-sudo dpkg -i agentty_0.1.0_amd64.deb       # or agentty_0.1.0_arm64.deb`}</Code>
+      <Code>{`curl -fsSLO https://github.com/1ay1/agentty/releases/latest/download/agentty_${release.version}_amd64.deb
+sudo dpkg -i agentty_${release.version}_amd64.deb       # or agentty_${release.version}_arm64.deb`}</Code>
       <p>Update: <code>dpkg -i</code> the new release&apos;s <code>.deb</code>.</p>
 
       <h2 id="fedora">Fedora / RHEL / openSUSE</h2>
-      <Code>{`sudo rpm -Uvh https://github.com/1ay1/agentty/releases/latest/download/agentty-0.1.0-1.x86_64.rpm`}</Code>
+      <Code>{`sudo rpm -Uvh https://github.com/1ay1/agentty/releases/latest/download/agentty-${release.version}-1.x86_64.rpm`}</Code>
       <p><code>-U</code> is upgrade; works for the first install too.</p>
 
       <h2 id="arch">Arch Linux</h2>
