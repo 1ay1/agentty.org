@@ -464,9 +464,12 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
 .docs-side-toggle { display: none; }
 
 /* ---------- STATS BAND ---------- */
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-soft); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border-soft); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .stat { background: var(--bg-card); padding: 28px 20px; text-align: center; transition: background .2s ease; }
 .stat:hover { background: #11131b; }
+.stat-link { display: block; color: inherit; text-decoration: none; }
+.stat-link:hover { background: #11131b; }
+.stat-link:hover .num { filter: brightness(1.15); }
 .stat .num { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .stat .lbl { color: var(--text-dim); font-size: 13.5px; margin-top: 6px; }
 .stats-note { text-align: center; color: var(--text-faint); font-size: 12.5px; margin: 14px 0 0; }

@@ -5,21 +5,21 @@
 import { latestRelease } from "./release.generated";
 
 const fallback = {
-  version: "0.1.0",
-  tag: "v0.1.0",
+  version: "0.2.4",
+  tag: "v0.2.4",
   htmlUrl: "https://github.com/1ay1/agentty/releases/latest",
 } as const;
 
 export const release = {
-  /** "0.1.0" */
+  /** "0.2.4" */
   version: latestRelease?.version || fallback.version,
-  /** "v0.1.0" */
+  /** "v0.2.4" */
   tag: latestRelease?.tag || fallback.tag,
   /** release page on GitHub */
   url: latestRelease?.htmlUrl || fallback.htmlUrl,
   /** ISO published date */
   publishedAt: latestRelease?.publishedAt || "",
-  /** size of the headline (Linux x86_64) standalone binary, e.g. "9.4 MB" */
+  /** size of the headline (Linux x86_64) standalone binary, e.g. "13.2 MB" */
   headlineSizeMB: latestRelease?.headlineSizeMB || null,
   /** direct download for the headline binary */
   headlineUrl: latestRelease?.headlineUrl || null,
@@ -29,5 +29,5 @@ export const release = {
   platforms: latestRelease?.platforms ?? [],
 } as const;
 
-/** "0.1.0" → "v0.1.0" for display */
+/** "0.2.4" → "v0.2.4" for display */
 export const versionLabel = release.tag || `v${release.version}`;

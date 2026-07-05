@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
+import { repo, starLabel } from "@/lib/repo";
 import { CopyRow } from "@/components/CopyRow";
 import { CountUp } from "@/components/CountUp";
 import { AgenttyTui } from "@/components/AgenttyTui";
@@ -65,6 +66,10 @@ export default function Home() {
             <div className="stat" data-reveal><CountUp value={stats.coldStart} /><div className="lbl">Cold start</div></div>
             <div className="stat" data-reveal><CountUp value="0" /><div className="lbl">Runtime dependencies</div></div>
             <div className="stat" data-reveal><div className="num">C++26</div><div className="lbl">Native, no GC</div></div>
+            <a className="stat stat-link" data-reveal href={repo.url} target="_blank" rel="noreferrer">
+              <div className="num">&#9733;&nbsp;<CountUp value={starLabel} /></div>
+              <div className="lbl">Stars on GitHub</div>
+            </a>
           </div>
           <p className="stats-note">
             Size &amp; cold-start are the Linux&nbsp;x86_64 build, measured on each deploy;

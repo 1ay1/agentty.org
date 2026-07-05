@@ -12,20 +12,20 @@ import { measuredStats } from "./stats.generated";
 // Hardcoded fallbacks — only used if a field is somehow absent from the
 // generated file. Kept in sync with the last known-good measurement.
 const fallback = {
-  binarySizeMB: "9.4 MB",
-  version: "0.1.0",
+  binarySizeMB: "13.2 MB",
+  version: "0.2.4",
   staticLinked: true,
   coldStartLabel: "~2 ms",
-  versionMs: 2.2,
-  helpMs: 2.1,
+  versionMs: 2.29,
+  helpMs: 2.22,
 } as const;
 
 export const stats = {
-  /** e.g. "9.4 MB" */
+  /** e.g. "13.2 MB" */
   sizeMB: measuredStats?.binarySizeMB ?? fallback.binarySizeMB,
   /** exact bytes, e.g. 9849816 */
   sizeBytes: measuredStats?.binarySizeBytes ?? 0,
-  /** e.g. "0.1.0" */
+  /** e.g. "0.2.4" */
   version: measuredStats?.version || fallback.version,
   /** statically linked? */
   static: measuredStats?.staticLinked ?? fallback.staticLinked,

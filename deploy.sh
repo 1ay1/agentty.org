@@ -22,6 +22,11 @@ echo "==> Fetching the latest GitHub release (version + per-platform sizes)"
 # deploy on a network error / rate-limit — keeps the committed release data.
 node scripts/fetch-release.mjs || echo "   (release fetch skipped; using committed data)"
 
+echo "==> Fetching GitHub repo stats (stars + forks)"
+# Regenerates lib/repo.generated.ts from the repo API. Never fails the deploy
+# on a network error / rate-limit — keeps the committed repo data.
+node scripts/fetch-repo.mjs || echo "   (repo-stats fetch skipped; using committed data)"
+
 npm run build
 
 echo "==> Pre-compressing static assets (gzip) for gzip_static"
