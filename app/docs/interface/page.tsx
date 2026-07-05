@@ -36,14 +36,21 @@ export default function Interface() {
         automatically when the current turn finishes. On an empty composer, press{" "}
         <kbd>↑</kbd> to recall every queued message back into the buffer for editing.
       </p>
+      <p>
+        The composer is project-aware: type <kbd>@</kbd> to mention a file, <kbd>#</kbd>{" "}
+        to jump to a symbol, <kbd>/</kbd> for slash commands (e.g. <code>/compact</code>),
+        and <kbd>Ctrl+K</kbd> for the command palette. Drop an image file&apos;s path (or
+        paste with <kbd>Ctrl+V</kbd>) to attach a PNG, JPEG, GIF, or WebP inline.
+      </p>
 
       <h2 id="status">The status bar</h2>
       <p>
-        A single row at the bottom edge shows the active profile, model, and current
-        phase. When something needs your attention — a transient retry, an error — it
-        swaps in a banner-style notification (<code>▎⚠ &lt;text&gt;</code> for errors,{" "}
-        <code>▎ &lt;text&gt;</code> for info) and reverts to the keybindings strip when the
-        toast expires.
+        A single row at the bottom edge shows the active profile, provider, and model,
+        plus the current phase. When something needs your attention — a transient retry,
+        an error — it swaps in a banner-style notification (<code>▎⚠ &lt;text&gt;</code>{" "}
+        for errors, <code>▎ &lt;text&gt;</code> for info) and reverts to the keybindings
+        strip when the toast expires. Switch provider with <kbd>Ctrl+P</kbd> and model with{" "}
+        <kbd>Ctrl+/</kbd> without leaving the thread.
       </p>
 
       <h2 id="tool-widgets">Tool widgets</h2>

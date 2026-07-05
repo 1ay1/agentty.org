@@ -20,6 +20,8 @@ export default function Cli() {
       <Code>{`agentty                                # run in the current directory
 agentty -w ~/code/project              # run against another workspace
 agentty -m claude-opus-4-5             # pick a model for the session
+agentty --provider openai -m gpt-4o    # run against a different backend
+agentty --provider ollama              # local model, no key, no cloud
 agentty -k sk-ant-…                     # single-session key, never written to disk
 agentty --sandbox on                   # require an OS sandbox for bash/diagnostics`}</Code>
 
@@ -34,6 +36,8 @@ agentty --sandbox on                   # require an OS sandbox for bash/diagnost
             <tr><td className="mono"><code>agentty status</code></td><td>Print which auth source will be used.</td></tr>
             <tr><td className="mono"><code>agentty airgap user@host</code></td><td>Run the agent on a remote host through an SSH SOCKS tunnel.</td></tr>
             <tr><td className="mono"><code>agentty acp</code></td><td>Run headless as an <a href="/docs/acp">Agent Client Protocol</a> agent for Zed (JSON-RPC over stdio).</td></tr>
+            <tr><td className="mono"><code>agentty mcp-serve</code></td><td>Serve agentty&apos;s native tools over <a href="/docs/mcp">MCP</a> (stdio). Point any MCP client at it.</td></tr>
+            <tr><td className="mono"><code>agentty skills</code></td><td>List discovered <a href="/docs/skills">Agent Skills</a> with spec-lint diagnostics (exit 1 on warnings — CI-friendly).</td></tr>
             <tr><td className="mono"><code>agentty --version</code></td><td>Print <code>agentty &lt;version&gt;</code> and exit.</td></tr>
             <tr><td className="mono"><code>agentty --help</code></td><td>Print usage and exit.</td></tr>
           </tbody>
@@ -48,7 +52,9 @@ agentty --sandbox on                   # require an OS sandbox for bash/diagnost
           <tbody>
             <tr><td className="mono"><code>-k</code>, <code>--key &lt;key&gt;</code></td><td>API-key override for this session; never written to disk.</td></tr>
             <tr><td className="mono"><code>-m</code>, <code>--model &lt;id&gt;</code></td><td>Model id for the session (e.g. <code>claude-opus-4-5</code>).</td></tr>
-            <tr><td className="mono"><code>-w</code>, <code>--workspace &lt;dir&gt;</code></td><td>Sandbox filesystem tools to this directory (default: cwd). Tools refuse paths outside it.</td></tr>
+            <tr><td className="mono"><code>--provider &lt;p&gt;</code></td><td>LLM backend: <code>anthropic</code> (default) or an OpenAI-compatible one — <code>openai</code> · <code>groq</code> · <code>openrouter</code> · <code>together</code> · <code>cerebras</code> · <code>ollama</code>, or a raw <code>host:port</code>. Persisted like <code>-m</code>; switch live with <code>^P</code>. See <a href="/docs/providers">Providers &amp; Models</a>.</td></tr>
+            <tr><td className="mono"><code>-p</code>, <code>--profile &lt;mode&gt;</code></td><td>ACP permission tier (Zed shows the prompts): <code>ask</code> (default) · <code>minimal</code> (also prompt reads) · <code>write</code> (never prompt reads).</td></tr>
+            <tr><td className="mono"><code>-w</code>, <code>--workspace &lt;dir&gt;</code></td><td>Sandbox filesystem tools to this directory (default: cwd). Tools refuse paths outside it. Pass <code>--workspace /</code> to disable the gate.</td></tr>
             <tr><td className="mono"><code>--sandbox &lt;mode&gt;</code></td><td>Wrap <code>bash</code>/<code>diagnostics</code> in an OS-native sandbox. <code>auto</code> (default) · <code>on</code> (require a backend) · <code>off</code> (disable).</td></tr>
             <tr><td className="mono"><code>-V</code>, <code>--version</code></td><td>Print the agentty version and exit.</td></tr>
             <tr><td className="mono"><code>-h</code>, <code>--help</code></td><td>Show usage and exit.</td></tr>

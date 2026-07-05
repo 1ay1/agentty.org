@@ -10,10 +10,13 @@ export const metadata: Metadata = {
 };
 
 const envs: [string, string][] = [
-  ["ANTHROPIC_API_KEY", "API key used when no -k flag is passed. Second-highest priority."],
+  ["ANTHROPIC_API_KEY", "Claude API key used when no -k flag is passed. Second-highest priority."],
   ["CLAUDE_CODE_OAUTH_TOKEN", "OAuth token from the env, below API key but above on-disk creds."],
+  ["OPENAI_API_KEY", "Key for --provider openai, and the fallback key for every other OpenAI-compatible provider."],
+  ["GROQ_API_KEY / OPENROUTER_API_KEY / TOGETHER_API_KEY / CEREBRAS_API_KEY", "Provider-specific keys, checked before OPENAI_API_KEY for that provider. Ollama needs none."],
   ["AGENTTY_SOCKS_PROXY", "Route all TCP through this SOCKS5 proxy (set automatically by airgap mode)."],
   ["AGENTTY_AIRGAP_SSH", "Extra flags injected into the ssh invocation for airgap."],
+  ["AGENTTY_DOCS_DIR", "Folder of documents to index for the search_docs RAG tool (defaults to ./docs)."],
   ["AGENTTY_INSECURE", "Set to 1 to skip TLS peer verification. Last-resort only — never ship it."],
 ];
 
@@ -43,9 +46,21 @@ export default function Configuration() {
 
       <h2 id="paths">On-disk paths</h2>
       <ul>
-        <li><code>~/.config/agentty/credentials.json</code> — auth token, mode <code>0600</code>.</li>
+        <li><code>~/.config/agentty/credentials.json</code> — Claude auth token, mode <code>0600</code>.</li>
+        <li><code>~/.agentty/settings.json</code> — persisted provider, model, reasoning effort, favourite models, and permission profile.</li>
         <li><code>~/.agentty/threads/&lt;workspace-hash&gt;/</code> — one JSON file per thread.</li>
+        <li><code>~/.agentty/skills/</code> — personal <a href="/docs/skills">Agent Skills</a>, plus <code>&lt;project&gt;/.agentty/skills/</code>.</li>
+        <li><code>&lt;project&gt;/.agentty/mcp.json</code> — <a href="/docs/mcp">MCP servers</a> to connect on startup.</li>
       </ul>
+
+      <h2 id="settings">Persisted settings</h2>
+      <p>
+        <code>--provider</code>, <code>-m</code>/<code>--model</code>, the reasoning
+        effort tier, favourited models, and your permission profile are written to{" "}
+        <code>~/.agentty/settings.json</code> whenever you change them in-app — so the
+        next launch resumes exactly where you left off. There is nothing to hand-edit;
+        the picker (<code>^P</code> / <code>^/</code>) and <code>S-Tab</code> manage it.
+      </p>
 
       <h2 id="workspace">Choosing a workspace</h2>
       <p>By default the launch directory is the workspace. Override without <code>cd</code>:</p>

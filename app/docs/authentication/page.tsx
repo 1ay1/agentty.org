@@ -16,7 +16,9 @@ export default function Authentication() {
       <h1>Authentication</h1>
       <p className="lead">
         agentty authenticates with your Claude Pro/Max OAuth subscription or an Anthropic
-        API key. Both flow through the same login path.
+        API key. Both flow through the same login path. Using a{" "}
+        <a href="/docs/providers">different provider</a>? See the per-provider key note
+        below.
       </p>
 
       <h2 id="oauth">OAuth (Claude Pro/Max)</h2>
@@ -38,6 +40,16 @@ export default function Authentication() {
         <li><code>CLAUDE_CODE_OAUTH_TOKEN</code> environment variable.</li>
         <li>The on-disk credentials from the modal.</li>
       </ol>
+
+      <h2 id="providers">Other providers</h2>
+      <p>
+        When you run with <code>--provider</code>, agentty reads that backend&apos;s
+        key from its environment variable (e.g. <code>OPENAI_API_KEY</code>,{" "}
+        <code>GROQ_API_KEY</code>), falling back to <code>OPENAI_API_KEY</code>, or an
+        explicit <code>-k</code> for the session. Ollama needs no key. A key entered
+        in-app is saved per-provider so you only paste it once. See{" "}
+        <a href="/docs/providers">Providers &amp; Models</a>.
+      </p>
 
       <h2 id="non-interactive">Non-interactive auth (over SSH)</h2>
       <Code>{`agentty login     # complete auth without entering a thread

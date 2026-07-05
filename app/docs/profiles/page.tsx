@@ -27,7 +27,7 @@ export default function Profiles() {
           <tbody>
             <tr><td><strong>Write</strong></td><td>auto</td><td>auto</td><td>auto</td><td>auto</td></tr>
             <tr><td><strong>Ask</strong> (default)</td><td>auto</td><td>prompt</td><td>prompt</td><td>prompt</td></tr>
-            <tr><td><strong>Minimal</strong></td><td>auto</td><td>prompt</td><td>prompt</td><td>prompt</td></tr>
+            <tr><td><strong>Minimal</strong></td><td>prompt</td><td>prompt</td><td>prompt</td><td>prompt</td></tr>
           </tbody>
         </table>
       </div>
@@ -47,8 +47,10 @@ export default function Profiles() {
 
       <h2 id="minimal">Minimal</h2>
       <p>
-        The most conservative profile — only pure tools (reads, search, definition lookup)
-        run automatically; everything else prompts, including operations Ask might batch.
+        The most conservative profile — <strong>every</strong> tool prompts first,
+        including pure reads, search, and definition lookup. Use it when you want to
+        approve each step explicitly, even inspection. (In ACP mode this is the tier that
+        makes Zed prompt on reads too.)
       </p>
 
       <Note type="tip">

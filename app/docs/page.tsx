@@ -23,15 +23,18 @@ export default function DocsIndex() {
 
       <p>
         It signs in with your existing <strong>Claude Pro/Max OAuth</strong> subscription
-        (or an <code>ANTHROPIC_API_KEY</code>), runs every shell call in a sandbox by
-        default, and can drive an agent on an air-gapped host through a single SSH
-        command. No Node, no Python, no Electron, no <code>npm install</code>.
+        (or an <code>ANTHROPIC_API_KEY</code>) — or points at <strong>OpenAI, Groq,
+        OpenRouter, Together, Cerebras</strong>, or a local <strong>Ollama</strong> model.
+        It runs every shell call in a sandbox by default, and can drive an agent on an
+        air-gapped host through a single SSH command. No Node, no Python, no Electron,
+        no <code>npm install</code>.
       </p>
 
       <h2 id="who">Who it&apos;s for</h2>
       <ul>
-        <li>You want a <strong>single-binary Claude client</strong> with zero runtime dependencies.</li>
+        <li>You want a <strong>single-binary coding agent</strong> with zero runtime dependencies.</li>
         <li>You care about <strong>cold-start speed</strong> and a TUI that never pauses for GC.</li>
+        <li>You want <strong>your choice of model</strong> — Claude, GPT, or a local Ollama model — behind one client.</li>
         <li>You need to run an agent on an <strong>air-gapped host</strong> through an SSH tunnel.</li>
         <li>You want shell calls <strong>sandboxed by default</strong>, not as an afterthought.</li>
       </ul>

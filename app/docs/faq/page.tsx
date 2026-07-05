@@ -4,7 +4,7 @@ import { Breadcrumb, EditThisPage } from "@/components/DocMeta";
 
 export const metadata: Metadata = {
   title: "FAQ",
-  description: "Frequently asked questions about agentty — the C++26 claude-code alternative: auth, platforms, sandboxing, air-gap, storage, and licensing.",
+  description: "Frequently asked questions about agentty — the C++26 claude-code alternative: auth, providers, platforms, sandboxing, air-gap, storage, and licensing.",
   alternates: { canonical: "/docs/faq" },
 };
 
@@ -16,7 +16,11 @@ const faqPlain: [string, string][] = [
   ],
   [
     "Is it really a drop-in for claude-code?",
-    "It targets the same workflow — a Claude coding agent in your terminal with the same auth — as a single native binary. It is Claude-only by design; if you need many providers, aider is the better fit.",
+    "It targets the same workflow — a coding agent in your terminal with the same Claude auth — as a single native binary. Claude is the default, but agentty also runs against OpenAI, Groq, OpenRouter, Together, Cerebras, and local Ollama models, switchable live.",
+  ],
+  [
+    "Can I use models other than Claude?",
+    "Yes. Pass --provider to point agentty at OpenAI, Groq, OpenRouter, Together, Cerebras, a local Ollama model, or any raw OpenAI-compatible host:port. --provider persists like -m, and you can switch backends live in-app with Ctrl-P.",
   ],
   [
     "Do I need Node or Python?",
@@ -65,11 +69,15 @@ const faqJsonLd = {
 const faqs: [string, React.ReactNode][] = [
   [
     "Does it work with my Claude Pro/Max subscription?",
-    <>Yes — OAuth against your existing Pro/Max plan is the main path. No extra billing; same account you already pay for. You can also use an <code>ANTHROPIC_API_KEY</code>.</>,
+    <>Yes — OAuth against your existing Pro/Max plan is the main path. No extra billing; same account you already pay for. You can also use an <code>ANTHROPIC_API_KEY</code>, or a different <a href="/docs/providers">provider</a> entirely.</>,
   ],
   [
     "Is it really a drop-in for claude-code?",
-    <>It targets the same workflow — a Claude coding agent in your terminal with the same auth — as a single native binary. It is Claude-only by design; if you need many providers, aider is the better fit.</>,
+    <>It targets the same workflow — a coding agent in your terminal with the same Claude auth — as a single native binary. Claude is the default, but agentty also runs against OpenAI, Groq, OpenRouter, Together, Cerebras, and local Ollama models. See <a href="/docs/providers">Providers &amp; Models</a>.</>,
+  ],
+  [
+    "Can I use models other than Claude?",
+    <>Yes. Pass <code>--provider</code> to point agentty at OpenAI, Groq, OpenRouter, Together, Cerebras, a local Ollama model, or any raw <code>host:port</code>. It persists like <code>-m</code>, and you can switch backends live in-app with <code>^P</code>. See <a href="/docs/providers">Providers &amp; Models</a>.</>,
   ],
   [
     "Do I need Node or Python?",

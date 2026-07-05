@@ -46,6 +46,15 @@ Cmd  →  runtime executes side effects  →  new Msg events`}</Code>
         same <code>auth::cmd_login</code> path. SSE deltas are smoothed into the screen at ⅛
         buffer per tick so server batching doesn&apos;t produce chunky text.
       </p>
+      <p>
+        A second transport covers every OpenAI-compatible backend — OpenAI, Groq,
+        OpenRouter, Together, Cerebras, and local Ollama — collapsing the differences
+        to configuration (base URL, auth header, model id). Ollama&apos;s native{" "}
+        <code>/api/chat</code> path adds incremental salvage for weaker local models
+        that leak tool calls as raw JSON, so they can still drive the full tool suite.
+        The active provider is chosen per session and switchable live. See{" "}
+        <a href="/docs/providers">Providers &amp; Models</a>.
+      </p>
 
       <h2 id="subprocess">The subprocess model</h2>
       <p>

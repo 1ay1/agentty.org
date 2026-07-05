@@ -1,8 +1,8 @@
 export const site = {
   name: "agentty",
-  tagline: "Blazing-fast Claude in your terminal.",
+  tagline: "A blazing-fast coding agent in your terminal.",
   description:
-    "A native C++26 terminal coding agent. A single static binary with millisecond cold start, sandboxed by default, one-command SSH air-gap, and runs inside Zed over ACP. A drop-in alternative to claude-code with no Node, Python, or Electron.",
+    "A native C++26 terminal coding agent. A single static binary with millisecond cold start, sandboxed by default, one-command SSH air-gap, and runs inside Zed over ACP. Signs in with Claude Pro/Max, or points at OpenAI, Groq, OpenRouter, Together, Cerebras, or a local Ollama model. A drop-in alternative to claude-code with no Node, Python, or Electron.",
   url: "https://agentty.org",
   github: "https://github.com/1ay1/agentty",
   releases: "https://github.com/1ay1/agentty/releases",
@@ -27,6 +27,7 @@ export const docsNav: NavSection[] = [
       { title: "Installation", href: "/docs/installation" },
       { title: "Quick Start", href: "/docs/quick-start" },
       { title: "Authentication", href: "/docs/authentication" },
+      { title: "Providers & Models", href: "/docs/providers" },
     ],
   },
   {
@@ -53,6 +54,8 @@ export const docsNav: NavSection[] = [
     items: [
       { title: "SSH Air-gap", href: "/docs/airgap" },
       { title: "Zed / ACP", href: "/docs/acp" },
+      { title: "MCP Server", href: "/docs/mcp" },
+      { title: "Agent Skills", href: "/docs/skills" },
       { title: "Corporate Proxies", href: "/docs/proxies" },
       { title: "Building from Source", href: "/docs/building" },
       { title: "Architecture", href: "/docs/architecture" },

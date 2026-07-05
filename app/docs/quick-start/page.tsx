@@ -32,6 +32,13 @@ agentty`}</Code>
         billing, same account you already pay for. See <a href="/docs/authentication">Authentication</a>.
       </Note>
 
+      <Note type="note">
+        Prefer a different model? Launch with <code>--provider</code> —
+        e.g. <code>agentty --provider openai -m gpt-4o</code> or{" "}
+        <code>agentty --provider ollama</code> for a local model. See{" "}
+        <a href="/docs/providers">Providers &amp; Models</a>.
+      </Note>
+
       <h2 id="first-turn">3. Your first turn</h2>
       <p>
         Type a request, hit <kbd>Enter</kbd>. agentty streams the reply and lands tool
@@ -52,6 +59,7 @@ agentty`}</Code>
       <ul>
         <li><a href="/docs/interface">The Interface</a> — what every part of the screen means.</li>
         <li><a href="/docs/keybindings">Keybindings</a> — the full keymap.</li>
+        <li><a href="/docs/providers">Providers &amp; Models</a> — Claude, GPT, Groq, or a local model.</li>
         <li><a href="/docs/tools">Tools</a> — what agentty can actually do.</li>
         <li><a href="/docs/airgap">SSH Air-gap</a> — run on a box with no internet.</li>
       </ul>

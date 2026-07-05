@@ -4,7 +4,7 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "agentty — blazing-fast Claude in your terminal",
+    name: "agentty — a blazing-fast coding agent in your terminal",
     short_name: "agentty",
     description:
       "A native C++26 terminal coding agent. One static binary, sandboxed by default.",

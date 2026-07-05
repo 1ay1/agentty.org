@@ -20,7 +20,7 @@ export default function Home() {
               <AgenttyLogo />
             </div>
             <h1>
-              Blazing-fast <span className="grad">Claude</span>
+              Blazing-fast <span className="grad">coding agent</span>
               <br /> in your terminal.
             </h1>
             <p className="lede">
@@ -28,7 +28,9 @@ export default function Home() {
               <strong>{stats.sizeMB}&nbsp;binary</strong>, <strong>millisecond cold start</strong>,{" "}
               <strong>sandboxed by default</strong>, SSH air-gap in one command, and{" "}
               <strong>runs inside Zed</strong> over ACP. Signs in with your
-              existing <strong>Claude Pro/Max</strong> &mdash; no Node, Python, Electron, or{" "}
+              existing <strong>Claude Pro/Max</strong> &mdash; or point it at{" "}
+              <strong>OpenAI, Groq, OpenRouter, Cerebras</strong>, or a local{" "}
+              <strong>Ollama</strong> model. No Node, Python, Electron, or{" "}
               <code>npm install</code>.
             </p>
             <div className="hero-actions">
@@ -110,16 +112,55 @@ export default function Home() {
       <section className="block" id="features">
         <div className="wrap">
           <p className="eyebrow">Why agentty</p>
-          <h2 className="section-title">Four things the official client doesn&apos;t try to do.</h2>
+          <h2 className="section-title">Everything the official client does &mdash; and the things it doesn&apos;t.</h2>
           <div className="grid grid-3" style={{ marginTop: 28 }}>
             <div className="card tilt" data-reveal><span className="ico">⚡</span><h3>Native speed</h3><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup.</p></div>
             <div className="card tilt" data-reveal><span className="ico">📦</span><h3>One static binary</h3><p>{stats.sizeMB}. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>Any model</h3><p>Claude by default via your Pro/Max subscription — or GPT, Groq, OpenRouter, Together, Cerebras, and local Ollama. Switch backends live with <code>^P</code>. <Link href="/docs/providers">Providers &rarr;</Link></p></div>
             <div className="card tilt" data-reveal><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS). Workspace, system libs, and network stay reachable; <code>~/.ssh</code>, <code>/etc</code>, and other projects are read-only. An approved bash call still can&apos;t <code>cat ~/.ssh/id_rsa</code>.</p></div>
             <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays the bytes over SOCKS5-over-SSH. TLS pins on the real upstreams end-to-end, so the network in between can&apos;t MITM you.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🧠</span><h3>Learns your codebase</h3><p>Agent Skills teach it your conventions from a <code>SKILL.md</code>; <code>remember</code>/<code>forget</code> give it durable cross-session memory. Teach it once, every thread knows. <Link href="/docs/skills">Skills &rarr;</Link></p></div>
+            <div className="card tilt" data-reveal><span className="ico">🧵</span><h3>Threads that persist</h3><p>Every conversation is a saved thread you can reopen with <code>^J</code>. Long threads compact automatically so you never blow the context window mid-task.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🤖</span><h3>Isolated subagents</h3><p>The <code>task</code> tool spawns a subagent with its own context window to burn through a self-contained job, then returns one condensed report — keeping your main thread focused.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🔍</span><h3>Adjustable reasoning</h3><p>Dial thinking effort per model from the picker — fast answers for small edits, deep reasoning for hard refactors, without leaving the thread.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🖼️</span><h3>Paste images</h3><p>Drop a PNG, JPEG, GIF, or WebP path (or <code>^V</code> from the clipboard) straight into the composer — screenshots, diagrams, and mockups go to the model inline.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">📝</span><h3>Mentions &amp; palette</h3><p>Type <code>@</code> to mention a file, <code>#</code> to jump to a symbol, <code>/</code> for slash commands, and <code>^K</code> for the command palette. The composer knows your project.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🔐</span><h3>Permission profiles</h3><p>Start in <strong>Ask</strong> — writes, shell, and network each prompt first. <code>S-Tab</code> cycles to <strong>Write</strong> (autonomous) or <strong>Minimal</strong>. Every effect is gated by a compile-time permission matrix. <Link href="/docs/profiles">Profiles &rarr;</Link></p></div>
             <div className="card tilt" data-reveal><span className="ico">📐</span><h3>Workspace boundary</h3><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>
             <div className="card tilt" data-reveal><span className="ico">📜</span><h3>Inline render</h3><p>Lives at the bottom of your terminal, preserves scrollback, never takes over the screen.</p></div>
+            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>MCP, both ways</h3><p>Serve agentty&apos;s tools to any MCP client with <code>mcp-serve</code>, or consume other MCP servers from a <code>.agentty/mcp.json</code> — their tools appear indistinguishable from native ones. <Link href="/docs/mcp">MCP &rarr;</Link></p></div>
             <div className="card tilt" data-reveal><span className="ico">🧩</span><h3>Runs inside Zed (ACP)</h3><p><code>agentty acp</code> speaks the Agent Client Protocol, so agentty becomes a first-class agent panel in Zed — streaming text, inline diffs, native permission prompts, session reload. Same engine as the TUI. <Link href="/docs/acp">Set it up &rarr;</Link></p></div>
           </div>
+        </div>
+      </section>
+
+      {/* PROVIDERS */}
+      <section className="block" id="providers">
+        <div className="wrap">
+          <p className="eyebrow">Bring your own model</p>
+          <h2 className="section-title">Claude by default. Any model on demand.</h2>
+          <p className="section-sub">
+            Sign in once with your <strong>Claude Pro/Max</strong> subscription, or point
+            agentty at any OpenAI-compatible backend. Switch live mid-thread with
+            <code> ^P</code> &mdash; no restart, no re-auth.
+          </p>
+          <div className="tablewrap">
+            <table>
+              <tbody>
+                <tr><td className="mono"><code>agentty</code></td><td>Claude via OAuth (Pro/Max) or API key &mdash; the default</td></tr>
+                <tr><td className="mono"><code>--provider openai</code></td><td>GPT and o-series on <code>api.openai.com</code></td></tr>
+                <tr><td className="mono"><code>--provider groq</code></td><td>Llama/Mixtral on Groq LPUs &mdash; very fast</td></tr>
+                <tr><td className="mono"><code>--provider openrouter</code></td><td>Any model via <code>openrouter.ai</code></td></tr>
+                <tr><td className="mono"><code>--provider together</code></td><td>Open models on <code>together.ai</code></td></tr>
+                <tr><td className="mono"><code>--provider cerebras</code></td><td>Wafer-scale inference &mdash; very fast</td></tr>
+                <tr><td className="mono"><code>--provider ollama</code></td><td>Local models at <code>localhost:11434</code> &mdash; no key, no cloud</td></tr>
+                <tr><td className="mono"><code>--provider host:port</code></td><td>Any raw OpenAI-compatible endpoint</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style={{ marginTop: 18 }}>
+            <Link href="/docs/providers">Providers &amp; models reference &rarr;</Link>
+          </p>
         </div>
       </section>
 
@@ -140,7 +181,7 @@ export default function Home() {
                 <tr><td>Air-gapped mode</td><td><span className="win">Yes (SOCKS5/SSH)</span></td><td>No</td><td>No</td></tr>
                 <tr><td>Editor integration (ACP)</td><td><span className="win">Yes (Zed)</span></td><td>Yes (Zed)</td><td>No</td></tr>
                 <tr><td>Auth</td><td>OAuth (Pro/Max) + API key</td><td>OAuth + API key</td><td>per-provider env vars</td></tr>
-                <tr><td>Models</td><td>Claude (Anthropic)</td><td>Claude (Anthropic)</td><td>many providers</td></tr>
+                <tr><td>Models</td><td><span className="win">Claude · GPT · Groq · OpenRouter · Ollama</span></td><td>Claude (Anthropic)</td><td>many providers</td></tr>
               </tbody>
             </table>
           </div>
@@ -164,8 +205,8 @@ export default function Home() {
                 <tr><td className="mono"><code>bash · diagnostics</code></td><td>Sandboxed shell and build, with exit codes</td></tr>
                 <tr><td className="mono"><code>git_status · git_diff · git_log · git_commit</code></td><td>Version control, rendered natively</td></tr>
                 <tr><td className="mono"><code>web_fetch · web_search</code></td><td>Reach the web for docs and APIs</td></tr>
-                <tr><td className="mono"><code>skill · task</code></td><td>Load on-demand skills and spawn isolated subagents</td></tr>
-                <tr><td className="mono"><code>todo · remember · forget</code></td><td>Planning and durable cross-session memory</td></tr>
+                <tr><td className="mono"><code>skill · task · search_docs</code></td><td>On-demand skills, isolated subagents, and RAG over a knowledge corpus</td></tr>
+                <tr><td className="mono"><code>todo · remember · forget · wipe_memory</code></td><td>Planning and durable cross-session memory</td></tr>
               </tbody>
             </table>
           </div>

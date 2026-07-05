@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { stats } from "@/lib/stats";
 
 export const dynamic = "force-static";
-export const alt = "agentty — blazing-fast Claude in your terminal";
+export const alt = "agentty — a blazing-fast coding agent in your terminal";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

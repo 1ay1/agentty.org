@@ -36,7 +36,7 @@ export const viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: "agentty — blazing-fast Claude in your terminal",
+    default: "agentty — a blazing-fast coding agent in your terminal",
     template: "%s · agentty",
   },
   description: site.description,
@@ -75,14 +75,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: site.url,
-    title: "agentty — blazing-fast Claude in your terminal",
+    title: "agentty — a blazing-fast coding agent in your terminal",
     description: site.description,
     siteName: "agentty",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "agentty — blazing-fast Claude in your terminal",
+    title: "agentty — a blazing-fast coding agent in your terminal",
     description: site.description,
     creator: "@agentty",
   },
@@ -99,6 +99,9 @@ export const metadata: Metadata = {
   },
   icons: { icon: "/favicon.svg" },
   manifest: "/manifest.webmanifest",
+  verification: {
+    google: "7TjyM5swytiizAv-slWHVDdAEvklDKYmLQMGNqHkCJw",
+  },
 };
 
 const jsonLd = {
