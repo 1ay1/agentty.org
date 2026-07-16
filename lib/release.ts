@@ -5,15 +5,15 @@
 import { latestRelease } from "./release.generated";
 
 const fallback = {
-  version: "0.2.4",
-  tag: "v0.2.4",
+  version: "0.2.8",
+  tag: "v0.2.8",
   htmlUrl: "https://github.com/1ay1/agentty/releases/latest",
 } as const;
 
 export const release = {
-  /** "0.2.4" */
+  /** "0.2.8" */
   version: latestRelease?.version || fallback.version,
-  /** "v0.2.4" */
+  /** "v0.2.8" */
   tag: latestRelease?.tag || fallback.tag,
   /** release page on GitHub */
   url: latestRelease?.htmlUrl || fallback.htmlUrl,
