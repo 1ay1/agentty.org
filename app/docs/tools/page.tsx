@@ -62,9 +62,10 @@ export default function Tools() {
 
       <Note>
         The <strong>effect class</strong> determines which permission profile auto-runs the
-        tool. <em>Pure</em> and <em>Read</em> tools run automatically in every profile;{" "}
-        <em>Write</em>, <em>Shell</em>, and <em>Network</em> are gated by{" "}
-        <a href="/docs/profiles">your profile</a>.
+        tool. <em>Pure</em> and <em>Read</em> tools run automatically in{" "}
+        <strong>Ask</strong> and <strong>Write</strong>; <em>Write</em>, <em>Shell</em>, and{" "}
+        <em>Network</em> are gated by <a href="/docs/profiles">your profile</a>. The{" "}
+        <strong>Minimal</strong> profile prompts on <em>every</em> class, reads included.
       </Note>
 
       <h2 id="enforcement">Compile-time enforcement</h2>

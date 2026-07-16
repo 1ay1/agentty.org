@@ -76,13 +76,34 @@ sudo dpkg -i agentty_${release.version}_amd64.deb       # or agentty_${release.v
       <p>Update: <code>dpkg -i</code> the new release&apos;s <code>.deb</code>.</p>
 
       <h2 id="fedora">Fedora / RHEL / openSUSE</h2>
-      <Code>{`sudo rpm -Uvh https://github.com/1ay1/agentty/releases/latest/download/agentty-${release.version}-1.x86_64.rpm`}</Code>
+      <Code>{`# Fedora / RHEL / CentOS
+sudo dnf install https://github.com/1ay1/agentty/releases/latest/download/agentty-x86_64.rpm
+
+# openSUSE
+sudo zypper install https://github.com/1ay1/agentty/releases/latest/download/agentty-x86_64.rpm
+
+# or upgrade an existing install:
+sudo rpm -Uvh https://github.com/1ay1/agentty/releases/latest/download/agentty-${release.version}-1.x86_64.rpm`}</Code>
       <p><code>-U</code> is upgrade; works for the first install too.</p>
 
       <h2 id="arch">Arch Linux</h2>
       <Code>{`yay -S agentty-bin       # or paru, pikaur, etc.
 yay -Syu agentty-bin     # update`}</Code>
       <p>Or install the release-page <code>.pkg.tar.zst</code> with <code>sudo pacman -U</code>.</p>
+
+      <h2 id="alpine">Alpine</h2>
+      <Code>{`curl -fsSLO https://github.com/1ay1/agentty/releases/latest/download/agentty-x86_64.apk
+sudo apk add --allow-untrusted agentty-x86_64.apk`}</Code>
+
+      <h2 id="nix-snap-gentoo">Nix · Snap · Gentoo</h2>
+      <p>
+        Pinned manifests for these are attached to every release. Grab the one for
+        your channel from the{" "}
+        <a href={site.releasesLatest} target="_blank" rel="noopener noreferrer">latest release page</a>:
+      </p>
+      <Code>{`nix-env -iA agentty      # Nix (attached manifest)
+snap install agentty     # Snap
+emerge agentty           # Gentoo`}</Code>
 
       <h2 id="macos">macOS</h2>
       <p>

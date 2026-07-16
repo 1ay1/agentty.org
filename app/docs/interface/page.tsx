@@ -43,6 +43,32 @@ export default function Interface() {
         paste with <kbd>Ctrl+V</kbd>) to attach a PNG, JPEG, GIF, or WebP inline.
       </p>
 
+      <h2 id="run-code">Run code blocks (Ctrl+G)</h2>
+      <p>
+        When a reply hands you a fenced block of shell commands, don&apos;t copy-paste it.{" "}
+        <kbd>Ctrl+G</kbd> lists the runnable blocks from the newest reply; <kbd>Enter</kbd>{" "}
+        (or a digit) runs one <strong>interactively on your real terminal</strong> — the
+        TUI suspends, so <code>sudo</code> password prompts work, output streams live, and{" "}
+        <kbd>Ctrl+C</kbd> kills the command (not agentty). When it exits, a result card lets
+        you attach the captured output back to the composer as a collapsed chip
+        (<kbd>a</kbd>), copy it (<kbd>y</kbd>), or discard (<kbd>Esc</kbd>) — so “it failed
+        with X” reaches the model without you re-typing anything. A transient toast surfaces
+        the affordance while the commands are still on screen. It runs the right shell per
+        block on every OS: <code>sh</code>/<code>bash</code> blocks through <code>/bin/sh</code>{" "}
+        on Linux/macOS, <code>powershell</code>/<code>cmd</code> blocks natively on Windows.
+      </p>
+
+      <h2 id="threads">Threads &amp; quick-cycle</h2>
+      <p>
+        Every conversation is a saved thread. <kbd>Ctrl+J</kbd> opens the thread list{" "}
+        <em>at the current thread</em> (marked with a bold <code>●</code>), and{" "}
+        <kbd>Ctrl+N</kbd> starts a new one. To flip to the adjacent thread without opening
+        the picker, use <kbd>Alt+←/→</kbd> (or <kbd>Ctrl+←/→</kbd> on an empty composer) —{" "}
+        <kbd>←</kbd> newer, <kbd>→</kbd> older — with a “thread k/N · title” toast on every
+        hop. Quick-cycle only fires while the session is idle, so a live stream can never be
+        yanked out from under you.
+      </p>
+
       <h2 id="status">The status bar</h2>
       <p>
         A single row at the bottom edge shows the active profile, provider, and model,
