@@ -44,7 +44,7 @@ const faqPlain: [string, string][] = [
   ],
   [
     "Where are my conversations stored?",
-    "As plain JSON, one file per thread, under ~/.agentty/threads/<workspace-hash>/. Safe to inspect, back up, or delete.",
+    "As plain JSON, one file per thread, under ~/.agentty/threads/. Safe to inspect, back up, or delete.",
   ],
   [
     "Is it stable / production ready?",
@@ -101,7 +101,7 @@ const faqs: [string, React.ReactNode][] = [
   ],
   [
     "Where are my conversations stored?",
-    <>As plain JSON, one file per thread, under <code>~/.agentty/threads/&lt;workspace-hash&gt;/</code>. Safe to inspect, back up, or delete.</>,
+    <>As plain JSON, one file per thread, under <code>~/.agentty/threads/</code>. Safe to inspect, back up, or delete.</>,
   ],
   [
     "Is it stable / production ready?",

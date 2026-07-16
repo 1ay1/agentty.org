@@ -53,16 +53,19 @@ description: This project's commit + code conventions. Load before committing or
       <h2 id="locations">Where skills live</h2>
       <p>
         agentty scans these roots for <code>&lt;name&gt;/SKILL.md</code>. Earlier
-        roots win when two skills share a name:
+        roots win when two skills share a name (project shadows personal; native
+        <code>.agentty</code> shadows the interop dirs):
       </p>
       <div className="tablewrap">
         <table>
           <thead><tr><th>Location</th><th>Scope</th></tr></thead>
           <tbody>
-            <tr><td className="mono"><code>&lt;project&gt;/.agentty/skills/</code></td><td>This repo</td></tr>
-            <tr><td className="mono"><code>~/.agentty/skills/</code></td><td>Every project (personal)</td></tr>
-            <tr><td className="mono"><code>&lt;project&gt;/.claude/skills/</code></td><td>Claude Code compatibility</td></tr>
-            <tr><td className="mono"><code>&lt;project&gt;/.agents/</code></td><td>Shared agent skills</td></tr>
+            <tr><td className="mono"><code>&lt;project&gt;/.agentty/skills/</code></td><td>This repo (native)</td></tr>
+            <tr><td className="mono"><code>&lt;project&gt;/.agents/skills/</code></td><td>This repo (shared agents format)</td></tr>
+            <tr><td className="mono"><code>&lt;project&gt;/.claude/skills/</code></td><td>This repo (Claude Code compat)</td></tr>
+            <tr><td className="mono"><code>~/.agentty/skills/</code></td><td>Every project (native, personal)</td></tr>
+            <tr><td className="mono"><code>~/.agents/skills/</code></td><td>Every project (shared agents format)</td></tr>
+            <tr><td className="mono"><code>~/.claude/skills/</code></td><td>Every project (Claude Code compat)</td></tr>
           </tbody>
         </table>
       </div>

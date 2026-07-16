@@ -28,18 +28,43 @@ export default function Sandboxing() {
       </ul>
 
       <h2 id="policy">What&apos;s reachable</h2>
-      <p>Inside the sandbox:</p>
+      <p>Inside the Linux (bwrap) sandbox:</p>
       <ul>
-        <li><strong>Read-write:</strong> the workspace directory.</li>
-        <li><strong>Read-only:</strong> system libraries (so builds work).</li>
-        <li><strong>Reachable:</strong> the network.</li>
-        <li><strong>Read-only / blocked:</strong> <code>~/.ssh</code>, <code>/etc</code>, and other projects.</li>
+        <li><strong>Read-write:</strong> the workspace directory, plus a fresh <code>tmpfs</code> mounted at <code>/tmp</code>.</li>
+        <li><strong>Read-only:</strong> system libraries and binaries (<code>/usr</code>, <code>/bin</code>, <code>/lib</code>, <code>/opt</code> …) so builds and toolchains work.</li>
+        <li><strong>Reachable:</strong> the network (<code>--share-net</code>) — so <code>git push</code>, <code>npm</code>, and <code>curl</code> still work.</li>
+        <li><strong>Blocked (not mounted):</strong> <code>$HOME</code>, <code>~/.ssh</code>, and every other project on the machine.</li>
+        <li><strong>Only an allow-list of <code>/etc</code> is exposed</strong> — <code>resolv.conf</code>, <code>hosts</code>, CA certs, <code>gitconfig</code> and a few others are readable so networking and git identity work; the rest of <code>/etc</code> (e.g. <code>shadow</code>, keytabs, corporate config) is invisible.</li>
       </ul>
+      <p>
+        Hardened with <code>--unshare-pid</code>, <code>--new-session</code>, and{" "}
+        <code>--die-with-parent</code>. macOS uses <code>sandbox-exec</code> with a{" "}
+        <code>(deny default)</code> profile: broad file reads, writes restricted to the
+        workspace + temp dirs, network open.
+      </p>
 
       <Note type="tip">
         The practical upshot: even if you approve a shell command in the autonomous{" "}
         <a href="/docs/profiles">Write profile</a>, it can&apos;t{" "}
         <code>cat ~/.ssh/id_rsa</code> or tamper with other projects on the machine.
+      </Note>
+
+      <h2 id="modes">Modes</h2>
+      <p>Control the sandbox with <code>--sandbox</code>:</p>
+      <div className="tablewrap" style={{ marginBottom: 24 }}>
+        <table>
+          <thead><tr><th>Mode</th><th>Behaviour</th></tr></thead>
+          <tbody>
+            <tr><td className="mono"><code>auto</code> (default)</td><td>Use the OS sandbox backend if present; otherwise run unsandboxed with a warning.</td></tr>
+            <tr><td className="mono"><code>on</code></td><td>Require a backend — exit rather than run <code>bash</code>/<code>diagnostics</code> unsandboxed.</td></tr>
+            <tr><td className="mono"><code>off</code></td><td>Disable the sandbox entirely.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <Note type="warn">
+        Running with <code>--workspace /</code> makes the whole filesystem writable, so the
+        sandbox reports as <em>degraded</em> — there&apos;s no directory left to contain. Keep
+        the workspace scoped to your project to preserve containment.
       </Note>
 
       <h2 id="example">Concrete example</h2>

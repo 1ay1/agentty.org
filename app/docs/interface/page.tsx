@@ -38,9 +38,11 @@ export default function Interface() {
       </p>
       <p>
         The composer is project-aware: type <kbd>@</kbd> to mention a file, <kbd>#</kbd>{" "}
-        to jump to a symbol, <kbd>/</kbd> for slash commands (e.g. <code>/compact</code>),
-        and <kbd>Ctrl+K</kbd> for the command palette. Drop an image file&apos;s path (or
-        paste with <kbd>Ctrl+V</kbd>) to attach a PNG, JPEG, GIF, or WebP inline.
+        to jump to a symbol, and <kbd>/</kbd> (on an empty composer) to open the command
+        palette — the same fuzzy list as <kbd>Ctrl+K</kbd>, with entries like{" "}
+        <em>Compact context</em>, <em>Switch provider</em>, and <em>New thread</em>. Drop
+        an image file&apos;s path (or paste with <kbd>Ctrl+V</kbd>) to attach a PNG, JPEG,
+        GIF, or WebP inline.
       </p>
 
       <h2 id="run-code">Run code blocks (Ctrl+G)</h2>

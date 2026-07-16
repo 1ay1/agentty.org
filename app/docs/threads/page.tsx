@@ -21,15 +21,20 @@ export default function Threads() {
 
       <h2 id="where">Where threads live</h2>
       <p>
-        Threads are written to <code>~/.agentty/threads/&lt;workspace-hash&gt;/</code>, one
-        JSON file each. The workspace hash keys them to the directory you launched in, so
-        projects don&apos;t cross-contaminate.
+        Threads are written to <code>~/.agentty/threads/</code>, one JSON file per thread
+        keyed by its id. They&apos;re plain files you can inspect, back up, or delete.
       </p>
       <Code>{`~/.agentty/
-└── threads/
-    └── 8f3a…b2/          # hash of the workspace path
-        ├── f24a29c6….json
-        └── 86be6534….json`}</Code>
+├── threads/
+│   ├── f24a29c6….json     # one file per conversation
+│   └── 86be6534….json
+├── settings.json          # provider, model, profile, favourites
+└── memory.jsonl           # user-scope remembered facts`}</Code>
+      <p>
+        Threads are global — the directory is flat and a thread isn&apos;t bound to the
+        workspace you created it in, so <kbd>Ctrl+J</kbd> lists every conversation
+        regardless of which project you launched from.
+      </p>
 
       <h2 id="manage">Managing threads</h2>
       <p>

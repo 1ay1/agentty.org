@@ -44,6 +44,29 @@ agentty --sandbox on                   # require an OS sandbox for bash/diagnost
         </table>
       </div>
 
+      <h2 id="palette">Command palette</h2>
+      <p>
+        Inside a thread there are no typed <code>/command</code> literals — press{" "}
+        <code>^K</code> (or <code>/</code> on an empty composer) to open a fuzzy command
+        palette. The fixed command set:
+      </p>
+      <div className="tablewrap" style={{ marginBottom: 24 }}>
+        <table>
+          <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td>New thread</td><td>Start a fresh conversation.</td></tr>
+            <tr><td>Compact context</td><td>Replace history with a structured summary to reclaim the context window.</td></tr>
+            <tr><td>Review changes</td><td>Open the diff review pane (also <code>^R</code>).</td></tr>
+            <tr><td>Accept all / Reject all changes</td><td>Apply or discard every pending hunk.</td></tr>
+            <tr><td>Cycle profile</td><td>Ask → Minimal → Write (also <code>S-Tab</code>).</td></tr>
+            <tr><td>Open model picker / Switch provider</td><td>Change the active model (<code>^/</code>) or backend (<code>^P</code>).</td></tr>
+            <tr><td>Open threads / Open plan</td><td>Browse saved conversations (<code>^J</code>) or view the todo plan (<code>^T</code>).</td></tr>
+            <tr><td>Run code block</td><td>Run a fenced block from the last reply (<code>^G</code>).</td></tr>
+            <tr><td>Login / Quit</td><td>Sign in, or exit agentty.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
       <h2 id="flags">Options</h2>
       <p>These mirror <code>agentty --help</code> exactly.</p>
       <div className="tablewrap">

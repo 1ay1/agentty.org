@@ -19,12 +19,20 @@ export default function Proxies() {
         that re-encrypts with its own certificate is a different story.
       </p>
 
-      <h2 id="socks">SOCKS proxies — nothing to do</h2>
+      <h2 id="socks">SOCKS proxies</h2>
       <p>
         Because SOCKS doesn&apos;t terminate TLS, agentty&apos;s certificate verification
         works exactly as it does on a direct connection. This is also why{" "}
         <a href="/docs/airgap">air-gap mode</a> is safe over an untrusted network.
       </p>
+      <Note type="note">
+        agentty routes through SOCKS via its own <code>AGENTTY_SOCKS_PROXY=host:port</code>{" "}
+        variable — it does <strong>not</strong> read the ambient{" "}
+        <code>HTTP_PROXY</code>/<code>HTTPS_PROXY</code>/<code>NO_PROXY</code> variables, so a
+        stray shell export can&apos;t silently reroute your API traffic. Airgap mode sets it
+        for you.
+      </Note>
+      <Code>{`AGENTTY_SOCKS_PROXY=127.0.0.1:1080 agentty`}</Code>
 
       <h2 id="mitm">TLS-terminating proxies (Zscaler, Bluecoat, mitmproxy)</h2>
       <p>
