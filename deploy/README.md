@@ -1,72 +1,100 @@
-# Automated deploys
+# Fully automated deploys — you only ever edit Markdown
 
-The site auto-redeploys whenever **agentty** publishes a new release. No
-manual `./deploy.sh`, no hand-editing version numbers.
+The site redeploys itself. **You never run `./deploy.sh`, never touch the
+server, never edit a version number.** Edit docs in `1ay1/agentty`
+(`docs/website/*.md`), push, and the live site updates within seconds.
 
-## How it works
+## Architecture
 
-Two cooperating pieces, both already in the build:
+```
+edit docs/website/*.md (agentty repo)  ──push──▶  GitHub
+     or push site code (agentty.org)                 │
+     or publish an agentty release                   │  webhook (HMAC-signed)
+                                                      ▼
+                             https://agentty.org/_deploy-hook
+                                   │  nginx → 127.0.0.1:9099
+                                   ▼
+                         webhook.mjs  (systemd: agentty-deploy-hook.service)
+                                   │  verify signature, debounce 3s
+                                   ▼
+                         autodeploy.sh  ──flock──▶  deploy.sh
+                                   │                   ├─ sync-docs.mjs  (pull docs/website from agentty)
+                                   │                   ├─ fetch-release / measure-stats / fetch-repo
+                                   │                   ├─ next build → out/
+                                   │                   └─ rsync → /var/www + reload nginx
+                                   ▼
+                         https://agentty.org  (live)
 
-1. **`scripts/fetch-release.mjs`** (run by `deploy.sh` before every build)
-   pulls the latest GitHub release and regenerates `lib/release.generated.ts`
-   — version, per-platform binary sizes, SHA-256s, download count. If the
-   "latest" release hasn't uploaded its standalone binaries yet (streaming
-   release: the source tarball lands first), it falls back to the newest
-   release that *does* have binaries, so the install page never loses its
-   download table mid-publish. `scripts/measure-stats.mjs` likewise re-measures
-   the installed binary's size + cold-start.
+  + agentty-deploy.timer  ──every 30 min──▶  autodeploy.sh   (self-healing backstop)
+```
 
-2. **`scripts/redeploy-on-release.sh`** polls the GitHub "latest release" tag
-   and runs `./deploy.sh` only when it changed (recorded in
-   `.last-deployed-tag`). Idempotent — safe to run on a tight timer.
+**Instant path:** GitHub webhook → listener → deploy. Reacts to a push in ~3 s.
 
-So a deploy always ships numbers measured from reality; the timer just decides
-*when*.
+**Backstop:** a systemd timer runs `autodeploy.sh` every 30 min regardless, so
+even if a webhook is ever missed the site reconciles to the latest docs + live
+GitHub data (version, sizes, stars) on its own.
 
-## Install the timer (one time, on the server)
+Everything the site shows is refetched from GitHub on every deploy — nothing is
+hardcoded. A new agentty release publishes → webhook (`release: published`) →
+redeploy → the version badge updates itself.
+
+## Components (all in this `deploy/` dir)
+
+| File | Role |
+|------|------|
+| `webhook.mjs` | Zero-dep HTTP listener on `127.0.0.1:9099`; HMAC-verifies GitHub, triggers deploy. Watches `1ay1/agentty` (docs/website only) + `1ay1/agentty.org`. |
+| `autodeploy.sh` | Headless deploy driver: `git reset --hard origin/master` → `deploy.sh`. `flock` prevents overlap; coalesces bursts. |
+| `agentty-deploy-hook.service` | systemd unit for the webhook listener (always on). |
+| `agentty-deploy.service` + `.timer` | 30-min backstop that runs `autodeploy.sh`. |
+| `agentty-deploy.sudoers` | Narrow passwordless-sudo grant for the exact rsync/nginx/chown steps `deploy.sh` needs. |
+
+The older `agentty-site-deploy.*` units + `scripts/redeploy-on-release.sh`
+(release-tag polling only) are **superseded** by this webhook + backstop and can
+be ignored.
+
+## One-time server setup (already done on the production box)
+
+For reference / rebuilding the box:
 
 ```bash
-# 1. (optional) raise the GitHub API rate limit
-echo 'GITHUB_TOKEN=ghp_xxx' > deploy/.env       # 60/hr → 5000/hr
+# 1. webhook secret (shared with the GitHub webhook config)
+openssl rand -hex 32 | sed 's/^/WEBHOOK_SECRET=/' | sudo tee /etc/agentty-deploy.env
+sudo chmod 0600 /etc/agentty-deploy.env && sudo chown ayush:ayush /etc/agentty-deploy.env
 
-# 2. install the units
-sudo cp deploy/agentty-site-deploy.service /etc/systemd/system/
-sudo cp deploy/agentty-site-deploy.timer   /etc/systemd/system/
+# 2. passwordless sudo for the deploy steps
+sudo cp deploy/agentty-deploy.sudoers /etc/sudoers.d/agentty-deploy
+sudo chmod 0440 /etc/sudoers.d/agentty-deploy && sudo visudo -cf /etc/sudoers.d/agentty-deploy
+
+# 3. log dir
+sudo mkdir -p /var/log/agentty-deploy && sudo chown ayush:ayush /var/log/agentty-deploy
+
+# 4. systemd units
+sudo cp deploy/agentty-deploy-hook.service deploy/agentty-deploy.service deploy/agentty-deploy.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now agentty-site-deploy.timer
+sudo systemctl enable --now agentty-deploy-hook.service agentty-deploy.timer
 
-# 3. verify
-systemctl list-timers agentty-site-deploy.timer
-journalctl -u agentty-site-deploy.service -f
+# 5. nginx already proxies /_deploy-hook → 127.0.0.1:9099 (see agentty.org.nginx)
 ```
 
-`deploy.sh` needs root for the `rsync` into `/var/www` and the nginx reload.
-Either run the unit as a user with passwordless sudo for those steps, or change
-the unit's `User=` to a dedicated deploy role.
+## The GitHub webhooks (the only GitHub-side step)
 
-## Force a deploy now
+Add the SAME webhook to **both** repos (`1ay1/agentty` and `1ay1/agentty.org`):
+
+- **Settings → Webhooks → Add webhook**
+- Payload URL: `https://agentty.org/_deploy-hook`
+- Content type: `application/json`
+- Secret: the value from `/etc/agentty-deploy.env`
+- Events: **Just the push event** — plus, on the agentty repo, also check
+  **Releases** (so a new release refreshes the version badge).
+
+That's it. After the webhooks are added, the whole thing is hands-off forever.
+
+## Observability
 
 ```bash
-FORCE=1 ./scripts/redeploy-on-release.sh        # ignore the recorded tag
-# or
-sudo systemctl start agentty-site-deploy.service
+systemctl status agentty-deploy-hook.service     # listener
+journalctl -u agentty-deploy-hook.service -f     # incoming webhooks
+systemctl list-timers agentty-deploy.timer       # next backstop run
+tail -f /var/log/agentty-deploy/autodeploy.log   # deploy log
+curl -fsS http://127.0.0.1:9099/health           # → ok
 ```
-
-## Push-based alternative (instead of polling)
-
-If you'd rather deploy the instant a release finishes, add a final job to
-agentty's `.github/workflows/release.yml` that pings the server:
-
-```yaml
-  notify-site:
-    needs: [linux-x86_64, macos-arm64, windows]   # the binary build legs
-    runs-on: ubuntu-latest
-    steps:
-      - run: curl -fsSL -X POST -H "Authorization: Bearer ${{ secrets.SITE_DEPLOY_TOKEN }}" \
-               https://deploy.agentty.org/hook
-```
-
-…backed by a tiny authenticated endpoint on the server that runs
-`redeploy-on-release.sh`. The polling timer is simpler and needs no inbound
-port or shared secret, so it's the default; the webhook just trades that for
-lower latency.
