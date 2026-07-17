@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { site } from "@/lib/site";
 
 export function Breadcrumb({ title }: { title: string }) {
   return (
@@ -13,11 +12,17 @@ export function Breadcrumb({ title }: { title: string }) {
   );
 }
 
-export function EditThisPage({ path }: { path: string }) {
+export function EditThisPage({ path, repo = "agentty.org" }: { path: string; repo?: string }) {
+  // docs pages live in the agentty repo (repo="agentty"); everything else in the
+  // site repo ("agentty.org"). Both edit on the master branch.
+  const base =
+    repo === "agentty"
+      ? "https://github.com/1ay1/agentty"
+      : "https://github.com/1ay1/agentty.org";
   return (
     <div className="edit-page">
       <a
-        href={`${site.github}/edit/master/${path}`}
+        href={`${base}/edit/master/${path}`}
         target="_blank"
         rel="noopener noreferrer"
       >

@@ -24,6 +24,8 @@ function inline(text: string): string {
   });
 
   out = out
+    // keyboard chips [[Ctrl+K]] -> <kbd>Ctrl+K</kbd>
+    .replace(/\[\[([^\]]+)\]\]/g, (_m, k) => `<kbd>${k}</kbd>`)
     // images ![alt](src)
     .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_m, alt, src) => `<img src="${src}" alt="${alt}" loading="lazy" />`)
     // links [text](href)
@@ -56,6 +58,44 @@ export function markdownToHtml(md: string): string {
 
   while (i < lines.length) {
     const line = lines[i];
+
+    // directive: a lone `:::release-table` (etc.) becomes a sentinel the page
+    // hydrates into a live component. Kept out of the escaped text stream.
+    const directive = line.match(/^:::(release-table)\s*$/);
+    if (directive) {
+      flushParagraph(para);
+      html.push(`<div data-directive="${directive[1]}"></div>`);
+      i++;
+      continue;
+    }
+
+    // callout block:  :::note | :::tip | :::warn [optional label]
+    //   ...body lines...
+    // :::
+    const callout = line.match(/^:::(note|tip|warn)\s*(.*)$/);
+    if (callout && !/^:::(release-table)/.test(line)) {
+      flushParagraph(para);
+      const type = callout[1];
+      const label =
+        callout[2].trim() ||
+        (type === "warn" ? "Warning" : type === "tip" ? "Tip" : "Note");
+      const icon = type === "warn" ? "\u26a0" : type === "tip" ? "\u2726" : "\u2139";
+      const inner: string[] = [];
+      i++;
+      while (i < lines.length && !/^:::\s*$/.test(lines[i])) {
+        inner.push(lines[i]);
+        i++;
+      }
+      i++; // closing :::
+      const cls = type === "note" ? "note" : `note ${type}`;
+      const bodyHtml = inline(esc(inner.join(" ").trim()));
+      html.push(
+        `<div class="${cls}"><p><span class="label"><span class="note-ico">${icon}</span>${esc(
+          label,
+        )}</span>${bodyHtml}</p></div>`,
+      );
+      continue;
+    }
 
     // fenced code block ```lang
     const fence = line.match(/^```(\w*)\s*$/);

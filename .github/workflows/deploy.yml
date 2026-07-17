@@ -1,0 +1,40 @@
+name: Deploy agentty.org
+
+# Rebuilds and deploys the static site to this server. Runs on a SELF-HOSTED
+# runner installed on the production box (labels: [self-hosted, agentty-web]),
+# because deploy.sh rsyncs into /var/www and reloads the local nginx.
+#
+# Triggers:
+#   - push to master of this repo (site code / committed docs fallback changed)
+#   - repository_dispatch "docs-updated" from the agentty repo (docs edited there)
+#   - manual run (workflow_dispatch)
+on:
+  push:
+    branches: [master]
+  repository_dispatch:
+    types: [docs-updated]
+  workflow_dispatch:
+
+# Never let two deploys race on the webroot / nginx.
+concurrency:
+  group: deploy-agentty-org
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, agentty-web]
+    steps:
+      - name: Checkout site
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Build + deploy
+        # sync-docs.mjs (invoked by deploy.sh) fetches docs/website from the
+        # agentty repo at this ref. On the runner there is no sibling ../agentty
+        # checkout, so it fetches from GitHub — always the latest master docs.
+        env:
+          AGENTTY_DOCS_REF: master
+        run: ./deploy.sh
+</content>

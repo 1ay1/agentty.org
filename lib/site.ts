@@ -19,56 +19,11 @@ export const site = {
 export type NavItem = { title: string; href: string };
 export type NavSection = { title: string; items: NavItem[] };
 
-export const docsNav: NavSection[] = [
-  {
-    title: "Getting Started",
-    items: [
-      { title: "Introduction", href: "/docs" },
-      { title: "Installation", href: "/docs/installation" },
-      { title: "Quick Start", href: "/docs/quick-start" },
-      { title: "Authentication", href: "/docs/authentication" },
-      { title: "Providers & Models", href: "/docs/providers" },
-    ],
-  },
-  {
-    title: "User Manual",
-    items: [
-      { title: "The Interface", href: "/docs/interface" },
-      { title: "Keybindings", href: "/docs/keybindings" },
-      { title: "Permission Profiles", href: "/docs/profiles" },
-      { title: "Threads & Persistence", href: "/docs/threads" },
-      { title: "Configuration", href: "/docs/configuration" },
-      { title: "CLI Reference", href: "/docs/cli" },
-    ],
-  },
-  {
-    title: "Tools",
-    items: [
-      { title: "Tool Overview", href: "/docs/tools" },
-      { title: "Sandboxing", href: "/docs/sandboxing" },
-      { title: "Workspace Boundary", href: "/docs/workspace" },
-    ],
-  },
-  {
-    title: "Advanced",
-    items: [
-      { title: "SSH Air-gap", href: "/docs/airgap" },
-      { title: "Zed / ACP", href: "/docs/acp" },
-      { title: "MCP Server", href: "/docs/mcp" },
-      { title: "Agent Skills", href: "/docs/skills" },
-      { title: "Corporate Proxies", href: "/docs/proxies" },
-      { title: "Building from Source", href: "/docs/building" },
-      { title: "Architecture", href: "/docs/architecture" },
-    ],
-  },
-  {
-    title: "Help",
-    items: [
-      { title: "Troubleshooting", href: "/docs/troubleshooting" },
-      { title: "FAQ", href: "/docs/faq" },
-    ],
-  },
-];
+// docsNav is DERIVED from the docs markdown frontmatter (nav_section / nav_order)
+// and written to lib/docs-nav.generated.ts by scripts/sync-docs.mjs at build
+// time. Client components (DocsSidebar) import it from here. Editing a doc's
+// frontmatter is the only way to change the sidebar — there is no hand-kept list.
+export { docsNav } from "./docs-nav.generated";
 
 export const topNav: NavItem[] = [
   { title: "Docs", href: "/docs" },

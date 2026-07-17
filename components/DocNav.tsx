@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { docsNav } from "@/lib/site";
 
-// Flattened ordered list for prev/next navigation
-const flat = docsNav.flatMap((s) => s.items);
-
-export function DocNav({ current }: { current: string }) {
-  const idx = flat.findIndex((i) => i.href === current);
-  const prev = idx > 0 ? flat[idx - 1] : null;
-  const next = idx >= 0 && idx < flat.length - 1 ? flat[idx + 1] : null;
+// Prev/next footer navigation. The dynamic docs route computes prev/next from
+// the frontmatter-derived order (lib/docs.ts) and passes them in directly.
+export function DocNav({
+  prev,
+  next,
+}: {
+  prev?: { title: string; href: string } | null;
+  next?: { title: string; href: string } | null;
+}) {
   return (
     <div className="docnav">
       {prev ? (

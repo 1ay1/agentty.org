@@ -11,6 +11,13 @@ DOMAIN="agentty.org"
 echo "==> Building static site"
 cd "$PROJECT"
 
+echo "==> Syncing docs from the agentty repo (docs/website/*.md)"
+# Pulls the docs source of truth out of 1ay1/agentty into content/docs/ and
+# regenerates the frontmatter-derived sidebar (lib/docs-nav.generated.ts).
+# Prefers a sibling ../agentty checkout, else fetches from GitHub. Never fails
+# the deploy — falls back to the committed content/docs on any error.
+node scripts/sync-docs.mjs || echo "   (docs sync skipped; using committed content/docs)"
+
 echo "==> Measuring the real agentty binary (size + cold-start)"
 # Regenerates lib/stats.generated.ts so the site's numbers always match the
 # binary that's actually installed. Never fails the deploy if the binary is
