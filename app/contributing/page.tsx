@@ -51,10 +51,12 @@ export default function Contributing() {
 
       <h2>Releases</h2>
       <p>
-        Maintainers cut releases locally with one script — no CI in the loop:{" "}
-        <code>scripts/bump.sh 0.2.0</code> rewrites the version, builds every artifact
-        (deb/rpm/pkg.tar.zst/tarball/binaries/Homebrew/Scoop/AUR), tags, pushes, and creates
-        the GitHub release. Single source of truth: <code>CMakeLists.txt</code>.
+        Maintainers cut releases with one command:{" "}
+        <code>scripts/cut-release.sh X.Y.Z</code> bumps the version, promotes the{" "}
+        <code>CHANGELOG.md</code> <strong>Unreleased</strong> section to a dated entry, commits,
+        tags <code>vX.Y.Z</code>, and pushes. The tag push fires GitHub Actions, which builds
+        every artifact (deb/rpm/pkg.tar.zst/tarball/binaries) and auto-submits to
+        Homebrew/Scoop/winget/AUR. Single source of truth: <code>CMakeLists.txt</code>.
       </p>
 
       <h2>Code of Conduct</h2>

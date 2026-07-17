@@ -15,8 +15,8 @@ export default function Building() {
       <Breadcrumb title="Building from Source" />
       <h1>Building from Source</h1>
       <p className="lead">
-        agentty builds with CMake and a C++26 toolchain. The release binaries are built
-        locally with one script — no CI in the loop.
+        agentty builds with CMake and a C++26 toolchain. Cutting a release is a single
+        command that tags and pushes; GitHub Actions builds every binary and OS package.
       </p>
 
       <h2 id="requirements">Requirements</h2>
@@ -42,28 +42,34 @@ cmake --build build -j
       <Code>{`cmake -B build -DAGENTTY_STANDALONE=ON`}</Code>
       <p>
         Statically links OpenSSL + nghttp2 + libstdc++ + libgcc when their <code>.a</code>{" "}
-        archives are installed. libc stays dynamic on Linux/macOS (fully-static glibc breaks{" "}
-        <code>getaddrinfo</code> and the NSS resolver). For a 100% static binary, pass{" "}
-        <code>-DAGENTTY_FULLY_STATIC=ON</code> with a musl toolchain.
+        archives are installed, while libc stays dynamic. For a 100% static binary that runs
+        on any Linux userland, pass <code>-DAGENTTY_FULLY_STATIC=ON</code>.
       </p>
       <p>
-        Accurate one-liner: <strong>statically linked except libc and (usually) OpenSSL.</strong>{" "}
-        The latest release ships pre-built <code>agentty-linux-x86_64</code> and{" "}
-        <code>agentty-linux-aarch64</code> with zero shared-library dependencies (Alpine +
-        musl + GCC 14.2).
+        The prebuilt Linux release binaries are <strong>true standalone executables</strong>:
+        linked <code>-static -no-pie</code> into a classic <code>ET_EXEC</code> with no{" "}
+        <code>NEEDED</code> entry and no <code>PT_INTERP</code>, so one file runs on glibc
+        (Debian/Ubuntu/Fedora), musl (Alpine), and 64-bit Raspberry Pi OS alike. A build-time
+        ELF-shape assertion (<code>cmake/assert_static_pie.cmake</code>) hard-fails the compile
+        if the artifact ever regains a dynamic dependency. Termux/Android needs a PIE — build
+        that with the opt-in <code>-DAGENTTY_STATIC_PIE=ON</code> on a musl toolchain.
       </p>
 
       <h2 id="release">Cutting a release (maintainers)</h2>
-      <Code>{`scripts/bump.sh 0.2.0        # bump CMakeLists, build everything, tag, upload via gh
+      <Code>{`scripts/cut-release.sh X.Y.Z       # POSIX / macOS / Linux / Git-Bash
+scripts\\cut-release.cmd X.Y.Z       # Windows cmd.exe
 
-# or step-by-step
-scripts/release.sh                  # build every artifact into dist/, no upload
-scripts/release.sh --tag v0.2.0     # build + tag + upload via gh`}</Code>
+scripts/cut-release.sh X.Y.Z --dry-run   # preview the exact diff, write nothing`}</Code>
       <p>
         Single source of truth: <code>CMakeLists.txt</code>&apos;s{" "}
-        <code>project(agentty VERSION …)</code> line. <code>bump.sh</code> rewrites it,
-        commits, builds deb/rpm/pkg.tar.zst/tarball/binaries/Homebrew/Scoop/AUR manifests,
-        tags, pushes, and creates the GitHub release with every artifact attached.
+        <code>project(agentty VERSION …)</code> line. <code>cut-release.sh</code> bumps it,
+        promotes <code>CHANGELOG.md</code>&apos;s <code>[Unreleased]</code> section to a dated{" "}
+        <code>[X.Y.Z]</code>, commits <code>release: vX.Y.Z</code>, tags <code>vX.Y.Z</code>,
+        and pushes. The tag push fires GitHub Actions, which builds every binary + OS package
+        (Linux x86_64/aarch64 on native runners, macOS Intel/ARM, Windows exe/msi) and
+        auto-submits to winget, Homebrew, Scoop, and the AUR — nix/snap/gentoo manifests are
+        attached to the release. Guards refuse a downgrade, duplicate version, dirty tree, or
+        existing tag.
       </p>
 
       <DocNav current="/docs/building" />

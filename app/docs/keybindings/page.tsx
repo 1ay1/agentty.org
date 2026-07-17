@@ -61,6 +61,14 @@ export default function Keybindings() {
         <code>press ↑ to edit queued — type to queue another…</code> when relevant.
       </p>
 
+      <h2 id="palette">Palette-only actions</h2>
+      <p>
+        Some actions have no dedicated key — reach them from the command palette
+        (<kbd>Ctrl+K</kbd>). Notably <strong>Rewind to checkpoint</strong> opens a
+        diff-preview picker over every checkpointed turn (git repo + idle session); see{" "}
+        <a href="/docs/threads#checkpoints">Checkpoints &amp; rewind</a>.
+      </p>
+
       <DocNav current="/docs/keybindings" />
       <EditThisPage path="app/docs/keybindings/page.tsx" />
     </>

@@ -43,6 +43,32 @@ export default function Threads() {
         JSON, you can also <code>rm</code> one or copy it elsewhere as a backup.
       </p>
 
+      <h2 id="checkpoints">Checkpoints &amp; rewind</h2>
+      <p>
+        Inside a git repo, every user turn pins a <strong>worktree snapshot</strong> before
+        the agent starts editing. The turn&apos;s meta line carries a subtle{" "}
+        <code>· ↺ checkpoint</code> tag so a restore point reads as an ordinary turn, not a
+        banner. Nothing is committed to your history — the snapshot is captured out-of-band,
+        concurrent with the request, so it costs you nothing.
+      </p>
+      <p>
+        Open the command palette (<kbd>Ctrl+K</kbd>) and pick{" "}
+        <strong>Rewind to checkpoint</strong> to reach <em>any</em> earlier turn, not just the
+        last. The picker lists every checkpointed turn (turn number + prompt preview + relative
+        time), and each row shows a <code>N files · +A −D</code> summary of what the worktree
+        has changed <em>since</em> that point — computed asynchronously, so opening is instant
+        even on a big repo. <kbd>↑↓</kbd> / <kbd>j</kbd> / <kbd>k</kbd> move,{" "}
+        <kbd>Enter</kbd> rewinds, <kbd>Esc</kbd> cancels.
+      </p>
+      <p>
+        A rewind is a destructive double restore: the worktree files <em>and</em> the
+        transcript both return to the instant before that turn was submitted, and the original
+        prompt is refilled into the composer so you can edit and resend. It&apos;s gated on an
+        idle session and a real git repo (a friendly toast explains why otherwise). Checkpoints
+        key off the project directory agentty was launched from, so they keep working even
+        under <code>--workspace /</code>.
+      </p>
+
       <h2 id="atomic">Atomic writes</h2>
       <p>
         Thread and credential writes are atomic: agentty writes to a temp file, calls{" "}

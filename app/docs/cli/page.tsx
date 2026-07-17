@@ -58,6 +58,7 @@ agentty --sandbox on                   # require an OS sandbox for bash/diagnost
             <tr><td>Compact context</td><td>Replace history with a structured summary to reclaim the context window.</td></tr>
             <tr><td>Review changes</td><td>Open the diff review pane (also <code>^R</code>).</td></tr>
             <tr><td>Accept all / Reject all changes</td><td>Apply or discard every pending hunk.</td></tr>
+            <tr><td>Rewind to checkpoint</td><td>Jump to an earlier turn&apos;s worktree snapshot via a diff-preview picker (git repo + idle session; see <a href="/docs/threads#checkpoints">Checkpoints</a>).</td></tr>
             <tr><td>Cycle profile</td><td>Ask → Minimal → Write (also <code>S-Tab</code>).</td></tr>
             <tr><td>Open model picker / Switch provider</td><td>Change the active model (<code>^/</code>) or backend (<code>^P</code>).</td></tr>
             <tr><td>Open threads / Open plan</td><td>Browse saved conversations (<code>^J</code>) or view the todo plan (<code>^T</code>).</td></tr>

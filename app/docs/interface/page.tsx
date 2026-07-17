@@ -24,6 +24,11 @@ export default function Interface() {
         the assistant&apos;s replies, and every tool call render in order. Queued messages
         appear as preview rows above the composer — visually identical to real user turns.
       </p>
+      <p>
+        Inside a git repo, a user turn that pinned a worktree snapshot carries a subtle{" "}
+        <code>· ↺ checkpoint</code> tag in its meta line — a restore point you can{" "}
+        <a href="/docs/threads#checkpoints">rewind to</a> from the command palette.
+      </p>
 
       <h2 id="composer">The composer</h2>
       <p>
