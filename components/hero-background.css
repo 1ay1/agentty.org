@@ -24,8 +24,8 @@
   position: absolute;
   inset: -2px;
   background-image:
-    linear-gradient(rgba(255, 180, 84, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 180, 84, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(217, 107, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(217, 107, 255, 0.05) 1px, transparent 1px);
   background-size: 44px 44px;
   -webkit-mask-image: radial-gradient(900px 520px at 78% 4%, #000, transparent 72%);
   mask-image: radial-gradient(900px 520px at 78% 4%, #000, transparent 72%);
@@ -38,7 +38,7 @@
   height: 720px;
   top: -260px;
   left: 8%;
-  background: radial-gradient(circle, rgba(255, 180, 84, 0.16), transparent 62%);
+  background: radial-gradient(circle, rgba(217, 107, 255, 0.16), transparent 62%);
   filter: blur(8px);
   will-change: transform, opacity;
   transform: translateZ(0);
@@ -72,11 +72,11 @@
    without the murky overlay-blend the dark scanlines needed */
 html[data-theme="light"] .hero-bg-grid {
   background-image:
-    linear-gradient(rgba(194, 97, 10, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(194, 97, 10, 0.07) 1px, transparent 1px);
+    linear-gradient(rgba(160, 18, 201, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(160, 18, 201, 0.07) 1px, transparent 1px);
 }
 html[data-theme="light"] .hero-bg-glow {
-  background: radial-gradient(circle, rgba(194, 97, 10, 0.10), transparent 62%);
+  background: radial-gradient(circle, rgba(160, 18, 201, 0.10), transparent 62%);
 }
 
 @media (max-width: 640px) {

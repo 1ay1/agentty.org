@@ -37,7 +37,7 @@ export default async function Image({
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "76px 80px",
-          backgroundColor: "#0a0806",
+          backgroundColor: "#08070c",
           backgroundImage:
             "radial-gradient(1000px 560px at 84% -12%, rgba(255,180,84,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(255,122,89,0.16), transparent 58%)",
           fontFamily: "monospace",
@@ -53,7 +53,7 @@ export default async function Image({
             letterSpacing: "-0.02em",
           }}
         >
-          <span style={{ color: "#ffb454" }}>▌</span>
+          <span style={{ color: "#d96bff" }}>▌</span>
           <span style={{ color: "#f2f4f8" }}>agentty</span>
           <span style={{ color: "#5b6472", fontSize: "24px", fontWeight: 500 }}>
             / blog
@@ -67,7 +67,7 @@ export default async function Image({
             gap: "22px",
           }}
         >
-          <div style={{ fontSize: "22px", color: "#ff7a59", letterSpacing: "0.02em" }}>
+          <div style={{ fontSize: "22px", color: "#7c5cff", letterSpacing: "0.02em" }}>
             {meta}
           </div>
           <div

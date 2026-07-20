@@ -17,10 +17,10 @@ import { useEffect, useRef } from "react";
 const GLYPHS =
   "01{}[]()<>/=+-*&|!?;:.#$@_λ→∴⟨⟩∇∂∑01アイウエオカキクケコ▓▒░╱╲┃━┏┓┗┛".split("");
 
-const COLORS_DARK = ["#ffb454", "#ff7a59", "#ffc978", "#8a6a3a"];
-const COLORS_LIGHT = ["#c2610a", "#cf3f1c", "#a34f06", "#9a8a6a"];
-const LEAD_DARK = "#fff3df";
-const LEAD_LIGHT = "#221910";
+const COLORS_DARK = ["#d96bff", "#7c5cff", "#4fd6e0", "#e79bff"];
+const COLORS_LIGHT = ["#a012c9", "#5b3fd6", "#0a8b98", "#820aa4"];
+const LEAD_DARK = "#f6ecff";
+const LEAD_LIGHT = "#1c1730";
 
 export function HeroBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

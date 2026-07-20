@@ -17,7 +17,7 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          backgroundColor: "#0a0806",
+          backgroundColor: "#08070c",
           backgroundImage:
             "radial-gradient(1000px 560px at 84% -12%, rgba(255,180,84,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(255,122,89,0.18), transparent 58%)",
           fontFamily: "monospace",
@@ -28,13 +28,13 @@ export default function OpengraphImage() {
             display: "flex",
             alignItems: "center",
             gap: "18px",
-            color: "#ffb454",
+            color: "#d96bff",
             fontSize: "34px",
             fontWeight: 700,
             letterSpacing: "-0.02em",
           }}
         >
-          <span style={{ color: "#ffb454" }}>▌</span>
+          <span style={{ color: "#d96bff" }}>▌</span>
           <span style={{ color: "#f2f4f8" }}>agentty</span>
         </div>
 
@@ -53,7 +53,7 @@ export default function OpengraphImage() {
           Blazing-fast&nbsp;
           <span
             style={{
-              backgroundImage: "linear-gradient(110deg,#ffb454,#ff7a59)",
+              backgroundImage: "linear-gradient(110deg,#d96bff,#7c5cff)",
               backgroundClip: "text",
               color: "transparent",
             }}
@@ -82,10 +82,10 @@ export default function OpengraphImage() {
             alignItems: "center",
             gap: "14px",
             fontSize: "26px",
-            color: "#ff7a59",
+            color: "#7c5cff",
           }}
         >
-          <span style={{ color: "#ffb454" }}>$</span>
+          <span style={{ color: "#d96bff" }}>$</span>
           <span style={{ color: "#c9d1d9" }}>
             curl -fsSL agentty.org/install.sh | sh
           </span>

@@ -2,7 +2,7 @@
    Mirrors maya/widget/welcome_screen.hpp rendering. All motion is CSS-driven
    (composited transform + color) so the main thread stays idle. */
 .agentty-logo {
-  --logo-mag: #ffb454; /* amber phosphor brand mark */
+  --logo-mag: #d96bff; /* magenta phosphor brand mark */
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   line-height: 1;
   letter-spacing: 0;
@@ -11,7 +11,7 @@
   align-items: flex-start;
   color: var(--logo-mag);
   user-select: none;
-  text-shadow: 0 0 22px rgba(255, 180, 84, 0.4);
+  text-shadow: 0 0 22px rgba(217, 107, 255, 0.4);
   /* heartbeat — periodic white flash of the whole mark. The TUI fires it
      only AFTER the cascade settles: kPhase1End = (8-1)*100 + 500 = 1200ms,
      then every kPulsePeriod (3200ms) for kPulseWidth (80ms ≈ 2.5% of period). */
@@ -21,8 +21,8 @@
 /* light theme: the pastel magenta washes out on white — deepen it and drop
    the neon glow to a faint tint so the mark keeps its weight */
 html[data-theme="light"] .agentty-logo {
-  --logo-mag: #c2610a;
-  text-shadow: 0 0 14px rgba(194, 97, 10, 0.16);
+  --logo-mag: #a012c9;
+  text-shadow: 0 0 14px rgba(160, 18, 201, 0.16);
 }
 
 /* one letter = a vertical stack of half-block rows, animated as a unit */
