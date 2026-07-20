@@ -116,24 +116,62 @@ export default function Home() {
         <div className="wrap">
           <p className="eyebrow">Why agentty</p>
           <h2 className="section-title">Everything the official client does &mdash; and the things it doesn&apos;t.</h2>
-          <div className="grid grid-3" style={{ marginTop: 28 }}>
-            <div className="card tilt" data-reveal><span className="ico">⚡</span><h3>Native speed</h3><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">📦</span><h3>One static binary</h3><p>{stats.sizeMB}. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>Any model</h3><p>Claude by default via your Pro/Max subscription — or GPT, Groq, OpenRouter, Together, Cerebras, and local Ollama. Switch backends live with <code>^P</code>. <Link href="/docs/providers">Providers &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS). Workspace, system libs, and network stay reachable; <code>~/.ssh</code>, <code>/etc</code>, and other projects are read-only. An approved bash call still can&apos;t <code>cat ~/.ssh/id_rsa</code>.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays the bytes over SOCKS5-over-SSH. TLS pins on the real upstreams end-to-end, so the network in between can&apos;t MITM you.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🧠</span><h3>Learns your codebase</h3><p>Agent Skills teach it your conventions from a <code>SKILL.md</code>; <code>remember</code>/<code>forget</code> give it durable cross-session memory. Teach it once, every thread knows. <Link href="/docs/skills">Skills &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">🧵</span><h3>Threads that persist</h3><p>Every conversation is a saved thread you can reopen with <code>^J</code>. Long threads compact automatically so you never blow the context window mid-task.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🤖</span><h3>Isolated subagents</h3><p>The <code>task</code> tool spawns a subagent with its own context window to burn through a self-contained job, then returns one condensed report — keeping your main thread focused.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔍</span><h3>Adjustable reasoning</h3><p>Dial thinking effort per model from the picker — fast answers for small edits, deep reasoning for hard refactors, without leaving the thread.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🖼️</span><h3>Paste images</h3><p>Drop a PNG, JPEG, GIF, or WebP path (or <code>^V</code> from the clipboard) straight into the composer — screenshots, diagrams, and mockups go to the model inline.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">▶️</span><h3>Run code blocks</h3><p>When a reply hands you shell commands, <code>^G</code> runs one <strong>interactively on your real terminal</strong> — sudo prompts work, output streams live, <code>^C</code> kills the command not agentty. Attach the captured output back to the composer with one key. <Link href="/docs/interface">The interface &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">📝</span><h3>Mentions &amp; palette</h3><p>Type <code>@</code> to mention a file, <code>#</code> to jump to a symbol, <code>/</code> to open the command palette (also <code>^K</code>). The composer knows your project.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔐</span><h3>Permission profiles</h3><p>Start in <strong>Ask</strong> — writes, shell, and network each prompt first. <code>S-Tab</code> cycles to <strong>Write</strong> (autonomous) or <strong>Minimal</strong>. Every effect is gated by a compile-time permission matrix. <Link href="/docs/profiles">Profiles &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">📐</span><h3>Workspace boundary</h3><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">📜</span><h3>Inline render</h3><p>Lives at the bottom of your terminal, preserves scrollback, never takes over the screen.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>MCP, both ways</h3><p>Serve agentty&apos;s tools to any MCP client with <code>mcp-serve</code>, or consume other MCP servers from a <code>.agentty/mcp.json</code> — their tools appear indistinguishable from native ones. <Link href="/docs/mcp">MCP &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">🧩</span><h3>Runs inside Zed (ACP)</h3><p><code>agentty acp</code> speaks the Agent Client Protocol, so agentty becomes a first-class agent panel in Zed — streaming text, inline diffs, native permission prompts, session reload. Same engine as the TUI. <Link href="/docs/acp">Set it up &rarr;</Link></p></div>
+          <p className="section-sub">
+            A full coding agent, not a thin wrapper. Grouped by what you came for.
+          </p>
+
+          <div className="feat-groups">
+            {/* PERFORMANCE */}
+            <div className="feat-group" data-reveal>
+              <div className="feat-head"><span className="fg-ico">⚡</span><h3>Performance &amp; footprint</h3></div>
+              <div className="feat-cards">
+                <div className="card tilt lead"><h4>Native speed</h4><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup. The redraw loop is a <code>poll(2)</code> over the model stream and your input fd &mdash; every keystroke lands on the next frame.</p></div>
+                <div className="card tilt"><h4>One static binary</h4><p>{stats.sizeMB}. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
+                <div className="card tilt"><h4>Inline render</h4><p>Lives at the bottom of your terminal, preserves scrollback, never takes over the screen. Diffs, todos, and exit codes get purpose-built widgets.</p></div>
+              </div>
+            </div>
+
+            {/* MODELS & AUTH */}
+            <div className="feat-group" data-reveal>
+              <div className="feat-head"><span className="fg-ico">🔌</span><h3>Models &amp; auth</h3></div>
+              <div className="feat-cards">
+                <div className="card tilt lead"><h4>Any model</h4><p>Claude by default via your Pro/Max subscription &mdash; or GPT, Groq, OpenRouter, Together, Cerebras, and local Ollama. Switch backends and models live with <code>^P</code>&nbsp;/&nbsp;<code>^/</code>, no restart. <Link href="/docs/providers">Providers &rarr;</Link></p></div>
+                <div className="card tilt"><h4>Adjustable reasoning</h4><p>Dial thinking effort per model &mdash; fast answers for small edits, deep reasoning for hard refactors, without leaving the thread.</p></div>
+                <div className="card tilt"><h4>Paste images</h4><p>Drop a PNG/JPEG/GIF/WebP path or <code>^V</code> from the clipboard &mdash; screenshots, diagrams, and mockups go to the model inline.</p></div>
+              </div>
+            </div>
+
+            {/* SAFETY */}
+            <div className="feat-group" data-reveal>
+              <div className="feat-head"><span className="fg-ico">🛡️</span><h3>Safety &amp; isolation</h3></div>
+              <div className="feat-cards">
+                <div className="card tilt lead"><h4>Sandbox by default</h4><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS). Workspace, system libs, and network stay reachable; <code>~/.ssh</code>, <code>/etc</code>, and other projects are read-only. An approved bash call still can&apos;t <code>cat ~/.ssh/id_rsa</code>.</p></div>
+                <div className="card tilt"><h4>Permission profiles</h4><p>Start in <strong>Ask</strong>; <code>S-Tab</code> cycles to <strong>Write</strong> or <strong>Minimal</strong>. Every effect is gated by a compile-time permission matrix. <Link href="/docs/profiles">Profiles &rarr;</Link></p></div>
+                <div className="card tilt"><h4>Workspace boundary</h4><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>
+              </div>
+            </div>
+
+            {/* WORKFLOW */}
+            <div className="feat-group" data-reveal>
+              <div className="feat-head"><span className="fg-ico">🧠</span><h3>Workflow &amp; memory</h3></div>
+              <div className="feat-cards">
+                <div className="card tilt lead"><h4>Learns your codebase</h4><p>Agent Skills teach it your conventions from a <code>SKILL.md</code>; <code>remember</code>/<code>forget</code> give it durable cross-session memory; <code>search_docs</code> runs local RAG over your knowledge corpus. Teach it once, every thread knows. <Link href="/docs/skills">Skills &rarr;</Link></p></div>
+                <div className="card tilt"><h4>Threads that persist</h4><p>Every conversation is a saved thread you reopen with <code>^J</code>. Long threads compact automatically so you never blow the context window mid-task.</p></div>
+                <div className="card tilt"><h4>Isolated subagents</h4><p>The <code>task</code> tool spawns a subagent with its own context window, then returns one condensed report &mdash; keeping your main thread focused.</p></div>
+                <div className="card tilt"><h4>Run code blocks</h4><p>When a reply hands you shell commands, <code>^G</code> runs one interactively on your real terminal &mdash; sudo prompts work, output streams live, <code>^C</code> kills the command not agentty.</p></div>
+                <div className="card tilt"><h4>Mentions &amp; palette</h4><p>Type <code>@</code> to mention a file, <code>#</code> to jump to a symbol, <code>/</code> or <code>^K</code> for the command palette. The composer knows your project.</p></div>
+              </div>
+            </div>
+
+            {/* EXTENSIBILITY */}
+            <div className="feat-group" data-reveal>
+              <div className="feat-head"><span className="fg-ico">🧩</span><h3>Reach &amp; extensibility</h3></div>
+              <div className="feat-cards">
+                <div className="card tilt lead"><h4>One-command SSH air-gap</h4><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet &mdash; your laptop relays the bytes over SOCKS5-over-SSH. TLS pins on the real upstreams end-to-end, so the network in between can&apos;t MITM you.</p></div>
+                <div className="card tilt"><h4>Runs inside Zed (ACP)</h4><p><code>agentty acp</code> speaks the Agent Client Protocol &mdash; a first-class agent panel in Zed with streaming text, inline diffs, and native permission prompts. Same engine as the TUI. <Link href="/docs/acp">Set it up &rarr;</Link></p></div>
+                <div className="card tilt"><h4>MCP, both ways</h4><p>Serve agentty&apos;s tools to any MCP client with <code>mcp-serve</code>, or consume other MCP servers from <code>.agentty/mcp.json</code> &mdash; their tools appear indistinguishable from native ones. <Link href="/docs/mcp">MCP &rarr;</Link></p></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
