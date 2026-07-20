@@ -141,7 +141,7 @@ export function AgenttyTui() {
       const r = el.getBoundingClientRect();
       const px = (e.clientX - r.left) / r.width;  // 0..1
       const py = (e.clientY - r.top) / r.height;  // 0..1
-      const MAX = 3; // degrees of lean — subtle, not showy
+      const MAX = 7; // degrees of lean
       tx = (px - 0.5) * 2 * MAX;       // rotateY
       ty = -(py - 0.5) * 2 * MAX;      // rotateX
       gx = px * 100;
