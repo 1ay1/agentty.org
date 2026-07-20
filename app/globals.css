@@ -582,13 +582,15 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
 
 @media (max-width: 720px) {
   .nav-links { display: none; }
-  /* on phones the nav is: brand (left) · theme toggle + hamburger (right).
-     Everything else moves into the slide-down menu so nothing overflows. */
+  /* on phones the nav is: brand (left) · GitHub + theme + hamburger (right).
+     Command palette + version pill move out; GitHub stays as an icon-only
+     button since it's the primary CTA. */
   .cmdk-trigger { display: none; }
-  .ghbtn { display: none; }
   .brand-ver { display: none; }
+  .ghbtn { padding: 7px 9px; }
+  .ghbtn span { display: none; }
   .nav-cta { gap: 6px; }
-  .nav-inner { gap: 12px; }
+  .nav-inner { gap: 10px; }
   .nav-toggle { display: flex; align-items: center; justify-content: center; }
   .mobile-menu {
     display: flex; flex-direction: column; gap: 2px;

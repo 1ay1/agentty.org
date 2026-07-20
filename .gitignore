@@ -10,3 +10,6 @@ next-env.d.ts
 # automation: deploy state + secrets (never committed)
 .last-deployed-tag
 deploy/.env
+
+# live backend deps (native, rebuilt on deploy)
+deploy/live/node_modules/

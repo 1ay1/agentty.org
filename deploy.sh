@@ -67,6 +67,17 @@ sudo ln -sf "/etc/nginx/sites-available/dev.${DOMAIN}" "/etc/nginx/sites-enabled
 sudo nginx -t
 sudo systemctl reload nginx
 
+echo "==> Syncing the live agentty backend service"
+# node deps for the live PTY/mock-model server (node-pty is native; only
+# rebuilds when missing).
+if [ ! -f "$PROJECT/deploy/live/node_modules/node-pty/build/Release/pty.node" ]; then
+  ( cd "$PROJECT/deploy/live" && npm install --no-audit --no-fund && npm rebuild node-pty )
+fi
+sudo cp "$PROJECT/deploy/agentty-live.service" /etc/systemd/system/agentty-live.service
+sudo systemctl daemon-reload
+sudo systemctl enable agentty-live.service >/dev/null 2>&1 || true
+sudo systemctl restart agentty-live.service
+
 echo "==> Done. https://${DOMAIN} is live."
 echo "    Live terminal:      https://dev.${DOMAIN}"
 echo "    Server-side stats:  https://stats.${DOMAIN}"

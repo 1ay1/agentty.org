@@ -55,6 +55,25 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
+    # ── LIVE agentty backend ──────────────────────────────────────────
+    # Proxy the WebSocket (and health check) to the local live server, which
+    # spawns the real agentty binary in a PTY against a mock model.
+    location /live/ws {
+        proxy_pass http://127.0.0.1:8790;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 660s;
+        proxy_send_timeout 660s;
+        proxy_buffering off;
+    }
+    location /live/health {
+        proxy_pass http://127.0.0.1:8790;
+        proxy_set_header Host $host;
+    }
+
     # Root → the terminal (the exported /dev/ page).
     location = / {
         try_files /dev/index.html =404;
