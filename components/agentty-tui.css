@@ -14,7 +14,7 @@
   border: 1px solid #20242e;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 30px 80px -28px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  box-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.02);
   max-width: 780px;
   margin: 56px auto 0;
   /* cursor-driven lean — vars default to flat, JS streams them in */
@@ -28,21 +28,19 @@
 }
 .ttui-stage:hover .ttui {
   box-shadow:
-    0 40px 100px -32px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(139, 140, 249, 0.16),
-    0 0 50px -22px rgba(139, 140, 249, 0.3);
+    0 30px 70px -30px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 /* light theme: the window stays a dark terminal (that's the product), but the
    halo around it must be a crisp elevation shadow, not a black smear */
 html[data-theme="light"] .ttui {
-  box-shadow: 0 24px 60px -24px rgba(23, 26, 34, 0.35), 0 2px 8px rgba(23, 26, 34, 0.08);
+  box-shadow: 0 20px 50px -26px rgba(23, 26, 34, 0.3), 0 2px 8px rgba(23, 26, 34, 0.06);
 }
 html[data-theme="light"] .ttui-stage:hover .ttui {
   box-shadow:
-    0 30px 70px -28px rgba(23, 26, 34, 0.4),
-    0 0 0 1px rgba(79, 81, 216, 0.18),
-    0 0 50px -22px rgba(79, 81, 216, 0.3);
+    0 26px 60px -30px rgba(23, 26, 34, 0.35),
+    0 0 0 1px rgba(23, 26, 34, 0.06);
 }
 
 /* glare sheen — a soft radial highlight that tracks the pointer and only

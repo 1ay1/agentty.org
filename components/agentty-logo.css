@@ -2,7 +2,7 @@
    Mirrors maya/widget/welcome_screen.hpp rendering. All motion is CSS-driven
    (composited transform + color) so the main thread stays idle. */
 .agentty-logo {
-  --logo-mag: #e29be0; /* bright_magenta (role_brand_alt) */
+  --logo-mag: #9a9bfb; /* restrained brand indigo, not neon pink */
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   line-height: 1;
   letter-spacing: 0;
@@ -11,18 +11,6 @@
   align-items: flex-start;
   color: var(--logo-mag);
   user-select: none;
-  text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
-  /* heartbeat — periodic white flash of the whole mark. The TUI fires it
-     only AFTER the cascade settles: kPhase1End = (8-1)*100 + 500 = 1200ms,
-     then every kPulsePeriod (3200ms) for kPulseWidth (80ms ≈ 2.5% of period). */
-  animation: logo-pulse 3.2s ease-in-out 1.2s infinite;
-}
-
-/* light theme: the pastel magenta washes out on white — deepen it and drop
-   the neon glow to a faint tint so the mark keeps its weight */
-html[data-theme="light"] .agentty-logo {
-  --logo-mag: #b0399f;
-  text-shadow: 0 0 14px rgba(176, 57, 159, 0.18);
 }
 
 /* one letter = a vertical stack of half-block rows, animated as a unit */
@@ -31,14 +19,9 @@ html[data-theme="light"] .agentty-logo {
   flex-direction: column;
   margin-right: 1ch;          /* SPACER between glyphs */
   will-change: transform;
-  /* drop-in cascade then a perpetual bob.
-     The drop runs ONCE, staggered by --delay (100ms/letter cascade).
-     The bob loops forever, phase-shifted by --bob-delay (a negative
-     offset ≈ 245ms/letter) so the sine wave travels left→right at the
-     same per-glyph phase (0.7 rad) the TUI uses. */
-  animation:
-    logo-drop 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) both var(--delay),
-    logo-bob 2.2s ease-in-out infinite var(--bob-delay);
+  /* one-time drop-in cascade, staggered by --delay (100ms/letter). No
+     perpetual bob — the mark settles and stays put like a real logo. */
+  animation: logo-drop 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) both var(--delay);
 }
 .logo-letter:last-child { margin-right: 0; }
 
@@ -64,29 +47,12 @@ html[data-theme="light"] .agentty-logo {
   .agentty-logo.lg { font-size: clamp(9px, 2.7vw, 22px); }
 }
 
+html[data-theme="light"] .agentty-logo { --logo-mag: #4f51d8; }
+
 @keyframes logo-drop {
-  /* TUI starts each glyph at -(kFontH + kPadTop + 1) = -9px on a 9px-tall
-     canvas ≈ -1em, then eases in with ease-out cubic. */
   from { transform: translateY(-1em); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
-
-/* ±1.5px bob on a 9px canvas ≈ ±0.16em; the per-letter delay makes the
-   wave travel L→R. Symmetric around 0 so the resting row is the home row. */
-@keyframes logo-bob {
-  0%   { transform: translateY(0); }
-  25%  { transform: translateY(-0.16em); }
-  75%  { transform: translateY(0.16em); }
-  100% { transform: translateY(0); }
-}
-
-@keyframes logo-pulse {
-  /* 80ms / 3200ms = 2.5% of the cycle flashes bright_white, the rest holds
-     the brand magenta — a sharp "system alive" blink, not a slow glow. */
-  0%, 3%, 100% { color: var(--logo-mag); }
-  1%, 2%       { color: var(--logo-flash, #ffffff); }
-}
-html[data-theme="light"] .agentty-logo { --logo-flash: #171a22; }
 
 @media (prefers-reduced-motion: reduce) {
   .agentty-logo,

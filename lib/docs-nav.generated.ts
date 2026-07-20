@@ -9,6 +9,7 @@ export const docsNav: NavSection[] = [
     title: "Getting Started",
     items: [
       { title: "Introduction", href: "/docs" },
+      { title: "agentty vs Claude Code", href: "/docs/vs-claude-code" },
       { title: "Installation", href: "/docs/installation" },
       { title: "Quick Start", href: "/docs/quick-start" },
       { title: "Authentication", href: "/docs/authentication" },
@@ -32,6 +33,7 @@ export const docsNav: NavSection[] = [
       { title: "Tool Overview", href: "/docs/tools" },
       { title: "Sandboxing", href: "/docs/sandboxing" },
       { title: "Workspace Boundary", href: "/docs/workspace" },
+      { title: "Retrieval (RAG)", href: "/docs/retrieval" },
     ],
   },
   {
@@ -44,6 +46,8 @@ export const docsNav: NavSection[] = [
       { title: "Corporate Proxies", href: "/docs/proxies" },
       { title: "Building from Source", href: "/docs/building" },
       { title: "Architecture", href: "/docs/architecture" },
+      { title: "Why modern C++ (not Rust)", href: "/docs/why-not-rust" },
+      { title: "The Rust critique, answered", href: "/docs/rust-critique" },
     ],
   },
   {

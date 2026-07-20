@@ -10,11 +10,17 @@ Quick answers to the questions people ask most.
 
 ## Does it work with my Claude Pro/Max subscription?
 
-Yes — OAuth against your existing Pro/Max plan is the main path. No extra billing; same account you already pay for. You can also use an `ANTHROPIC_API_KEY`, or a different [provider](/docs/providers) entirely.
+Yes — OAuth against your existing Pro/Max plan is supported (no extra billing, same account). But it's not the only path or even the recommended one: agentty is bring-your-own-model, so most people run it with an API key or a local Ollama model. See [Authentication](/docs/authentication).
+
+## Will using my Claude subscription with agentty get my account banned?
+
+The honest answer: agentty is a third-party client, so it carries the same footing as any third-party client that speaks to Anthropic's API. What agentty actually does is deliberately unexotic — it completes the **same OAuth flow** and uses the **same `CLAUDE_CODE_OAUTH_TOKEN`** mechanism Claude Code itself uses, sends ordinary Messages-API requests over HTTPS, and adds nothing that spoofs, scrapes, or circumvents rate limits. Credentials live only in `~/.config/agentty/credentials.json` (mode `0600`); nothing is sent anywhere except Anthropic.
+
+We're not affiliated with Anthropic and can't speak for their enforcement, and their terms can change. If you want **zero ambiguity**, use an `ANTHROPIC_API_KEY` (pay-as-you-go, unquestionably in-bounds) or point agentty at [another provider](/docs/providers) — OpenAI, Groq, OpenRouter, or a local Ollama model — with `--provider`. See [Authentication](/docs/authentication).
 
 ## Is it really a drop-in for claude-code?
 
-It targets the same workflow — a coding agent in your terminal with the same Claude auth — as a single native binary. Claude is the default, but agentty also runs against OpenAI, Groq, OpenRouter, Together, Cerebras, and local Ollama models. See [Providers & Models](/docs/providers).
+It targets the same workflow — a coding agent in your terminal — as a single native binary, and it can use the same Claude auth. But it's bring-your-own-model: alongside Claude it runs against OpenAI, Groq, OpenRouter, Together, Cerebras, and local Ollama models. See the full [agentty vs Claude Code](/docs/vs-claude-code) comparison and [Providers & Models](/docs/providers).
 
 ## Can I use models other than Claude?
 
@@ -26,11 +32,11 @@ No. agentty is a single static C++26 binary. No Node runtime, no `npm install`, 
 
 ## What platforms are supported?
 
-Linux, macOS, and Windows — all built and tested daily. Prebuilt binaries ship for Linux (x86_64, aarch64) and Windows (x86_64); macOS builds from source in seconds.
+Linux, macOS, and Windows — all built and tested daily. Prebuilt binaries ship for Linux (x86_64, aarch64) and Windows (x86_64); macOS builds from source in seconds. It also builds natively on **Termux/Android** (no root, no proot) — see [Installation](/docs/installation#termux--android).
 
 ## How is it sandboxed?
 
-Every shell/build call runs in `bwrap` (Linux) or `sandbox-exec` (macOS). The workspace is read-write, system libs read-only, and `~/.ssh` / `/etc` / other projects are blocked. Windows runs unsandboxed for now.
+Every shell/build call runs in `bwrap` (Linux) or `sandbox-exec` (macOS). The workspace is read-write, system libs read-only, and `~/.ssh` / `/etc` / other projects are blocked. Windows and unrooted Android/Termux run unsandboxed (no user-namespace backend available there); agentty detects this and prints `sandbox: unavailable, running unsandboxed`.
 
 ## Can I run it on a machine with no internet?
 
