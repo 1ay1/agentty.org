@@ -37,9 +37,9 @@ export default async function Image({
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "76px 80px",
-          backgroundColor: "#08070c",
+          backgroundColor: "#08090c",
           backgroundImage:
-            "radial-gradient(1000px 560px at 84% -12%, rgba(255,180,84,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(255,122,89,0.16), transparent 58%)",
+            "radial-gradient(1000px 560px at 84% -12%, rgba(139,140,249,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(94,234,212,0.16), transparent 58%)",
           fontFamily: "monospace",
         }}
       >
@@ -53,7 +53,7 @@ export default async function Image({
             letterSpacing: "-0.02em",
           }}
         >
-          <span style={{ color: "#d96bff" }}>▌</span>
+          <span style={{ color: "#8b8cf9" }}>▌</span>
           <span style={{ color: "#f2f4f8" }}>agentty</span>
           <span style={{ color: "#5b6472", fontSize: "24px", fontWeight: 500 }}>
             / blog
@@ -67,7 +67,7 @@ export default async function Image({
             gap: "22px",
           }}
         >
-          <div style={{ fontSize: "22px", color: "#7c5cff", letterSpacing: "0.02em" }}>
+          <div style={{ fontSize: "22px", color: "#5eead4", letterSpacing: "0.02em" }}>
             {meta}
           </div>
           <div
@@ -91,8 +91,8 @@ export default async function Image({
               key={t}
               style={{
                 fontSize: "22px",
-                color: "#f0c79a",
-                border: "1px solid rgba(255,180,84,0.4)",
+                color: "#b9a8f0",
+                border: "1px solid rgba(139,140,249,0.4)",
                 borderRadius: "999px",
                 padding: "6px 20px",
                 display: "flex",

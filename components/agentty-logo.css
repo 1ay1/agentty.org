@@ -2,7 +2,7 @@
    Mirrors maya/widget/welcome_screen.hpp rendering. All motion is CSS-driven
    (composited transform + color) so the main thread stays idle. */
 .agentty-logo {
-  --logo-mag: #d96bff; /* magenta phosphor brand mark */
+  --logo-mag: #e29be0; /* bright_magenta (role_brand_alt) */
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   line-height: 1;
   letter-spacing: 0;
@@ -11,18 +11,11 @@
   align-items: flex-start;
   color: var(--logo-mag);
   user-select: none;
-  text-shadow: 0 0 22px rgba(217, 107, 255, 0.4);
+  text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
   /* heartbeat — periodic white flash of the whole mark. The TUI fires it
      only AFTER the cascade settles: kPhase1End = (8-1)*100 + 500 = 1200ms,
      then every kPulsePeriod (3200ms) for kPulseWidth (80ms ≈ 2.5% of period). */
   animation: logo-pulse 3.2s ease-in-out 1.2s infinite;
-}
-
-/* light theme: the pastel magenta washes out on white — deepen it and drop
-   the neon glow to a faint tint so the mark keeps its weight */
-html[data-theme="light"] .agentty-logo {
-  --logo-mag: #a012c9;
-  text-shadow: 0 0 14px rgba(160, 18, 201, 0.16);
 }
 
 /* one letter = a vertical stack of half-block rows, animated as a unit */
@@ -84,9 +77,8 @@ html[data-theme="light"] .agentty-logo {
   /* 80ms / 3200ms = 2.5% of the cycle flashes bright_white, the rest holds
      the brand magenta — a sharp "system alive" blink, not a slow glow. */
   0%, 3%, 100% { color: var(--logo-mag); }
-  1%, 2%       { color: var(--logo-flash, #ffffff); }
+  1%, 2%       { color: #ffffff; }
 }
-html[data-theme="light"] .agentty-logo { --logo-flash: #221910; }
 
 @media (prefers-reduced-motion: reduce) {
   .agentty-logo,

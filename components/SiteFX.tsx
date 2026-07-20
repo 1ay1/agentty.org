@@ -213,16 +213,11 @@ export function SiteFX() {
         }, 900);
       }, 5200);
     };
-    const onMatrix = () => {
-      if (!raining) logoRain();
-    };
     window.addEventListener("keydown", onKey);
-    window.addEventListener("agentty:matrix", onMatrix as EventListener);
 
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("agentty:matrix", onMatrix as EventListener);
       io?.disconnect();
       if (sweepTimer) window.clearTimeout(sweepTimer);
       if (revealSweep) window.removeEventListener("scroll", revealSweep);

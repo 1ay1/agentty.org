@@ -93,13 +93,6 @@ server {
 
     location / {
         try_files $uri $uri/ $uri.html $uri/index.html =404;
-        # HTML entry points must always revalidate so a fresh deploy is picked
-        # up immediately. Next emits content-hashed asset URLs, so the JS/CSS
-        # under /_next/static/ below overrides this with immutable caching;
-        # only these HTML pages need no-cache. Without it, browsers serve a
-        # stale index.html from disk cache and keep pointing at old chunk
-        # hashes even after a redeploy.
-        add_header Cache-Control "no-cache, must-revalidate" always;
     }
 
     # The one-line installer advertised on the site & social cards.

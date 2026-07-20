@@ -17,9 +17,9 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          backgroundColor: "#08070c",
+          backgroundColor: "#08090c",
           backgroundImage:
-            "radial-gradient(1000px 560px at 84% -12%, rgba(255,180,84,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(255,122,89,0.18), transparent 58%)",
+            "radial-gradient(1000px 560px at 84% -12%, rgba(139,140,249,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(94,234,212,0.18), transparent 58%)",
           fontFamily: "monospace",
         }}
       >
@@ -28,13 +28,13 @@ export default function OpengraphImage() {
             display: "flex",
             alignItems: "center",
             gap: "18px",
-            color: "#d96bff",
+            color: "#e29be0",
             fontSize: "34px",
             fontWeight: 700,
             letterSpacing: "-0.02em",
           }}
         >
-          <span style={{ color: "#d96bff" }}>▌</span>
+          <span style={{ color: "#8b8cf9" }}>▌</span>
           <span style={{ color: "#f2f4f8" }}>agentty</span>
         </div>
 
@@ -53,7 +53,7 @@ export default function OpengraphImage() {
           Blazing-fast&nbsp;
           <span
             style={{
-              backgroundImage: "linear-gradient(110deg,#d96bff,#7c5cff)",
+              backgroundImage: "linear-gradient(110deg,#8b8cf9,#5eead4)",
               backgroundClip: "text",
               color: "transparent",
             }}
@@ -82,10 +82,10 @@ export default function OpengraphImage() {
             alignItems: "center",
             gap: "14px",
             fontSize: "26px",
-            color: "#7c5cff",
+            color: "#5eead4",
           }}
         >
-          <span style={{ color: "#d96bff" }}>$</span>
+          <span style={{ color: "#8b8cf9" }}>$</span>
           <span style={{ color: "#c9d1d9" }}>
             curl -fsSL agentty.org/install.sh | sh
           </span>

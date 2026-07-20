@@ -10,13 +10,6 @@ const SiteFX = dynamic(() => import("./SiteFX").then((m) => m.SiteFX), {
   ssr: false,
 });
 
-// The interactive terminal console (press `) is a pure easter-egg — also
-// deferred to idle so it never touches first paint or input latency.
-const TermConsole = dynamic(
-  () => import("./TermConsole").then((m) => m.TermConsole),
-  { ssr: false }
-);
-
 export function DeferredFX() {
   const [ready, setReady] = useState(false);
 
@@ -33,10 +26,5 @@ export function DeferredFX() {
     }
   }, []);
 
-  return ready ? (
-    <>
-      <SiteFX />
-      <TermConsole />
-    </>
-  ) : null;
+  return ready ? <SiteFX /> : null;
 }

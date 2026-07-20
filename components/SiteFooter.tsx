@@ -43,12 +43,7 @@ export function SiteFooter() {
         </div>
         <div className="foot-bottom">
           <span>© {year} agentty contributors · {site.license} Licensed</span>
-          <span className="foot-bottom-right">
-            <button className="foot-console-hint" type="button" data-open-console aria-label="open interactive console">
-              <span className="foot-console-prompt">❯</span> press <kbd>`</kbd> for a shell
-            </button>
-            <span>Built with C++26 · Powered by Claude</span>
-          </span>
+          <span>Built with C++26 · Powered by Claude</span>
         </div>
       </div>
     </footer>

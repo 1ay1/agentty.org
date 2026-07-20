@@ -17,10 +17,7 @@ import { useEffect, useRef } from "react";
 const GLYPHS =
   "01{}[]()<>/=+-*&|!?;:.#$@_λ→∴⟨⟩∇∂∑01アイウエオカキクケコ▓▒░╱╲┃━┏┓┗┛".split("");
 
-const COLORS_DARK = ["#d96bff", "#7c5cff", "#4fd6e0", "#e79bff"];
-const COLORS_LIGHT = ["#a012c9", "#5b3fd6", "#0a8b98", "#820aa4"];
-const LEAD_DARK = "#f6ecff";
-const LEAD_LIGHT = "#1c1730";
+const COLORS = ["#8b8cf9", "#5eead4", "#a3a4fb", "#6a7280"];
 
 export function HeroBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -46,19 +43,14 @@ export function HeroBackground() {
       getComputedStyle(document.documentElement)
         .getPropertyValue("--font-mono")
         .trim() || "monospace";
-    // Cache theme-dependent colors once per resize/theme instead of calling
+    // Cache the trail-fade color once per resize/theme instead of calling
     // getComputedStyle every frame (that read forces a style/layout reflow).
-    let fade = "rgba(10, 8, 6, 0.10)";
-    let colors = COLORS_DARK;
-    let lead = LEAD_DARK;
+    let fade = "rgba(8, 9, 12, 0.10)";
     function readFade() {
       fade =
         getComputedStyle(document.documentElement)
           .getPropertyValue("--matrix-fade")
-          .trim() || "rgba(10, 8, 6, 0.10)";
-      const light = document.documentElement.getAttribute("data-theme") === "light";
-      colors = light ? COLORS_LIGHT : COLORS_DARK;
-      lead = light ? LEAD_LIGHT : LEAD_DARK;
+          .trim() || "rgba(8, 9, 12, 0.10)";
     }
     readFade();
 
@@ -92,9 +84,9 @@ export function HeroBackground() {
         const g = GLYPHS[(Math.random() * GLYPHS.length) | 0];
 
         // head glyph: bright; below it a short colored tail handled by trail fade
-        const isLead = Math.random() < 0.04;
-        ctx.fillStyle = isLead ? lead : colors[(i + (drops[i] | 0)) % colors.length];
-        ctx.globalAlpha = isLead ? 0.9 : 0.42;
+        const lead = Math.random() < 0.04;
+        ctx.fillStyle = lead ? "#f2f4f8" : COLORS[(i + (drops[i] | 0)) % COLORS.length];
+        ctx.globalAlpha = lead ? 0.9 : 0.42;
         ctx.fillText(g, x, y);
         ctx.globalAlpha = 1;
 
