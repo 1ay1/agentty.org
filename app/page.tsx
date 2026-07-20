@@ -64,13 +64,13 @@ export default function Home() {
       <section className="block" style={{ paddingTop: 40 }}>
         <div className="wrap">
           <div className="stats">
-            <div className="stat" data-reveal><CountUp value={stats.sizeMB} /><div className="lbl">Single static binary</div></div>
-            <div className="stat" data-reveal><CountUp value={stats.coldStart} /><div className="lbl">Cold start</div></div>
-            <div className="stat" data-reveal><CountUp value="0" /><div className="lbl">Runtime dependencies</div></div>
-            <div className="stat" data-reveal><div className="num">C++26</div><div className="lbl">Native, no GC</div></div>
+            <div className="stats-head">agentty --version</div>
+            <div className="stat" data-reveal><span className="lbl">Single static binary</span><span className="dots" /><span className="num"><CountUp value={stats.sizeMB} /></span></div>
+            <div className="stat" data-reveal><span className="lbl">Cold start</span><span className="dots" /><span className="num"><CountUp value={stats.coldStart} /></span></div>
+            <div className="stat" data-reveal><span className="lbl">Runtime dependencies</span><span className="dots" /><span className="num"><CountUp value="0" /></span></div>
+            <div className="stat" data-reveal><span className="lbl">Language</span><span className="dots" /><span className="num">C++26 · no GC</span></div>
             <a className="stat stat-link" data-reveal href={repo.url} target="_blank" rel="noreferrer">
-              <div className="num">&#9733;&nbsp;<CountUp value={starLabel} /></div>
-              <div className="lbl">Stars on GitHub</div>
+              <span className="lbl">Stars on GitHub</span><span className="dots" /><span className="num">&#9733;&nbsp;<CountUp value={starLabel} /></span>
             </a>
           </div>
           <p className="stats-note">
@@ -84,7 +84,7 @@ export default function Home() {
       {/* SPEED */}
       <section className="block" id="speed">
         <div className="wrap">
-          <p className="eyebrow">Speed</p>
+          <p className="eyebrow">agentty <span className="flag">--speed</span></p>
           <h2 className="section-title">Native, not interpreted.</h2>
           <p className="section-sub">
             Measured on the same Arch box, same shell, same day. No JIT warmup, no
@@ -111,7 +111,7 @@ export default function Home() {
       {/* FEATURES */}
       <section className="block" id="features">
         <div className="wrap">
-          <p className="eyebrow">Why agentty</p>
+          <p className="eyebrow">agentty <span className="flag">--why</span></p>
           <h2 className="section-title">Everything the official client does &mdash; and the things it doesn&apos;t.</h2>
           <div className="grid grid-3" style={{ marginTop: 28 }}>
             <div className="card tilt" data-reveal><span className="ico">⚡</span><h3>Native speed</h3><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup.</p></div>
@@ -138,7 +138,7 @@ export default function Home() {
       {/* PROVIDERS */}
       <section className="block" id="providers">
         <div className="wrap">
-          <p className="eyebrow">Bring your own model</p>
+          <p className="eyebrow">agentty <span className="flag">--provider</span> <span className="flag">list</span></p>
           <h2 className="section-title">Claude by default. Any model on demand.</h2>
           <p className="section-sub">
             Sign in once with your <strong>Claude Pro/Max</strong> subscription, or point
@@ -168,7 +168,7 @@ export default function Home() {
       {/* COMPARE */}
       <section className="block" id="compare">
         <div className="wrap">
-          <p className="eyebrow">How it compares</p>
+          <p className="eyebrow">agentty <span className="flag">--compare</span></p>
           <h2 className="section-title">The single-binary pick.</h2>
           <div className="tablewrap">
             <table>
@@ -192,7 +192,7 @@ export default function Home() {
       {/* TOOLS */}
       <section className="block" id="tools">
         <div className="wrap">
-          <p className="eyebrow">Tools</p>
+          <p className="eyebrow">agentty <span className="flag">--tools</span></p>
           <h2 className="section-title">A purpose-built widget for everything.</h2>
           <p className="section-sub">
             Diffs render as diffs, search groups by file, bash shows exit codes, todos
@@ -232,7 +232,7 @@ export default function Home() {
       {/* OPEN SOURCE */}
       <section className="block" id="open-source">
         <div className="wrap">
-          <p className="eyebrow">Open source</p>
+          <p className="eyebrow">agentty <span className="flag">--source</span></p>
           <h2 className="section-title">Built in the open, MIT licensed.</h2>
           <div className="boxrow" style={{ marginTop: 28 }}>
             <div className="bigbox tilt" data-reveal>

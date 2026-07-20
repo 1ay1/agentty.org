@@ -369,18 +369,28 @@ html[data-theme="dark"] .hero h1 .grad { filter: drop-shadow(0 0 30px rgba(255, 
 
 /* ---------- SECTIONS ---------- */
 section.block { padding: 72px 0; border-top: 1px solid var(--border-soft); }
+
+/* Terminal command-prompt section header: `$ agentty --speed` reads as if
+   you invoked the section, and the title below is its "output". */
 .eyebrow {
-  display: inline-flex; align-items: center; gap: 9px;
-  color: var(--accent); font-weight: 600; font-size: 13px;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  display: inline-flex; align-items: baseline; gap: 8px;
+  font-family: var(--mono); font-size: 13.5px; font-weight: 500;
+  letter-spacing: 0; text-transform: none; color: var(--text-dim);
 }
 .eyebrow::before {
-  content: "▸"; width: auto; height: auto;
-  font-size: 11px; color: var(--accent); background: none;
+  content: "$"; color: var(--accent); font-weight: 700;
   text-shadow: var(--phosphor);
 }
-.section-title { font-size: clamp(24px, 4vw, 38px); margin: 12px 0 16px; letter-spacing: -0.03em; text-wrap: balance; }
-.section-sub { color: var(--text-dim); font-size: 17px; max-width: 600px; margin: 0 0 40px; line-height: 1.6; }
+.eyebrow .flag { color: var(--accent); }
+.section-title {
+  font-size: clamp(24px, 4vw, 38px); margin: 14px 0 16px; letter-spacing: -0.03em;
+  text-wrap: balance; padding-left: 18px; position: relative;
+}
+.section-title::before {
+  content: ""; position: absolute; left: 0; top: 4px; bottom: 4px; width: 2px;
+  background: linear-gradient(var(--accent), transparent);
+}
+.section-sub { color: var(--text-dim); font-size: 17px; max-width: 600px; margin: 0 0 40px 18px; line-height: 1.6; }
 
 .grid { display: grid; gap: 16px; }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
@@ -540,16 +550,33 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
 .docs-main h2, .docs-main h3 { scroll-margin-top: calc(var(--nav-h) + 20px); }
 .docs-side-toggle { display: none; }
 
-/* ---------- STATS BAND ---------- */
-.stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border-soft); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.stat { background: var(--bg-card); padding: 28px 20px; text-align: center; transition: background .2s ease; }
-.stat:hover { background: var(--bg-elev); }
-.stat-link { display: block; color: inherit; text-decoration: none; }
-.stat-link:hover { background: var(--bg-elev); }
-.stat-link:hover .num { filter: brightness(1.15); }
-.stat .num { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.stat .lbl { color: var(--text-dim); font-size: 13.5px; margin-top: 6px; }
-.stats-note { text-align: center; color: var(--text-faint); font-size: 12.5px; margin: 14px 0 0; }
+/* ---------- STATS BAND: boot-log spec readout ---------- */
+.stats {
+  display: block;
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; font-family: var(--mono);
+}
+.stats-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 16px; background: var(--bg-elev); border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--text-faint);
+}
+.stats-head::before { content: "▓"; color: var(--accent); }
+.stat {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 13px 18px; border-bottom: 1px solid var(--border-soft);
+  text-decoration: none; color: inherit; transition: background .15s ease;
+}
+.stat:last-child { border-bottom: none; }
+.stat:hover { background: var(--bg-soft); }
+.stat .lbl { color: var(--text-dim); font-size: 13.5px; flex-shrink: 0; }
+.stat .dots { flex: 1; border-bottom: 1px dotted var(--border); transform: translateY(-4px); min-width: 20px; }
+.stat .num {
+  font-size: 15px; font-weight: 700; letter-spacing: 0; color: var(--accent);
+  text-shadow: var(--phosphor); font-variant-numeric: tabular-nums;
+}
+.stat-link:hover .num { color: var(--accent-hover); }
+.stats-note { color: var(--text-faint); font-size: 12.5px; margin: 12px 0 0; padding-left: 2px; }
 .stats-note a { color: var(--text-dim); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
 .stats-note a:hover { color: var(--text); }
 
@@ -592,7 +619,6 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
   .grid-3 { grid-template-columns: 1fr 1fr; }
   .grid-2, .foot-grid, .boxrow { grid-template-columns: 1fr; }
   .foot-grid { grid-template-columns: 1fr 1fr; }
-  .stats { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 720px) {
@@ -650,9 +676,9 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
 
   .quote { font-size: 17px; padding-left: 18px; }
   .quote::before { display: none; }
-  .stat { padding: 18px 12px; }
-  .stat .num { font-size: 24px; }
+  .stat { padding: 12px 14px; }
   .stat .lbl { font-size: 12.5px; }
+  .stat .num { font-size: 14px; }
 
   .bigbox { padding: 22px 18px; }
   .foot-grid { gap: 24px; }
@@ -671,12 +697,11 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
 
 @media (max-width: 460px) {
   .wrap { padding: 0 16px; }
-  .stats, .foot-grid { grid-template-columns: 1fr; }
+  .foot-grid { grid-template-columns: 1fr; }
   .copybtn { padding: 5px 9px; }
-  /* stats read better as a compact left-aligned ledger than 5 stacked cards */
-  .stat { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; text-align: left; padding: 14px 16px; }
-  .stat .num { font-size: 20px; }
-  .stat .lbl { margin-top: 0; font-size: 13px; }
+  .stat { gap: 8px; padding: 11px 13px; }
+  .stat .lbl { font-size: 12px; }
+  .stat .dots { min-width: 12px; }
   .hero-actions { gap: 10px; }
   .cmdk-trigger { display: none; }
 }
@@ -727,8 +752,8 @@ html.fx-ready [data-reveal].revealed { opacity: 1; transform: none; }
   .card.tilt:hover, .bigbox.tilt:hover { transform: translateY(-3px); }
 }
 
-/* ---------- count-up: keep gradient number stable while ticking ---------- */
-.stat .num { font-variant-numeric: tabular-nums; min-height: 1.05em; }
+/* ---------- count-up: keep the readout value stable while ticking ---------- */
+.stat .num { font-variant-numeric: tabular-nums; }
 
 /* ---------- typed copy-row caret + copy flash ---------- */
 .copyrow-caret {
