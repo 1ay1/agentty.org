@@ -284,8 +284,9 @@ export function TermConsole() {
     // gentle staggered type-in
     let i = 0;
     const id = window.setInterval(() => {
-      setLines((prev) => [...prev, boot[i]]);
+      const next = boot[i];
       i++;
+      if (next) setLines((prev) => [...prev, next]);
       if (i >= boot.length) window.clearInterval(id);
     }, 55);
     return () => window.clearInterval(id);
@@ -360,15 +361,15 @@ export function TermConsole() {
         </div>
         <div className="term-body" ref={bodyRef} onClick={() => inputRef.current?.focus()}>
           {lines.map((l, i) => (
-            <div key={i} className={`term-line term-${l.kind}`}>
-              {l.kind === "in" ? (
+            <div key={i} className={`term-line term-${l?.kind ?? "out"}`}>
+              {l?.kind === "in" ? (
                 <>
                   <span className="term-prompt">{PROMPT}</span>
                   <span className="term-sep">:~$ </span>
                   {l.text}
                 </>
               ) : (
-                l.text || "\u00a0"
+                (l?.text ?? "") || "\u00a0"
               )}
             </div>
           ))}
