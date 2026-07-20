@@ -128,13 +128,16 @@ pre.code::-webkit-scrollbar,
 
 /* ---------- NAV ---------- */
 .nav {
-  position: sticky; top: 0; z-index: 50;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   height: var(--nav-h);
   display: flex; align-items: center;
   background: var(--nav-bg);
   backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
   border-bottom: 1px solid var(--border-soft);
 }
+/* offset the page content so the fixed nav doesn't overlap it */
+#main { padding-top: var(--nav-h); }
 .nav-inner { display: flex; align-items: center; gap: 22px; width: 100%; }
 .brand { display: flex; align-items: center; gap: 9px; color: var(--text); font-weight: 700; letter-spacing: -0.03em; font-size: 17px; }
 .brand:hover { text-decoration: none; }
@@ -196,7 +199,7 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
 .btn-ghost:hover { border-color: var(--accent); background: var(--bg-soft); }
 
 /* ---------- HERO ---------- */
-.hero { padding: 52px 0 0; position: relative; overflow: hidden; }
+.hero { padding: 40px 0 0; position: relative; overflow: hidden; }
 .hero .wrap { position: relative; z-index: 1; }
 
 /* two-column: text left, live TUI window right */
@@ -321,7 +324,9 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
 .term-block { margin-bottom: 12px; }
 
 /* ---------- SECTIONS ---------- */
-section.block { padding: 72px 0; border-top: 1px solid var(--border-soft); }
+section.block { padding: 76px 0; border-top: 1px solid var(--border-soft); position: relative; }
+/* every other content section gets a faint tinted band for rhythm */
+section.block:nth-of-type(even) { background: linear-gradient(180deg, var(--bg-soft), transparent 40%); }
 .eyebrow {
   display: inline-flex; align-items: center; gap: 9px;
   color: var(--accent); font-weight: 600; font-size: 13px;
@@ -359,28 +364,37 @@ section.block { padding: 72px 0; border-top: 1px solid var(--border-soft); }
 .card p { color: var(--text-dim); margin: 0; font-size: 14.5px; line-height: 1.6; }
 
 /* ---------- FEATURE GROUPS (categorized bento) ---------- */
-.feat-groups { display: flex; flex-direction: column; gap: 40px; margin-top: 20px; }
+.feat-groups { display: flex; flex-direction: column; gap: 48px; margin-top: 24px; }
 .feat-group { }
-.feat-head { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border-soft); }
+.feat-head { display: flex; align-items: center; gap: 13px; margin: 0 0 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-soft); }
 .feat-head .fg-ico {
-  font-size: 16px; line-height: 1; width: 38px; height: 38px; flex-shrink: 0;
+  font-size: 17px; line-height: 1; width: 40px; height: 40px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
+  background: linear-gradient(150deg, rgba(139,140,249,0.14), rgba(94,234,212,0.08));
+  border: 1px solid rgba(139,140,249,0.28); border-radius: 11px;
 }
-.feat-head h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--text); }
+.feat-head h3 { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; margin: 0; color: var(--text); text-transform: uppercase; }
+.feat-head h3::after {
+  content: ""; display: inline-block; vertical-align: middle;
+}
 /* the cards: a responsive 3-up grid where the LEAD card spans two columns */
-.feat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.feat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; grid-auto-rows: 1fr; }
 .feat-cards .card { padding: 22px; }
 .feat-cards .card h4 { font-size: 16px; margin: 0 0 8px; letter-spacing: -0.02em; color: var(--text); }
 .feat-cards .card p { color: var(--text-dim); margin: 0; font-size: 14px; line-height: 1.6; }
 .feat-cards .card.lead {
   grid-column: span 2; grid-row: span 2;
   background: linear-gradient(158deg, var(--bg-elev), var(--bg-card));
+  border-color: rgba(139,140,249,0.28);
 }
-.feat-cards .card.lead h4 { font-size: 19px; }
+/* accent hairline across the top of the lead card */
+.feat-cards .card.lead::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), transparent);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.feat-cards .card.lead h4 { font-size: 20px; margin-bottom: 10px; }
 .feat-cards .card.lead p { font-size: 15px; color: var(--text-dim); }
-/* groups with 5 cards (workflow) get a denser auto-flow so nothing leaves gaps */
-.feat-cards { grid-auto-rows: 1fr; }
 
 /* ---------- TABLE ---------- */
 .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
