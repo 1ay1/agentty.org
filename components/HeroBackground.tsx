@@ -17,7 +17,10 @@ import { useEffect, useRef } from "react";
 const GLYPHS =
   "01{}[]()<>/=+-*&|!?;:.#$@_λ→∴⟨⟩∇∂∑01アイウエオカキクケコ▓▒░╱╲┃━┏┓┗┛".split("");
 
-const COLORS = ["#8b8cf9", "#5eead4", "#a3a4fb", "#6a7280"];
+const COLORS_DARK = ["#8b8cf9", "#5eead4", "#a3a4fb", "#6a7280"];
+const COLORS_LIGHT = ["#4f51d8", "#0b7285", "#6a6cd8", "#8a90a0"];
+const LEAD_DARK = "#f2f4f8";
+const LEAD_LIGHT = "#171a22";
 
 export function HeroBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -43,14 +46,19 @@ export function HeroBackground() {
       getComputedStyle(document.documentElement)
         .getPropertyValue("--font-mono")
         .trim() || "monospace";
-    // Cache the trail-fade color once per resize/theme instead of calling
+    // Cache theme-dependent colors once per resize/theme instead of calling
     // getComputedStyle every frame (that read forces a style/layout reflow).
     let fade = "rgba(8, 9, 12, 0.10)";
+    let colors = COLORS_DARK;
+    let lead = LEAD_DARK;
     function readFade() {
       fade =
         getComputedStyle(document.documentElement)
           .getPropertyValue("--matrix-fade")
           .trim() || "rgba(8, 9, 12, 0.10)";
+      const light = document.documentElement.getAttribute("data-theme") === "light";
+      colors = light ? COLORS_LIGHT : COLORS_DARK;
+      lead = light ? LEAD_LIGHT : LEAD_DARK;
     }
     readFade();
 
@@ -84,9 +92,9 @@ export function HeroBackground() {
         const g = GLYPHS[(Math.random() * GLYPHS.length) | 0];
 
         // head glyph: bright; below it a short colored tail handled by trail fade
-        const lead = Math.random() < 0.04;
-        ctx.fillStyle = lead ? "#f2f4f8" : COLORS[(i + (drops[i] | 0)) % COLORS.length];
-        ctx.globalAlpha = lead ? 0.9 : 0.42;
+        const isLead = Math.random() < 0.04;
+        ctx.fillStyle = isLead ? lead : colors[(i + (drops[i] | 0)) % colors.length];
+        ctx.globalAlpha = isLead ? 0.9 : 0.42;
         ctx.fillText(g, x, y);
         ctx.globalAlpha = 1;
 

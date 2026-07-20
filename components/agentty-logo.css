@@ -18,6 +18,13 @@
   animation: logo-pulse 3.2s ease-in-out 1.2s infinite;
 }
 
+/* light theme: the pastel magenta washes out on white — deepen it and drop
+   the neon glow to a faint tint so the mark keeps its weight */
+html[data-theme="light"] .agentty-logo {
+  --logo-mag: #b0399f;
+  text-shadow: 0 0 14px rgba(176, 57, 159, 0.18);
+}
+
 /* one letter = a vertical stack of half-block rows, animated as a unit */
 .logo-letter {
   display: inline-flex;
@@ -77,8 +84,9 @@
   /* 80ms / 3200ms = 2.5% of the cycle flashes bright_white, the rest holds
      the brand magenta — a sharp "system alive" blink, not a slow glow. */
   0%, 3%, 100% { color: var(--logo-mag); }
-  1%, 2%       { color: #ffffff; }
+  1%, 2%       { color: var(--logo-flash, #ffffff); }
 }
+html[data-theme="light"] .agentty-logo { --logo-flash: #171a22; }
 
 @media (prefers-reduced-motion: reduce) {
   .agentty-logo,
