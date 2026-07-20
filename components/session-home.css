@@ -1,0 +1,108 @@
+/* session-home.css — the homepage body rendered as a page-width agentty
+   session transcript. Reuses agentty-tui.css chrome/palette classes and
+   overrides the fixed 540px window to natural page flow. */
+
+.sh {
+  max-width: 940px;
+  margin: 8px auto 0;
+  padding: 0 20px;
+}
+
+/* the whole transcript sits in one terminal window */
+.sh-window {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #08070c;
+  box-shadow: 0 40px 110px -40px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(217, 107, 255, 0.06);
+}
+html[data-theme="light"] .sh-window {
+  box-shadow: 0 30px 80px -34px rgba(20, 12, 40, 0.28), 0 2px 10px rgba(20, 12, 40, 0.08);
+}
+.sh-bar { position: sticky; top: var(--nav-h); z-index: 3; }
+
+/* the scrollback: unlike the hero window this GROWS with the page — no
+   fixed height, no internal scroll. It's the page you scroll. */
+.sh-scroll {
+  position: static;
+  z-index: auto;
+  max-width: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+  padding: 26px 26px 30px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #c9d1d9;
+  display: block;
+}
+.sh-scroll:hover { box-shadow: none; }
+
+.sh-turn { margin: 0 0 26px; padding-left: 18px; }
+.sh-turn .row { white-space: pre-wrap; word-break: break-word; }
+.sh-turn .ttui-prose { max-width: 74ch; }
+.sh-turn .ttui-blank { height: 0.6em; }
+
+/* panels breathe a bit more at page scale */
+.sh-panel { margin: 4px 0 2px; font-size: 13px; max-width: 780px; }
+.sh-panel .ttui-panel-line { padding: 1px 0; }
+
+/* key ──────── value readout rows */
+.sh-kv { justify-content: flex-start; gap: 0; }
+.sh-kv .sh-dots {
+  flex: 1;
+  align-self: center;
+  height: 0;
+  border-bottom: 1px dotted var(--border);
+  opacity: 0.5;
+  margin: 0 10px;
+  min-width: 24px;
+}
+.sh-kv .white { flex: none; }
+
+/* feature rows */
+.sh-feat { align-items: baseline; }
+.sh-feat-title { font-weight: 700; }
+.sh-feat-body .white { font-style: italic; }
+
+/* comparison grid — three aligned columns inside the panel */
+.sh-cmp, .sh-cmp-h {
+  display: grid !important;
+  grid-template-columns: 1.1fr 1.3fr 1.3fr;
+  gap: 14px;
+  width: 100%;
+}
+.sh-cmp-h { display: contents; }
+.ttui-panel-line .ttui-pad.sh-cmp > span { white-space: normal; }
+
+/* install row + CTA inside the assistant turn */
+.sh-install { max-width: 620px; }
+.sh-install .copyrow { font-size: 13px; }
+.sh-cta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* pinned chrome at the bottom of the window */
+.sh-chrome {
+  border-top: 1px solid var(--border-soft);
+  padding: 14px 26px 16px;
+  background: #0a0810;
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+.sh-composer { margin-bottom: 8px; }
+
+@media (max-width: 720px) {
+  .sh { padding: 0 12px; }
+  .sh-scroll { padding: 18px 14px 22px; font-size: 12px; }
+  .sh-panel { font-size: 11.5px; }
+  .sh-cmp, .sh-cmp-h { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sh-chrome { padding: 12px 14px; }
+  .sh-bar { position: static; }
+}
