@@ -3,267 +3,344 @@ import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
 import { repo, starLabel } from "@/lib/repo";
 import { CopyRow } from "@/components/CopyRow";
-import { CountUp } from "@/components/CountUp";
 import { AgenttyTui } from "@/components/AgenttyTui";
 import { AgenttyLogo } from "@/components/AgenttyLogo";
 import { HeroBackgroundLazy } from "@/components/HeroBackgroundLazy";
 
+/**
+ * The homepage IS an agentty session.
+ *
+ * It opens with a boot banner, then every section is a command the user
+ * "ran" (`$ agentty --features`, `--providers`, …). The output of each
+ * command renders as a framed TUI panel hung off a left timeline rail,
+ * closing with an exit-status stamp — exactly the shape of the real app's
+ * turn timeline. No generic SaaS cards; the page reads like the tool.
+ */
+
+// A section header rendered as a shell command line.
+function Cmd({
+  bin = "agentty",
+  flag,
+  arg,
+  comment,
+}: {
+  bin?: string;
+  flag?: string;
+  arg?: string;
+  comment?: string;
+}) {
+  return (
+    <div className="sx-cmd">
+      <span className="sx-node" aria-hidden />
+      <span className="sx-prompt">❯</span>
+      <span className="sx-bin">{bin}</span>
+      {flag && <span className="sx-flag">{flag}</span>}
+      {arg && <span className="sx-arg">{arg}</span>}
+      {comment && <span className="sx-comment"># {comment}</span>}
+    </div>
+  );
+}
+
+function Exit({ dur, note }: { dur: string; note?: string }) {
+  return (
+    <p className="sx-exit">
+      <b>✓ exit 0</b>
+      <span className="dur">· {dur}</span>
+      {note && <span className="dur">· {note}</span>}
+    </p>
+  );
+}
+
 export default function Home() {
   return (
-    <>
-      {/* HERO */}
-      <section className="hero">
-      <HeroBackgroundLazy />
-        <div className="wrap hero-grid">
-          <div className="hero-inner">
-            <div className="hero-logo">
-              <AgenttyLogo />
-            </div>
-            <h1>
-              Blazing-fast <span className="grad">coding agent</span>
-              <br /> in your terminal.
-            </h1>
-            <p className="lede">
-              A drop-in alternative to <code>claude-code</code>, written in C++26.{" "}
-              <strong>{stats.sizeMB}&nbsp;binary</strong>, <strong>millisecond cold start</strong>,{" "}
-              <strong>sandboxed by default</strong>, SSH air-gap in one command, and{" "}
-              <strong>runs inside Zed</strong> over ACP. Signs in with your
-              existing <strong>Claude Pro/Max</strong> &mdash; or point it at{" "}
-              <strong>OpenAI, Groq, OpenRouter, Cerebras</strong>, or a local{" "}
-              <strong>Ollama</strong> model. No Node, Python, Electron, or{" "}
-              <code>npm install</code>.
-            </p>
-            <div className="hero-actions">
-              <Link className="btn btn-primary" href="/docs/installation" data-magnetic>
-                Get started
-              </Link>
-              <Link className="btn btn-ghost" href="/docs" data-magnetic>
-                Read the docs →
-              </Link>
-            </div>
+    <div className="session">
+      {/* ── boot / hero ─────────────────────────────────────────── */}
+      <section className="boot hero">
+        <HeroBackgroundLazy />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <p className="boot-line">
+            <span className="ok">●</span> booting <span className="b">agentty</span>{" "}
+            v{stats.version} · <span className="c">C++26</span> · one static binary
+          </p>
+          <p className="boot-line">
+            <span className="ok">✓</span> cold start <span className="c">{stats.coldStart}</span> ·{" "}
+            {stats.sizeMB} · sandboxed · no Node / Python / Electron
+          </p>
+
+          <div style={{ margin: "22px 0 4px" }}>
+            <AgenttyLogo />
           </div>
 
-          <div className="hero-tui">
+          <h1 className="boot-headline">
+            A blazing-fast <span className="grad">coding agent</span>
+            <br /> that lives in your terminal.
+          </h1>
+
+          <p className="boot-lede">
+            A drop-in, native alternative to <code>claude-code</code>. Signs in with
+            your existing <strong>Claude Pro/Max</strong> — or points at OpenAI, Groq,
+            OpenRouter, Together, Cerebras, or a local <strong>Ollama</strong> model.
+            Sandboxed by default, SSH air-gap in one command, and it{" "}
+            <strong>runs inside Zed</strong> over ACP.
+          </p>
+
+          <div style={{ maxWidth: 560 }}>
+            <CopyRow cmd={site.installOneLiner} />
+          </div>
+
+          <div className="hero-actions" style={{ marginTop: 22 }}>
+            <Link className="btn btn-primary" href="/docs/quick-start" data-magnetic>
+              Quick start →
+            </Link>
+            <a
+              className="btn btn-ghost"
+              href={site.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-magnetic
+            >
+              ★ {starLabel} on GitHub
+            </a>
+          </div>
+
+          <div style={{ marginTop: 40 }}>
             <AgenttyTui />
           </div>
         </div>
       </section>
 
-      {/* INSTALL */}
-      <section className="install-band">
-        <div className="wrap install-inner">
-          <p className="install-kicker">Install in one line</p>
-          <CopyRow cmd={site.installOneLiner} typed />
-          <p className="install-note">
-            No Node, no Python, no <code>npm install</code> — just a single {stats.sizeMB} static binary.
-          </p>
-        </div>
-      </section>
-
-      {/* STATS */}
-      <section className="block" style={{ paddingTop: 40 }}>
-        <div className="wrap">
-          <div className="stats">
-            <div className="stats-head">agentty --version</div>
-            <div className="stat" data-reveal><span className="lbl">Single static binary</span><span className="dots" /><span className="num"><CountUp value={stats.sizeMB} /></span></div>
-            <div className="stat" data-reveal><span className="lbl">Cold start</span><span className="dots" /><span className="num"><CountUp value={stats.coldStart} /></span></div>
-            <div className="stat" data-reveal><span className="lbl">Runtime dependencies</span><span className="dots" /><span className="num"><CountUp value="0" /></span></div>
-            <div className="stat" data-reveal><span className="lbl">Language</span><span className="dots" /><span className="num">C++26 · no GC</span></div>
-            <a className="stat stat-link" data-reveal href={repo.url} target="_blank" rel="noreferrer">
-              <span className="lbl">Stars on GitHub</span><span className="dots" /><span className="num">&#9733;&nbsp;<CountUp value={starLabel} /></span>
-            </a>
+      {/* ── $ agentty --version : the spec readout ──────────────── */}
+      <section className="sx">
+        <Cmd flag="--version" comment="what you actually get" />
+        <div className="panel">
+          <div className="panel-head">
+            <span className="tag">stdout</span>
+            <span>spec</span>
+            <span className="spacer" />
+            <span className="hint">measured from the real binary</span>
           </div>
-          <p className="stats-note">
-            Size &amp; cold-start are the Linux&nbsp;x86_64 build, measured on each deploy;
-            other platforms vary — see the{" "}
-            <Link href="/docs/installation#latest">per-platform download sizes</Link>.
-          </p>
-        </div>
-      </section>
-
-      {/* SPEED */}
-      <section className="block" id="speed">
-        <div className="wrap">
-          <p className="eyebrow">agentty <span className="flag">--speed</span></p>
-          <h2 className="section-title">Native, not interpreted.</h2>
-          <p className="section-sub">
-            Measured on the same Arch box, same shell, same day. No JIT warmup, no
-            <code> require()</code> graph to walk, no GC ticking while bytes stream in.
-            Figures are the Linux&nbsp;x86_64 build &mdash; <Link href="/docs/installation#latest">other platforms here</Link>.
-          </p>
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr><th></th><th>agentty (C++26)</th><th>claude-code (Node)</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>Cold-start <code>--help</code></td><td><span className="win">{stats.coldStart}</span></td><td>~150 ms</td></tr>
-                <tr><td><code>--version</code></td><td><span className="win">{stats.coldStart}</span></td><td>~60 ms</td></tr>
-                <tr><td>Binary on disk</td><td><span className="win">{stats.sizeMB}</span></td><td>222 MB (+ Node runtime)</td></tr>
-                <tr><td>Install</td><td><span className="win">curl | chmod +x</span></td><td>npm i -g + Node</td></tr>
-                <tr><td>GC pauses mid-stream</td><td><span className="win">None</span></td><td>V8 GC</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section className="block" id="features">
-        <div className="wrap">
-          <p className="eyebrow">agentty <span className="flag">--why</span></p>
-          <h2 className="section-title">Everything the official client does &mdash; and the things it doesn&apos;t.</h2>
-          <div className="grid grid-3" style={{ marginTop: 28 }}>
-            <div className="card tilt" data-reveal><span className="ico">⚡</span><h3>Native speed</h3><p>C++26, statically linked, <code>posix_spawn</code> everywhere. Spawns in microseconds, no GC pauses mid-stream, no warmup.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">📦</span><h3>One static binary</h3><p>{stats.sizeMB}. <code>curl | chmod +x | run</code>. No Node runtime, no <code>npm install</code>, no version drift between machines.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>Any model</h3><p>Claude by default via your Pro/Max subscription — or GPT, Groq, OpenRouter, Together, Cerebras, and local Ollama. Switch backends live with <code>^P</code>. <Link href="/docs/providers">Providers &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">🛡️</span><h3>Sandbox by default</h3><p>Every shell and build call runs inside <code>bwrap</code> (Linux) / <code>sandbox-exec</code> (macOS). Workspace, system libs, and network stay reachable; <code>~/.ssh</code>, <code>/etc</code>, and other projects are read-only. An approved bash call still can&apos;t <code>cat ~/.ssh/id_rsa</code>.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>One-command SSH air-gap</h3><p><code>agentty airgap user@host</code> runs the agent on a box with no direct internet — your laptop relays the bytes over SOCKS5-over-SSH. TLS pins on the real upstreams end-to-end, so the network in between can&apos;t MITM you.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🧠</span><h3>Learns your codebase</h3><p>Agent Skills teach it your conventions from a <code>SKILL.md</code>; <code>remember</code>/<code>forget</code> give it durable cross-session memory. Teach it once, every thread knows. <Link href="/docs/skills">Skills &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">🧵</span><h3>Threads that persist</h3><p>Every conversation is a saved thread you can reopen with <code>^J</code>. Long threads compact automatically so you never blow the context window mid-task.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🤖</span><h3>Isolated subagents</h3><p>The <code>task</code> tool spawns a subagent with its own context window to burn through a self-contained job, then returns one condensed report — keeping your main thread focused.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔍</span><h3>Adjustable reasoning</h3><p>Dial thinking effort per model from the picker — fast answers for small edits, deep reasoning for hard refactors, without leaving the thread.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🖼️</span><h3>Paste images</h3><p>Drop a PNG, JPEG, GIF, or WebP path (or <code>^V</code> from the clipboard) straight into the composer — screenshots, diagrams, and mockups go to the model inline.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">▶️</span><h3>Run code blocks</h3><p>When a reply hands you shell commands, <code>^G</code> runs one <strong>interactively on your real terminal</strong> — sudo prompts work, output streams live, <code>^C</code> kills the command not agentty. Attach the captured output back to the composer with one key. <Link href="/docs/interface">The interface &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">📝</span><h3>Mentions &amp; palette</h3><p>Type <code>@</code> to mention a file, <code>#</code> to jump to a symbol, <code>/</code> to open the command palette (also <code>^K</code>). The composer knows your project.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔐</span><h3>Permission profiles</h3><p>Start in <strong>Ask</strong> — writes, shell, and network each prompt first. <code>S-Tab</code> cycles to <strong>Write</strong> (autonomous) or <strong>Minimal</strong>. Every effect is gated by a compile-time permission matrix. <Link href="/docs/profiles">Profiles &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">📐</span><h3>Workspace boundary</h3><p>Filesystem tools refuse paths outside the launch directory. Opt out explicitly with <code>--workspace /</code>.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">📜</span><h3>Inline render</h3><p>Lives at the bottom of your terminal, preserves scrollback, never takes over the screen.</p></div>
-            <div className="card tilt" data-reveal><span className="ico">🔌</span><h3>MCP, both ways</h3><p>Serve agentty&apos;s tools to any MCP client with <code>mcp-serve</code>, or consume other MCP servers from a <code>.agentty/mcp.json</code> — their tools appear indistinguishable from native ones. <Link href="/docs/mcp">MCP &rarr;</Link></p></div>
-            <div className="card tilt" data-reveal><span className="ico">🧩</span><h3>Runs inside Zed (ACP)</h3><p><code>agentty acp</code> speaks the Agent Client Protocol, so agentty becomes a first-class agent panel in Zed — streaming text, inline diffs, native permission prompts, session reload. Same engine as the TUI. <Link href="/docs/acp">Set it up &rarr;</Link></p></div>
-          </div>
-        </div>
-      </section>
-
-      {/* PROVIDERS */}
-      <section className="block" id="providers">
-        <div className="wrap">
-          <p className="eyebrow">agentty <span className="flag">--provider</span> <span className="flag">list</span></p>
-          <h2 className="section-title">Claude by default. Any model on demand.</h2>
-          <p className="section-sub">
-            Sign in once with your <strong>Claude Pro/Max</strong> subscription, or point
-            agentty at any OpenAI-compatible backend. Switch live mid-thread with
-            <code> ^P</code> &mdash; no restart, no re-auth.
-          </p>
-          <div className="tablewrap">
-            <table>
-              <tbody>
-                <tr><td className="mono"><code>agentty</code></td><td>Claude via OAuth (Pro/Max) or API key &mdash; the default</td></tr>
-                <tr><td className="mono"><code>--provider openai</code></td><td>GPT and o-series on <code>api.openai.com</code></td></tr>
-                <tr><td className="mono"><code>--provider groq</code></td><td>Llama/Mixtral on Groq LPUs &mdash; very fast</td></tr>
-                <tr><td className="mono"><code>--provider openrouter</code></td><td>Any model via <code>openrouter.ai</code></td></tr>
-                <tr><td className="mono"><code>--provider together</code></td><td>Open models on <code>together.ai</code></td></tr>
-                <tr><td className="mono"><code>--provider cerebras</code></td><td>Wafer-scale inference &mdash; very fast</td></tr>
-                <tr><td className="mono"><code>--provider ollama</code></td><td>Local models at <code>localhost:11434</code> &mdash; no key, no cloud</td></tr>
-                <tr><td className="mono"><code>--provider host:port</code></td><td>Any raw OpenAI-compatible endpoint</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p style={{ marginTop: 18 }}>
-            <Link href="/docs/providers">Providers &amp; models reference &rarr;</Link>
-          </p>
-        </div>
-      </section>
-
-      {/* COMPARE */}
-      <section className="block" id="compare">
-        <div className="wrap">
-          <p className="eyebrow">agentty <span className="flag">--compare</span></p>
-          <h2 className="section-title">The single-binary pick.</h2>
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr><th></th><th>agentty</th><th>claude-code</th><th>aider</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>Language / runtime</td><td><span className="win">C++26 — static binary</span></td><td>TypeScript / Node</td><td>Python</td></tr>
-                <tr><td>Footprint</td><td><span className="win">{stats.sizeMB}</span></td><td>npm + Node runtime</td><td>pip + Python runtime</td></tr>
-                <tr><td>Platforms</td><td><span className="win">Linux · macOS · Windows</span></td><td>Linux · macOS · Windows</td><td>Linux · macOS · Windows</td></tr>
-                <tr><td>Air-gapped mode</td><td><span className="win">Yes (SOCKS5/SSH)</span></td><td>No</td><td>No</td></tr>
-                <tr><td>Editor integration (ACP)</td><td><span className="win">Yes (Zed)</span></td><td>Yes (Zed)</td><td>No</td></tr>
-                <tr><td>Auth</td><td>OAuth (Pro/Max) + API key</td><td>OAuth + API key</td><td>per-provider env vars</td></tr>
-                <tr><td>Models</td><td><span className="win">Claude · GPT · Groq · OpenRouter · Ollama</span></td><td>Claude (Anthropic)</td><td>many providers</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* TOOLS */}
-      <section className="block" id="tools">
-        <div className="wrap">
-          <p className="eyebrow">agentty <span className="flag">--tools</span></p>
-          <h2 className="section-title">A purpose-built widget for everything.</h2>
-          <p className="section-sub">
-            Diffs render as diffs, search groups by file, bash shows exit codes, todos
-            become checklists. Every tool effect is gated by a compile-time permission matrix.
-          </p>
-          <div className="tablewrap">
-            <table>
-              <tbody>
-                <tr><td className="mono"><code>read · write · edit</code></td><td>File IO with atomic writes and diff rendering</td></tr>
-                <tr><td className="mono"><code>grep · glob · find_definition</code></td><td>Search and symbol lookup across the codebase</td></tr>
-                <tr><td className="mono"><code>bash · diagnostics</code></td><td>Sandboxed shell and build, with exit codes</td></tr>
-                <tr><td className="mono"><code>git_status · git_diff · git_log · git_commit</code></td><td>Version control, rendered natively</td></tr>
-                <tr><td className="mono"><code>web_fetch · web_search</code></td><td>Reach the web for docs and APIs</td></tr>
-                <tr><td className="mono"><code>skill · task · search_docs</code></td><td>On-demand skills, isolated subagents, and RAG over a knowledge corpus</td></tr>
-                <tr><td className="mono"><code>todo · remember · forget · wipe_memory</code></td><td>Planning and durable cross-session memory</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p style={{ marginTop: 18 }}>
-            <Link href="/docs/tools">Full tool reference →</Link>
-          </p>
-        </div>
-      </section>
-
-      {/* QUOTE */}
-      <section className="block">
-        <div className="wrap">
-          <blockquote className="quote">
-            &ldquo;No JIT warmup, no <code>require()</code> graph to walk, no GC ticking while
-            bytes stream in from the API. The redraw loop is a <code>poll(2)</code> over the
-            model stream and your input fd — every keystroke lands on the next frame.&rdquo;
-            <span className="by">— from the design notes</span>
-          </blockquote>
-        </div>
-      </section>
-
-      {/* OPEN SOURCE */}
-      <section className="block" id="open-source">
-        <div className="wrap">
-          <p className="eyebrow">agentty <span className="flag">--source</span></p>
-          <h2 className="section-title">Built in the open, MIT licensed.</h2>
-          <div className="boxrow" style={{ marginTop: 28 }}>
-            <div className="bigbox tilt" data-reveal>
-              <h3>Read the source</h3>
-              <p>The reducer is one <code>std::visit</code> over a closed event sum; the view is a single <code>Model &rarr; Element</code> function; the permission matrix is a <code>constexpr</code> with <code>static_assert</code>s. Change a policy cell and the build breaks — not a test nobody runs.</p>
-              <a className="btn btn-ghost" href={site.github} target="_blank" rel="noopener noreferrer" data-magnetic>Browse the repo →</a>
-            </div>
-            <div className="bigbox tilt" data-reveal>
-              <h3>Get involved</h3>
-              <p>Bug reports, fixes, and well-scoped features are all welcome. Start with the contributing guide.</p>
-              <Link className="btn btn-ghost" href="/contributing" data-magnetic>How to contribute →</Link>
+          <div className="panel-body">
+            <div className="readout">
+              <div className="rline hit">
+                <span className="k">binary size</span>
+                <span className="lead" />
+                <span className="v brand">{stats.sizeMB}</span>
+              </div>
+              <div className="rline hit">
+                <span className="k">cold start (<code>--version</code>)</span>
+                <span className="lead" />
+                <span className="v ok">{stats.coldStart}</span>
+              </div>
+              <div className="rline hit">
+                <span className="k">runtime deps</span>
+                <span className="lead" />
+                <span className="v ok">0 — statically linked</span>
+              </div>
+              <div className="rline hit">
+                <span className="k">language</span>
+                <span className="lead" />
+                <span className="v">C++26</span>
+              </div>
+              <div className="rline hit">
+                <span className="k">platforms</span>
+                <span className="lead" />
+                <span className="v">linux · macos · x86_64 &amp; aarch64</span>
+              </div>
+              <div className="rline hit">
+                <span className="k">license</span>
+                <span className="lead" />
+                <span className="v">{site.license}</span>
+              </div>
             </div>
           </div>
         </div>
+        <Exit dur="2 ms" />
       </section>
 
-      {/* CTA */}
-      <section className="cta">
-        <div className="cta-mesh" aria-hidden />
-        <div className="wrap">
-          <h2>Ready in one line.</h2>
-          <p>Linux, macOS &amp; Windows · x86_64 &amp; aarch64. The same line updates it.</p>
-          <div style={{ maxWidth: 620, margin: "0 auto" }}>
+      {/* ── $ agentty --features : the capability grid ──────────── */}
+      <section className="sx">
+        <Cmd flag="--features" comment="why it feels different" />
+        <div className="panel">
+          <div className="panel-head">
+            <span className="tag">stdout</span>
+            <span>capabilities</span>
+            <span className="spacer" />
+            <span className="hint">
+              press <kbd>j</kbd>/<kbd>k</kbd> to scan
+            </span>
+          </div>
+          <div className="panel-body">
+            <div className="pgrid">
+              {FEATURES.map((f, i) => (
+                <div className="pcell" key={f.title}>
+                  <span className="pcell-key">
+                    {f.key} <span className="id">#{String(i + 1).padStart(2, "0")}</span>
+                  </span>
+                  <h3>{f.title}</h3>
+                  <p>{f.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <Exit dur="instant" note={`${FEATURES.length} features`} />
+      </section>
+
+      {/* ── $ agentty --providers : model backends ──────────────── */}
+      <section className="sx">
+        <Cmd flag="--providers" arg="--list" comment="bring your own model" />
+        <div className="panel">
+          <div className="panel-head">
+            <span className="tag">stdout</span>
+            <span>providers</span>
+            <span className="spacer" />
+            <span className="hint">any OpenAI-compatible endpoint works</span>
+          </div>
+          <div className="panel-body">
+            <div className="readout">
+              {PROVIDERS.map((p) => (
+                <div className="rline hit" key={p.name}>
+                  <span className="k">{p.name}</span>
+                  <span className="lead" />
+                  <span className={`v ${p.tone}`}>{p.detail}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <Exit dur="ready" />
+      </section>
+
+      {/* ── $ agentty diff claude-code : the comparison ─────────── */}
+      <section className="sx">
+        <Cmd bin="agentty" flag="diff" arg="claude-code" comment="honest tradeoffs" />
+        <div className="panel">
+          <div className="panel-head">
+            <span className="tag">stdout</span>
+            <span>agentty vs claude-code</span>
+            <span className="spacer" />
+            <span className="hint">— / + is us</span>
+          </div>
+          <div className="panel-body tablescroll">
+            <table className="ptable">
+              <thead>
+                <tr>
+                  <th>dimension</th>
+                  <th>agentty</th>
+                  <th>claude-code</th>
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARE.map((r) => (
+                  <tr key={r.dim}>
+                    <td>{r.dim}</td>
+                    <td className="win">{r.us}</td>
+                    <td>{r.them}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <Exit dur="—" note="same OAuth, same account" />
+      </section>
+
+      {/* ── $ agentty install : the CTA ─────────────────────────── */}
+      <section className="sx sx--last">
+        <Cmd flag="install" comment="one line, then you're in" />
+        <div className="panel">
+          <div className="panel-head">
+            <span className="tag">exec</span>
+            <span>installer</span>
+            <span className="spacer" />
+            <span className="hint">linux · macos · x86_64 &amp; aarch64</span>
+          </div>
+          <div className="panel-body">
             <CopyRow cmd={site.installOneLiner} />
-          </div>
-          <div className="hero-actions" style={{ justifyContent: "center", marginTop: 26 }}>
-            <Link className="btn btn-primary" href="/docs/quick-start" data-magnetic>Quick start guide</Link>
-            <a className="btn btn-ghost" href={site.github} target="_blank" rel="noopener noreferrer" data-magnetic>Star on GitHub →</a>
+            <p
+              style={{
+                fontFamily: "var(--sans)",
+                color: "var(--text-dim)",
+                fontSize: 14,
+                margin: "14px 0 0",
+              }}
+            >
+              Detects your platform, drops one static binary on <code>$PATH</code>, and
+              self-updates from the same line. Windows?{" "}
+              <code>{site.installOneLinerWindows}</code>
+            </p>
+            <div className="hero-actions" style={{ marginTop: 20 }}>
+              <Link className="btn btn-primary" href="/docs/quick-start" data-magnetic>
+                Read the quick start →
+              </Link>
+              <a
+                className="btn btn-ghost"
+                href={site.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-magnetic
+              >
+                ★ Star on GitHub
+              </a>
+            </div>
           </div>
         </div>
+        <Exit dur="welcome aboard" />
       </section>
-    </>
+    </div>
   );
 }
+
+/* ── content ─────────────────────────────────────────────────── */
+
+const FEATURES = [
+  {
+    key: "SPEED",
+    title: "Millisecond cold start",
+    body: "A single static C++26 binary. It's alive before an Electron splash screen would have finished measuring your CPU.",
+  },
+  {
+    key: "SANDBOX",
+    title: "Sandboxed by default",
+    body: "Every tool call runs inside an OS sandbox. Filesystem and network access are gated, not assumed.",
+  },
+  {
+    key: "AIRGAP",
+    title: "SSH air-gap in one command",
+    body: "Push the agent onto a remote box and drive it over SSH — no ports opened, no daemon, nothing to trust.",
+  },
+  {
+    key: "ACP",
+    title: "Runs inside Zed",
+    body: "Speaks the Agent Client Protocol, so it drops straight into Zed's agent panel as a first-class backend.",
+  },
+  {
+    key: "AUTH",
+    title: "Your Claude Pro/Max",
+    body: "The exact OAuth flow Claude Code uses. No extra billing — sign in with the plan you already pay for.",
+  },
+  {
+    key: "NO-DEPS",
+    title: "Nothing to install first",
+    body: "No Node, no Python, no Electron runtime. curl one line and it runs on a fresh box with zero prerequisites.",
+  },
+];
+
+const PROVIDERS = [
+  { name: "Claude Pro / Max", detail: "OAuth · default", tone: "brand" },
+  { name: "Anthropic API", detail: "API key", tone: "" },
+  { name: "OpenAI", detail: "gpt-* models", tone: "" },
+  { name: "Groq · Cerebras", detail: "fast inference", tone: "" },
+  { name: "OpenRouter · Together", detail: "aggregators", tone: "" },
+  { name: "Ollama", detail: "local · offline", tone: "ok" },
+];
+
+const COMPARE = [
+  { dim: "runtime", us: "one static binary", them: "Node + Electron" },
+  { dim: "cold start", us: "~2 ms", them: "seconds" },
+  { dim: "install size", us: "≈13 MB", them: "hundreds of MB" },
+  { dim: "sandbox", us: "on by default", them: "opt-in" },
+  { dim: "SSH air-gap", us: "one command", them: "—" },
+  { dim: "editor", us: "TUI + Zed (ACP)", them: "TUI" },
+  { dim: "providers", us: "Claude + 6 more", them: "Claude only" },
+];

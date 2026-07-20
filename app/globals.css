@@ -1145,3 +1145,170 @@ html[data-theme="light"] .term-body { text-shadow: none; }
   .term-body { font-size: 12.5px; }
   .term-foot { gap: 10px; }
 }
+
+/* ============================================================
+   TERMINAL-SESSION HOMEPAGE REDESIGN
+   The whole page reads as one continuous agentty session:
+   a boot banner, then each section is a command the "user"
+   ran, its content rendered as piped output inside TUI panels
+   framed with box-drawing characters, hung off a left rail.
+   ============================================================ */
+
+.session {
+  max-width: 1040px; margin: 0 auto; padding: 0 20px;
+  font-family: var(--mono);
+}
+
+/* ---- the left “timeline” rail every block hangs off ---- */
+.sx { position: relative; padding: 0 0 0 30px; margin: 0; }
+.sx::before {
+  content: ""; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px;
+  background: linear-gradient(180deg, var(--accent), transparent 92%);
+  opacity: .4; border-radius: 2px;
+}
+.sx--last::before { bottom: auto; height: 34px; }
+
+/* the command “prompt” that opens a section */
+.sx-cmd {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 14px; margin: 0 0 4px; position: relative;
+}
+.sx-cmd::before {
+  content: ""; position: absolute; left: -30px; top: 50%; width: 20px; height: 2px;
+  background: var(--accent); opacity: .5; transform: translateY(-50%);
+}
+.sx-node {
+  position: absolute; left: -30px; top: 50%; transform: translate(-3px,-50%);
+  width: 9px; height: 9px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 0 4px var(--bg), 0 0 14px var(--accent);
+}
+.sx-prompt { color: var(--green); font-weight: 700; }
+.sx-bin { color: var(--text); }
+.sx-flag { color: var(--accent); }
+.sx-arg { color: var(--cyan); }
+.sx-comment { color: var(--text-faint); font-style: italic; }
+
+/* the exit-status stamp shown after a section “finishes” */
+.sx-exit {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: var(--text-faint); margin: 12px 0 0;
+}
+.sx-exit b { color: var(--green); font-weight: 700; }
+.sx-exit .dur { color: var(--text-faint); }
+
+/* ---- a framed TUI panel (box-drawing borders) ---- */
+.panel {
+  position: relative; margin: 14px 0 0;
+  background: linear-gradient(180deg, rgba(217,107,255,0.035), transparent 40%), var(--bg-card);
+  border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 20px 50px -34px rgba(0,0,0,.8);
+}
+.panel-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-bottom: 1px solid var(--border-soft);
+  color: var(--text-faint); font-size: 12px; letter-spacing: .01em;
+}
+.panel-head .tag {
+  color: var(--accent); font-weight: 700;
+}
+.panel-head .spacer { flex: 1; }
+.panel-head .hint { color: var(--text-faint); }
+.panel-head kbd {
+  font-family: var(--mono); font-size: 10.5px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 5px; padding: 0 5px; color: var(--cyan);
+}
+.panel-body { padding: 16px 18px; }
+
+/* ---- panel grid: TUI cells with box-drawing corners ---- */
+.pgrid { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
+.pcell {
+  position: relative; padding: 15px 15px 15px 16px;
+  background: var(--bg-elev); border: 1px solid var(--border-soft); border-radius: 8px;
+  transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+  overflow: hidden;
+}
+.pcell::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--accent); opacity: 0; transition: opacity .18s ease;
+}
+.pcell:hover {
+  border-color: var(--accent); transform: translateY(-2px);
+  box-shadow: 0 14px 34px -22px var(--accent);
+}
+.pcell:hover::before { opacity: .9; }
+.pcell-key {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 9px;
+  font-size: 11px; color: var(--accent); font-weight: 700; letter-spacing: .02em;
+}
+.pcell-key .id { color: var(--text-faint); font-weight: 500; }
+.pcell h3 { font-family: var(--sans); font-size: 15.5px; margin: 0 0 6px; letter-spacing: -.01em; color: var(--text); }
+.pcell p { font-family: var(--sans); font-size: 13.5px; line-height: 1.58; color: var(--text-dim); margin: 0; }
+.pcell p code, .pcell-key .id code { background: var(--code-bg); border: 1px solid var(--border-soft); border-radius: 5px; padding: 0 4px; font-size: .86em; color: var(--cyan); font-family: var(--mono); }
+.pcell a { color: var(--accent); text-decoration: none; }
+.pcell a:hover { text-decoration: underline; }
+
+/* ---- key/value “boot log” readout (stats, providers, tools) ---- */
+.readout { display: flex; flex-direction: column; gap: 0; }
+.rline {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 7px 0; border-bottom: 1px dashed var(--border-soft);
+  font-size: 13.5px;
+}
+.rline:last-child { border-bottom: 0; }
+.rline .k { color: var(--text-dim); white-space: nowrap; }
+.rline .k code { color: var(--cyan); background: var(--code-bg); border: 1px solid var(--border-soft); border-radius: 5px; padding: 0 5px; font-size: .9em; }
+.rline .lead { flex: 1; border-bottom: 1px dotted var(--border); transform: translateY(-3px); opacity: .5; min-width: 20px; }
+.rline .v { color: var(--text); font-weight: 600; white-space: nowrap; text-align: right; }
+.rline .v.ok { color: var(--green); }
+.rline .v.brand { color: var(--accent); }
+.rline.hit { transition: background .15s ease; }
+.rline.hit:hover { background: rgba(217,107,255,0.05); }
+
+/* ---- comparison table, TUI-styled ---- */
+.ptable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ptable th, .ptable td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border-soft); }
+.ptable thead th { color: var(--text-faint); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; }
+.ptable thead th:nth-child(2) { color: var(--accent); }
+.ptable td:first-child { color: var(--text-dim); }
+.ptable tbody tr:hover { background: rgba(217,107,255,0.04); }
+.ptable .win { color: var(--green); font-weight: 700; }
+.ptable code { color: var(--cyan); background: var(--code-bg); border: 1px solid var(--border-soft); border-radius: 5px; padding: 0 5px; font-size: .9em; }
+.tablescroll { overflow-x: auto; }
+
+/* ---- hero as a boot sequence ---- */
+.boot { position: relative; padding: 46px 0 8px; }
+.boot-line {
+  font-size: 13px; color: var(--text-faint); margin: 0 0 3px;
+  display: flex; gap: 9px; align-items: baseline;
+}
+.boot-line .ok { color: var(--green); }
+.boot-line .b { color: var(--accent); }
+.boot-line .c { color: var(--cyan); }
+.boot-headline {
+  font-family: var(--sans); font-weight: 800;
+  font-size: clamp(30px, 6vw, 60px); line-height: 1.05; letter-spacing: -.045em;
+  margin: 20px 0 16px; text-wrap: balance;
+}
+.boot-headline .grad {
+  background: linear-gradient(100deg, var(--accent), var(--accent-2) 60%, var(--cyan));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.boot-lede { font-family: var(--sans); color: var(--text-dim); font-size: 17px; line-height: 1.6; max-width: 60ch; margin: 0 0 26px; }
+.boot-lede strong { color: var(--text); font-weight: 600; }
+.boot-lede code { font-family: var(--mono); color: var(--cyan); background: var(--code-bg); border: 1px solid var(--border-soft); border-radius: 5px; padding: 0 5px; font-size: .88em; }
+
+/* section spacing in the session */
+.session > .sx { padding-top: 40px; }
+.session > .sx:first-child { padding-top: 12px; }
+
+@media (max-width: 900px) {
+  .pgrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .pgrid { grid-template-columns: 1fr; }
+  .sx { padding-left: 22px; }
+  .sx-cmd::before, .sx-node { left: -22px; }
+  .rline { flex-wrap: wrap; }
+  .rline .lead { display: none; }
+  .rline .v { text-align: left; }
+}
