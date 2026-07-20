@@ -2,7 +2,7 @@
    Mirrors maya/widget/welcome_screen.hpp rendering. All motion is CSS-driven
    (composited transform + color) so the main thread stays idle. */
 .agentty-logo {
-  --logo-mag: #e29be0; /* bright_magenta (role_brand_alt) */
+  --logo-mag: #ffb454; /* amber phosphor brand mark */
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   line-height: 1;
   letter-spacing: 0;
@@ -11,7 +11,7 @@
   align-items: flex-start;
   color: var(--logo-mag);
   user-select: none;
-  text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
+  text-shadow: 0 0 22px rgba(255, 180, 84, 0.4);
   /* heartbeat — periodic white flash of the whole mark. The TUI fires it
      only AFTER the cascade settles: kPhase1End = (8-1)*100 + 500 = 1200ms,
      then every kPulsePeriod (3200ms) for kPulseWidth (80ms ≈ 2.5% of period). */
@@ -21,8 +21,8 @@
 /* light theme: the pastel magenta washes out on white — deepen it and drop
    the neon glow to a faint tint so the mark keeps its weight */
 html[data-theme="light"] .agentty-logo {
-  --logo-mag: #b0399f;
-  text-shadow: 0 0 14px rgba(176, 57, 159, 0.18);
+  --logo-mag: #c2610a;
+  text-shadow: 0 0 14px rgba(194, 97, 10, 0.16);
 }
 
 /* one letter = a vertical stack of half-block rows, animated as a unit */
@@ -86,7 +86,7 @@ html[data-theme="light"] .agentty-logo {
   0%, 3%, 100% { color: var(--logo-mag); }
   1%, 2%       { color: var(--logo-flash, #ffffff); }
 }
-html[data-theme="light"] .agentty-logo { --logo-flash: #171a22; }
+html[data-theme="light"] .agentty-logo { --logo-flash: #221910; }
 
 @media (prefers-reduced-motion: reduce) {
   .agentty-logo,

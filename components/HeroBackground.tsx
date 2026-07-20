@@ -17,10 +17,10 @@ import { useEffect, useRef } from "react";
 const GLYPHS =
   "01{}[]()<>/=+-*&|!?;:.#$@_λ→∴⟨⟩∇∂∑01アイウエオカキクケコ▓▒░╱╲┃━┏┓┗┛".split("");
 
-const COLORS_DARK = ["#8b8cf9", "#5eead4", "#a3a4fb", "#6a7280"];
-const COLORS_LIGHT = ["#4f51d8", "#0b7285", "#6a6cd8", "#8a90a0"];
-const LEAD_DARK = "#f2f4f8";
-const LEAD_LIGHT = "#171a22";
+const COLORS_DARK = ["#ffb454", "#ff7a59", "#ffc978", "#8a6a3a"];
+const COLORS_LIGHT = ["#c2610a", "#cf3f1c", "#a34f06", "#9a8a6a"];
+const LEAD_DARK = "#fff3df";
+const LEAD_LIGHT = "#221910";
 
 export function HeroBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -48,14 +48,14 @@ export function HeroBackground() {
         .trim() || "monospace";
     // Cache theme-dependent colors once per resize/theme instead of calling
     // getComputedStyle every frame (that read forces a style/layout reflow).
-    let fade = "rgba(8, 9, 12, 0.10)";
+    let fade = "rgba(10, 8, 6, 0.10)";
     let colors = COLORS_DARK;
     let lead = LEAD_DARK;
     function readFade() {
       fade =
         getComputedStyle(document.documentElement)
           .getPropertyValue("--matrix-fade")
-          .trim() || "rgba(8, 9, 12, 0.10)";
+          .trim() || "rgba(10, 8, 6, 0.10)";
       const light = document.documentElement.getAttribute("data-theme") === "light";
       colors = light ? COLORS_LIGHT : COLORS_DARK;
       lead = light ? LEAD_LIGHT : LEAD_DARK;
