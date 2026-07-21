@@ -40,9 +40,6 @@ export default function Home() {
               <Link className="btn btn-ghost" href="/docs" data-magnetic>
                 Read the docs →
               </Link>
-              <a className="btn btn-ghost" href="/dev/" data-magnetic>
-                Try it live →
-              </a>
             </div>
           </div>
 
