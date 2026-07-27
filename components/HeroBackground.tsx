@@ -17,7 +17,7 @@ import { useEffect, useRef } from "react";
 const GLYPHS =
   "01{}[]()<>/=+-*&|!?;:.#$@_λ→∴⟨⟩∇∂∑01アイウエオカキクケコ▓▒░╱╲┃━┏┓┗┛".split("");
 
-const COLORS = ["#8b8cf9", "#5eead4", "#a3a4fb", "#6a7280"];
+const COLORS = ["#58a6ff", "#d2a8ff", "#79c0ff", "#656d76"];
 
 export function HeroBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -85,7 +85,7 @@ export function HeroBackground() {
 
         // head glyph: bright; below it a short colored tail handled by trail fade
         const lead = Math.random() < 0.04;
-        ctx.fillStyle = lead ? "#f2f4f8" : COLORS[(i + (drops[i] | 0)) % COLORS.length];
+        ctx.fillStyle = lead ? "#e6edf3" : COLORS[(i + (drops[i] | 0)) % COLORS.length];
         ctx.globalAlpha = lead ? 0.9 : 0.42;
         ctx.fillText(g, x, y);
         ctx.globalAlpha = 1;

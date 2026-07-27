@@ -1,13 +1,13 @@
 .live-root {
   position: fixed; inset: 0; z-index: 1;
   display: flex; flex-direction: column;
-  background: #07080b; color: #c9d1d9;
+  background: #010409; color: #e6edf3;
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 .live-topbar {
   display: flex; align-items: center; gap: 14px;
   height: 42px; flex-shrink: 0; padding: 0 14px;
-  background: #0c0e13; border-bottom: 1px solid #20242e;
+  background: #161b22; border-bottom: 1px solid #30363d;
 }
 .live-dots { display: flex; gap: 7px; }
 .live-dots span { width: 11px; height: 11px; border-radius: 50%; }
@@ -16,27 +16,27 @@
 .live-dots span:nth-child(3) { background: #27c93f; }
 .live-title { flex: 1; display: flex; align-items: center; gap: 12px; font-size: 13px; color: #868e9e; }
 .live-badge { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; letter-spacing: .03em; }
-.live-badge.connecting { background: rgba(255,180,84,0.14); color: #ffb454; }
-.live-badge.live { background: rgba(74,222,128,0.14); color: #4ade80; }
-.live-badge.ended { background: rgba(248,113,113,0.14); color: #f87171; }
+.live-badge.connecting { background: rgba(210, 153, 34,0.14); color: #d29922; }
+.live-badge.live { background: rgba(63, 185, 80,0.14); color: #3fb950; }
+.live-badge.ended { background: rgba(248, 81, 73,0.14); color: #f85149; }
 .live-exit { color: #868e9e; font-size: 13px; text-decoration: none; }
-.live-exit:hover { color: #f2f4f8; }
+.live-exit:hover { color: #e6edf3; }
 
 .live-term { flex: 1; min-height: 0; padding: 10px 8px 6px 12px; overflow: hidden; }
 .live-term .xterm { height: 100%; }
 .live-term .xterm-viewport { background: transparent !important; }
 /* thin scrollbar to match the site */
 .live-term .xterm-viewport::-webkit-scrollbar { width: 8px; }
-.live-term .xterm-viewport::-webkit-scrollbar-thumb { background: rgba(139,140,249,0.22); border-radius: 8px; }
+.live-term .xterm-viewport::-webkit-scrollbar-thumb { background: rgba(88, 166, 255,0.22); border-radius: 8px; }
 
 .live-hint {
   flex-shrink: 0; height: 34px; display: flex; align-items: center; justify-content: center;
-  gap: 6px; font-size: 12px; color: #5c6370; border-top: 1px solid #181b22; background: #0c0e13;
+  gap: 6px; font-size: 12px; color: #656d76; border-top: 1px solid #21262d; background: #161b22;
   text-align: center; padding: 0 12px;
 }
 .live-hint kbd {
-  font-family: inherit; font-size: 11px; background: #12141b; border: 1px solid #20242e;
-  border-radius: 5px; padding: 1px 6px; color: #a4adbb;
+  font-family: inherit; font-size: 11px; background: #1c2128; border: 1px solid #30363d;
+  border-radius: 5px; padding: 1px 6px; color: #8b949e;
 }
 
 .live-ended {
@@ -44,16 +44,16 @@
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
   background: rgba(7,8,11,0.92); backdrop-filter: blur(6px); text-align: center; padding: 24px;
 }
-.live-ended p { margin: 0; color: #a4adbb; font-size: 15px; max-width: 460px; }
-.live-ended .live-fine { color: #5c6370; font-size: 13px; margin-top: 8px; }
+.live-ended p { margin: 0; color: #8b949e; font-size: 15px; max-width: 460px; }
+.live-ended .live-fine { color: #656d76; font-size: 13px; margin-top: 8px; }
 .live-ended button {
-  background: #8b8cf9; color: #0a0b14; border: none; border-radius: 10px;
+  background: #58a6ff; color: #0d1117; border: none; border-radius: 10px;
   padding: 11px 22px; font-weight: 700; font-size: 14px; cursor: pointer;
   font-family: var(--font-sans), system-ui, sans-serif;
 }
-.live-ended button:hover { background: #a3a4fb; }
+.live-ended button:hover { background: #79c0ff; }
 .live-ended code {
-  background: #0c0e13; border: 1px solid #20242e; border-radius: 8px;
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px;
   padding: 9px 14px; color: #7ee787; font-size: 13px;
 }
 

@@ -75,13 +75,13 @@ export function LiveTerminal({ onUnavailable }: { onUnavailable: () => void }) {
         lineHeight: 1.15,
         allowProposedApi: true,
         theme: {
-          background: "#07080b", foreground: "#c9d1d9", cursor: "#8b8cf9",
-          selectionBackground: "rgba(139,140,249,0.3)",
-          black: "#07080b", red: "#e06c75", green: "#98c379", yellow: "#e5c07b",
+          background: "#010409", foreground: "#e6edf3", cursor: "#58a6ff",
+          selectionBackground: "rgba(88, 166, 255,0.3)",
+          black: "#010409", red: "#e06c75", green: "#98c379", yellow: "#e5c07b",
           blue: "#61afef", magenta: "#c586c0", cyan: "#56b6c2", white: "#d7dae0",
-          brightBlack: "#5c6370", brightRed: "#e06c75", brightGreen: "#7ee787",
+          brightBlack: "#656d76", brightRed: "#e06c75", brightGreen: "#7ee787",
           brightYellow: "#f0d98c", brightBlue: "#61afef", brightMagenta: "#d97cd9",
-          brightCyan: "#56d4e0", brightWhite: "#f2f4f8",
+          brightCyan: "#56d4e0", brightWhite: "#e6edf3",
         },
       });
       const FitAddon = window.FitAddon?.FitAddon || window.FitAddon;

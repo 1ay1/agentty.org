@@ -37,9 +37,9 @@ export default async function Image({
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "76px 80px",
-          backgroundColor: "#08090c",
+          backgroundColor: "#0d1117",
           backgroundImage:
-            "radial-gradient(1000px 560px at 84% -12%, rgba(139,140,249,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(94,234,212,0.16), transparent 58%)",
+            "radial-gradient(1000px 560px at 84% -12%, rgba(88, 166, 255,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(210, 168, 255,0.16), transparent 58%)",
           fontFamily: "monospace",
         }}
       >
@@ -53,8 +53,8 @@ export default async function Image({
             letterSpacing: "-0.02em",
           }}
         >
-          <span style={{ color: "#8b8cf9" }}>▌</span>
-          <span style={{ color: "#f2f4f8" }}>agentty</span>
+          <span style={{ color: "#58a6ff" }}>▌</span>
+          <span style={{ color: "#e6edf3" }}>agentty</span>
           <span style={{ color: "#5b6472", fontSize: "24px", fontWeight: 500 }}>
             / blog
           </span>
@@ -67,7 +67,7 @@ export default async function Image({
             gap: "22px",
           }}
         >
-          <div style={{ fontSize: "22px", color: "#5eead4", letterSpacing: "0.02em" }}>
+          <div style={{ fontSize: "22px", color: "#d2a8ff", letterSpacing: "0.02em" }}>
             {meta}
           </div>
           <div
@@ -76,7 +76,7 @@ export default async function Image({
               fontWeight: 800,
               lineHeight: 1.06,
               letterSpacing: "-0.035em",
-              color: "#f2f4f8",
+              color: "#e6edf3",
               maxWidth: "1040px",
               display: "flex",
             }}
@@ -92,7 +92,7 @@ export default async function Image({
               style={{
                 fontSize: "22px",
                 color: "#b9a8f0",
-                border: "1px solid rgba(139,140,249,0.4)",
+                border: "1px solid rgba(88, 166, 255,0.4)",
                 borderRadius: "999px",
                 padding: "6px 20px",
                 display: "flex",
