@@ -152,10 +152,11 @@ export default function Home() {
             <div className="feat-group" data-reveal>
               <div className="feat-head"><span className="fg-ico">🧠</span><h3>Workflow &amp; memory</h3></div>
               <div className="feat-cards">
-                <div className="card tilt lead"><h4>Learns your codebase</h4><p>Agent Skills teach it your conventions from a <code>SKILL.md</code>; <code>remember</code>/<code>forget</code> give it durable cross-session memory; <code>search_docs</code> runs local RAG over your knowledge corpus. Teach it once, every thread knows. <Link href="/docs/skills">Skills &rarr;</Link></p></div>
+                <div className="card tilt lead"><h4>Learns your codebase</h4><p>Agent Skills teach it your conventions from a <code>SKILL.md</code>; <code>remember</code>/<code>forget</code> give it durable cross-session memory; <code>search_docs</code> runs a frontier-grade local <Link href="/docs/retrieval">retrieval engine</Link> over your knowledge corpus &mdash; hybrid BM25 + dense embeddings, HNSW ANN, GraphRAG expansion, and a learning loop that gets sharper the more you use it. All local, zero dependencies. Teach it once, every thread knows. <Link href="/docs/skills">Skills &rarr;</Link></p></div>
                 <div className="card tilt"><h4>Threads that persist</h4><p>Every conversation is a saved thread you reopen with <code>^J</code>. Long threads compact automatically so you never blow the context window mid-task.</p></div>
                 <div className="card tilt"><h4>Isolated subagents</h4><p>The <code>task</code> tool spawns a subagent with its own context window, then returns one condensed report &mdash; keeping your main thread focused.</p></div>
                 <div className="card tilt"><h4>Run code blocks</h4><p>When a reply hands you shell commands, <code>^G</code> runs one interactively on your real terminal &mdash; sudo prompts work, output streams live, <code>^C</code> kills the command not agentty.</p></div>
+                <div className="card tilt"><h4>Rewind to any checkpoint</h4><p>Every user turn in a git repo pins a worktree snapshot. The palette lists every checkpoint with a <code>N files &middot; +A &minus;D</code> summary of what&apos;s changed since, so <code>Enter</code> rewinds files <em>and</em> transcript &mdash; never blind.</p></div>
                 <div className="card tilt"><h4>Mentions &amp; palette</h4><p>Type <code>@</code> to mention a file, <code>#</code> to jump to a symbol, <code>/</code> or <code>^K</code> for the command palette. The composer knows your project.</p></div>
               </div>
             </div>
@@ -197,6 +198,10 @@ export default function Home() {
               </tbody>
             </table>
           </div>
+          <p className="section-sub" style={{ marginTop: 16 }}>
+            Behind an enterprise gateway? <code>--auth-header X-API-Key</code> sends your key
+            under a custom header instead of the standard bearer.
+          </p>
           <p style={{ marginTop: 18 }}>
             <Link href="/docs/providers">Providers &amp; models reference &rarr;</Link>
           </p>
@@ -220,7 +225,7 @@ export default function Home() {
                 <tr><td>Air-gapped mode</td><td><span className="win">Yes (SOCKS5/SSH)</span></td><td>No</td><td>No</td></tr>
                 <tr><td>Editor integration (ACP)</td><td><span className="win">Yes (Zed)</span></td><td>Yes (Zed)</td><td>No</td></tr>
                 <tr><td>Auth</td><td>OAuth (Pro/Max) + API key</td><td>OAuth + API key</td><td>per-provider env vars</td></tr>
-                <tr><td>Models</td><td><span className="win">Claude · GPT · Groq · OpenRouter · Ollama</span></td><td>Claude (Anthropic)</td><td>many providers</td></tr>
+                <tr><td>Models</td><td><span className="win">Claude · GPT · Groq · OpenRouter · Together · Cerebras · Ollama</span></td><td>Claude (Anthropic)</td><td>many providers</td></tr>
               </tbody>
             </table>
           </div>
@@ -240,11 +245,11 @@ export default function Home() {
             <table>
               <tbody>
                 <tr><td className="mono"><code>read · write · edit</code></td><td>File IO with atomic writes and diff rendering</td></tr>
-                <tr><td className="mono"><code>grep · glob · find_definition</code></td><td>Search and symbol lookup across the codebase</td></tr>
+                <tr><td className="mono"><code>grep · glob · list_dir · find_definition</code></td><td>Search, listing, and symbol lookup across the codebase</td></tr>
                 <tr><td className="mono"><code>bash · diagnostics</code></td><td>Sandboxed shell and build, with exit codes</td></tr>
                 <tr><td className="mono"><code>git_status · git_diff · git_log · git_commit</code></td><td>Version control, rendered natively</td></tr>
                 <tr><td className="mono"><code>web_fetch · web_search</code></td><td>Reach the web for docs and APIs</td></tr>
-                <tr><td className="mono"><code>skill · task · search_docs</code></td><td>On-demand skills, isolated subagents, and RAG over a knowledge corpus</td></tr>
+                <tr><td className="mono"><code>search_docs · search_code · skill · task</code></td><td>Local RAG over your knowledge corpus, semantic code search, on-demand skills, and isolated subagents</td></tr>
                 <tr><td className="mono"><code>todo · remember · forget · wipe_memory</code></td><td>Planning and durable cross-session memory</td></tr>
               </tbody>
             </table>
