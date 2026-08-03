@@ -40,8 +40,9 @@ agentty is configured through flags, environment variables, and two on-disk path
 | `AGENTTY_RAG_STITCH` | Parent-document stitch: after ranking, fold each surviving chunk back into its adjacent siblings so the model reads the hit in context. **On by default** (in-memory, no network); `=0` disables. |
 | `AGENTTY_RAG_GRAPH` | GraphRAG **local multi-hop expansion**: seed with hybrid, walk the document graph (links + shared-entity edges) and fuse in supporting passages a flat index misses. **On by default** (deterministic, in-memory); `=0` disables. |
 | `AGENTTY_RAG_CORRECT` | **CRAG** corrective grading: a model-free retrieval evaluator drops passages graded irrelevant and yields a calibrated confidence in `[0,1]` — the signal the proactive-injection gate reads. **On by default**; `=0` disables. |
-| `AGENTTY_RAG_EXPAND / AGENTTY_RAG_HYDE / AGENTTY_RAG_GEN_MODEL` | LLM-assisted recall: **multi-query / RAG-Fusion** (`_EXPAND`) and **HyDE** (`_HYDE`), both **on by default**, powered by a small **local** Ollama model (`_GEN_MODEL`, default `qwen2.5:0.5b`) on the same Ollama used for embeddings — **zero cloud cost**. If Ollama is unreachable they silently no-op and plain hybrid still runs; they are also skipped on the latency-sensitive proactive pre-turn path. Set `=0` to disable. |
+| `AGENTTY_RAG_EXPAND / AGENTTY_RAG_HYDE / AGENTTY_RAG_GEN_MODEL` | LLM-assisted recall: **multi-query / RAG-Fusion** (`_EXPAND`) and **HyDE** (`_HYDE`), both opt-in (`=1`), powered by a small **local** Ollama model (`_GEN_MODEL`, default `qwen2.5:0.5b`) on the same Ollama used for embeddings. If Ollama is unreachable they silently no-op and plain hybrid still runs; they are also skipped on the latency-sensitive proactive pre-turn path. |
 | `AGENTTY_RAG_PERSIST` | Cache the built docs index to `.agentty/rag_docs.ragdb` so a later session opens warm without re-walking + re-embedding. **On by default**; `=0` disables. |
+| `AGENTTY_RAG_LEARN` | The **learning loop**: fold each passage's Beta-smoothed win-rate (`.agentty/rag_feedback.tsv`) back into ranking as a bounded (±15%) nudge, so passages that repeatedly prove useful **in this workspace** edge ahead of near-tied ones. A `read` of a path retrieval just surfaced counts as a win; unseen paths are untouched (neutral). **On by default**; `=0` disables (delete the TSV to forget). |
 | `AGENTTY_RAG_TRACE` | Fold rag-cpp's per-stage trace into the retrieval `mode` string for debugging. **Off by default**; truthy enables. |
 | `AGENTTY_RAG_PROACTIVE / AGENTTY_RAG_PROACTIVE_MIN` | Pre-turn auto-retrieval that injects a `<retrieved-context>` block when a query looks knowledge-shaped. On by default; `=0` disables. `_MIN` is the CRAG-calibrated confidence bar to inject (default `0.35`). |
 | `AGENTTY_RAG_PROACTIVE_BUDGET_MS` | Fast-path **hedge** for the proactive pre-turn retrieval. The submit thread waits at most this long for the funnel; if it lands, grounding is injected inline with zero added latency. If it overruns the submit thread never blocks — the turn enters its normal streaming state (status shows *retrieving context…*, the UI never feels hung) and the stream launch is HELD behind a background retrieval that injects the block **same-turn** the moment it lands. Grounding is always for the question just asked; it is never dropped or deferred to a later turn. Default `250`; `0` skips the inline hedge. |
@@ -54,7 +55,7 @@ agentty is configured through flags, environment variables, and two on-disk path
 Credentials live under XDG config; everything else lives under `~/.agentty`.
 
 - `~/.config/agentty/credentials.json` — Claude OAuth token or API key, mode `0600` (honours `$XDG_CONFIG_HOME`). Plaintext JSON by default; optionally sealed with AES-256-GCM (`AGENTTY_ENCRYPT_PASSPHRASE`) and/or stored in the OS keystore (`AGENTTY_USE_KEYSTORE`). See [Authentication](/docs/authentication) for the hardening options.
-- `~/.agentty/settings.json` — persisted provider, model, per-provider models, reasoning effort, favourite models, permission profile, and in-app-pasted provider keys.
+- `~/.agentty/settings.json` — persisted provider, model, per-provider models, reasoning effort, favourite models, permission profile, auto-compaction depth, and in-app-pasted provider keys.
 - `~/.agentty/threads/<id>.json` — one JSON file per thread (flat, keyed by thread id).
 - `~/.agentty/memory.jsonl` — user-scope `remember` facts (cross-workspace); `<project>/.agentty/memory.jsonl` holds project-scope facts.
 - `~/.agentty/skills/`, `~/.agents/skills/`, `~/.claude/skills/` — personal [Agent Skills](/docs/skills); the same three dirs under `<project>/` shadow them.
@@ -72,7 +73,7 @@ On the Claude backend, agentty appends up to three user-authored guidance files 
 
 ## Persisted settings
 
-`--provider`, `-m`/`--model`, the reasoning effort tier, favourited models, and your permission profile are written to `~/.agentty/settings.json` whenever you change them in-app — so the next launch resumes exactly where you left off. There is nothing to hand-edit; the picker (`^P` / `^/`) and `S-Tab` manage it.
+`--provider`, `-m`/`--model`, the reasoning effort tier, favourited models, your permission profile, and your compaction depth are written to `~/.agentty/settings.json` whenever you change them in-app — so the next launch resumes exactly where you left off. There is nothing to hand-edit; the picker (`^P` / `^/`) and `S-Tab` manage it. Compaction depth is set from the command palette's *Compaction depth* entry — see [Providers](/docs/providers#1m-context-models) for why you'd raise it on a 1M-context model.
 
 ## Choosing a workspace
 
