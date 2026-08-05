@@ -137,3 +137,8 @@ single render function, a permission matrix you can audit in one sitting.
 
 If you've ever closed a terminal agent because the startup lag broke your flow:
 this one starts before you finish letting go of `Enter`.
+
+Cold start is one piece of a bigger picture — see [Why terminal-first AI
+feels faster than web-based tools](/blog/why-terminal-first-ai-feels-faster)
+for the full latency chain, from DOM diffing to garbage-collector pauses,
+that a browser-hosted tool can never architect its way out of.
