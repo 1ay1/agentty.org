@@ -1,17 +1,17 @@
 ---
-title: "Why terminal-first AI feels faster than web-based tools"
+title: "I measured why terminal AI agents feel faster than web-based ones (1.2ms vs 122ms cold start)"
 date: 2026-08-05
 author: agentty
 tags: [terminal, ux, performance, deep-dive]
-excerpt: "I benchmarked it instead of trusting the vibe: agentty cold-starts at 1.2ms p50, claude-code at 122ms p50, on the same machine, same session — a ~100x gap that has nothing to do with model speed. Here's the actual latency chain a browser-hosted tool can't architect its way out of, the honest counterarguments, and the raw numbers to reproduce yourself."
+excerpt: "I stopped trusting the vibe and benchmarked it: agentty cold-starts at 1.2ms p50, claude-code at 122ms p50, on the same machine, same session — a ~100x gap that has nothing to do with model speed. Where the 122ms actually goes, the obvious 'compiled vs interpreted, duh' objection addressed head-on, and the raw script to reproduce it on your own tools."
 ---
 
-# Why terminal-first AI feels faster than web-based tools
+# I measured why terminal AI agents feel faster than web-based ones
 
 I kept telling myself the "terminal agents feel snappier" thing was probably
 just vibes — recency bias, or me liking the aesthetic of green text on black.
-So I stopped asserting it and measured it instead, on one machine, back to
-back, right before writing this.
+So instead of writing another blog post asserting it, I measured it, on one
+machine, back to back, right before writing this.
 
 ```
 $ python3 -c "
@@ -137,6 +137,28 @@ is. The case isn't "you'll notice one cold start." It's that the same
 category of overhead (chrome, not model) recurs on every keystroke, every
 streamed token, and every mouse trip for the whole session, and *that*
 compounds into something you feel even if no single instance of it does.
+
+## "Yeah, compiled beats a Node CLI, no kidding"
+
+Fair, and worth saying out loud instead of hoping nobody notices: none of
+this is a novel discovery. Native binaries beating interpreted, GC'd
+runtimes at cold start is not news to anyone who's shipped both. The point
+of this post isn't "static linking is fast" — it's that this well-known,
+unglamorous fact has a *compounding* effect on a specific, popular category
+of software (chat-driven coding agents) that mostly gets discussed in terms
+of model quality and pricing, never in terms of the wrapper's own latency
+budget. Nobody benchmarks the wrapper. I think they should, because for the
+short, frequent interactions that make up most of a session, the wrapper's
+cost is the *whole* cost — the model isn't even involved yet.
+
+The other fair pushback: `--version` isn't a full session. It's a
+deliberately minimal, reproducible proxy for "cost paid before your prompt
+even reaches the model," not a claim that every subsequent interaction is
+100x apart too. Streaming, tool-call latency, and network RTT to the
+provider are shared costs both tools pay once a request is actually in
+flight. What differs, and what this post is actually about, is everything
+*around* that shared cost — the four extra taxes in the chain above, paid
+by a browser-hosted UI on every single round trip, not just the first one.
 
 ## Reproduce it yourself
 
