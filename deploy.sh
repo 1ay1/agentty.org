@@ -67,6 +67,13 @@ sudo ln -sf "/etc/nginx/sites-available/dev.${DOMAIN}" "/etc/nginx/sites-enabled
 sudo nginx -t
 sudo systemctl reload nginx
 
+echo "==> Notifying IndexNow (Bing/DuckDuckGo/Yandex) of the current sitemap"
+# Free, zero-auth push so new/changed pages (e.g. a new blog post) get
+# crawled in minutes instead of waiting on the next organic crawl. Google
+# doesn't consume IndexNow — it relies on the sitemap.xml <lastmod> plus
+# Search Console verification (already in app/layout.tsx). Never fails deploy.
+node scripts/submit-indexnow.mjs || echo "   (IndexNow submission skipped)"
+
 echo "==> Syncing the live agentty backend service"
 # node deps for the live PTY/mock-model server (node-pty is native; only
 # rebuilds when missing).

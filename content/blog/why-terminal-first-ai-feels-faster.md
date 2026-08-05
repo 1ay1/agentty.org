@@ -121,6 +121,35 @@ because some unrelated tab decided to collect garbage. A terminal binary's
 resource footprint is just... the agent. Nothing else is sharing the
 process.
 
+## Frequently asked
+
+**Is a terminal AI tool actually faster, or does it just feel faster?**
+Both, and they're the same thing measured two ways. Cold start is a real,
+measurable number (milliseconds vs. seconds — see above), and "feel" is
+just human perception of the *other* three costs — DOM mutation, layout,
+and GC pauses — that don't show up in a token-per-second benchmark but do
+show up in every keystroke and every streamed token.
+
+**Does this apply to every web-based AI tool, or just bad ones?**
+It applies to the category, not the implementation quality. Even a
+perfectly engineered web app still has to boot a JS runtime, hydrate a
+framework, and mutate a DOM for every token — that's the platform's
+floor, not a bug. A terminal binary's floor is a `poll()` loop and a cell
+buffer diff, which is structurally lower no matter how well either side
+is written.
+
+**Is this specific to agentty, or true of terminal tools generally?**
+The *category* argument (no DOM, no browser hop, no GC-driven jank) holds
+for any native terminal tool. The specific numbers in this post — ~2 ms
+cold start, zero-hop render loop — are agentty's, because it's a static
+C++26 binary with [its own TUI renderer](https://github.com/1ay1/maya)
+rather than a wrapped web view.
+
+**Does terminal-first mean I lose a GUI entirely?**
+No — agentty also runs natively [inside Zed over ACP](/docs/acp), so you
+get the same zero-DOM render loop with an editor's chrome around it, not
+an either/or choice between raw terminal and browser tab.
+
 ## Reproduce it yourself
 
 Don't take the vibes for it — measure your own tools:

@@ -20,7 +20,9 @@ export type PostMeta = {
   wordCount: number;
 };
 
-export type Post = PostMeta & { html: string };
+export type FaqItem = { question: string; answer: string };
+
+export type Post = PostMeta & { html: string; faq: FaqItem[] };
 
 // Minimal frontmatter parser: a leading `---` block of `key: value` lines.
 // Values may be quoted; `tags` accepts an inline [a, b] array or comma list.
@@ -54,6 +56,27 @@ function readingTime(text: string): number {
   return Math.max(1, Math.round(words / 200));
 }
 
+// Pulls Q&A pairs out of a "## Frequently asked" section (bold question line
+// followed by a plain-text answer paragraph) to feed FAQPage JSON-LD. Purely
+// additive — posts without that heading just get an empty faq array.
+function parseFaq(body: string): FaqItem[] {
+  const section = body.match(/\n##\s+Frequently asked\s*\n([\s\S]*?)(?:\n##\s|$)/);
+  if (!section) return [];
+  const items: FaqItem[] = [];
+  const re = /\*\*(.+?)\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(section[1]))) {
+    const question = m[1].trim();
+    const answer = m[2]
+      .trim()
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/[*`_]/g, "")
+      .replace(/\s+/g, " ");
+    if (question && answer) items.push({ question, answer });
+  }
+  return items;
+}
+
 function loadPost(filename: string): Post {
   const slug = filename.replace(/\.md$/, "");
   const raw = readFileSync(join(BLOG_DIR, filename), "utf8");
@@ -80,6 +103,7 @@ function loadPost(filename: string): Post {
     readingMinutes: readingTime(body),
     wordCount: body.trim().split(/\s+/).filter(Boolean).length,
     html,
+    faq: parseFaq(body),
   };
 }
 

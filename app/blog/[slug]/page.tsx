@@ -92,6 +92,19 @@ export default async function BlogPost({
           { "@type": "ListItem", position: 3, name: post.title, item: postUrl },
         ],
       },
+      ...(post.faq.length > 0
+        ? [
+            {
+              "@type": "FAQPage",
+              "@id": `${postUrl}#faq`,
+              mainEntity: post.faq.map((f) => ({
+                "@type": "Question",
+                name: f.question,
+                acceptedAnswer: { "@type": "Answer", text: f.answer },
+              })),
+            },
+          ]
+        : []),
     ],
   };
 
