@@ -1,220 +1,149 @@
 ---
-title: "I measured why terminal AI agents feel faster than web-based ones (1.2ms vs 122ms cold start)"
+title: "Why a terminal UI can out-render a browser: packed cells, SIMD diffing, and zero allocations"
 date: 2026-08-05
 author: agentty
-tags: [terminal, ux, performance, deep-dive]
-excerpt: "I stopped trusting the vibe and benchmarked it: agentty cold-starts at 1.2ms p50, claude-code at 122ms p50, on the same machine, same session — a ~100x gap that has nothing to do with model speed. Where the 122ms actually goes, the obvious 'compiled vs interpreted, duh' objection addressed head-on, and the raw script to reproduce it on your own tools."
+tags: [terminal, performance, deep-dive, rendering]
+excerpt: "A terminal frame is a grid of a few thousand cells, not a DOM tree — and that difference in data structure is why a well-built TUI renderer can diff, encode, and flush a frame with zero heap allocations and SIMD-width cell comparisons. Here's the actual rendering pipeline: 64-bit packed cells, open-addressing style interning, AVX/NEON row-skip, and why there's no GC pause waiting to happen."
 ---
 
-# I measured why terminal AI agents feel faster than web-based ones
+# Why a terminal UI can out-render a browser
 
-I kept telling myself the "terminal agents feel snappier" thing was probably
-just vibes — recency bias, or me liking the aesthetic of green text on black.
-So instead of writing another blog post asserting it, I measured it, on one
-machine, back to back, right before writing this.
+Not "terminal apps feel snappy" as received wisdom — the actual mechanics
+of *why*, from the render loop of a TUI engine I work on
+([maya](https://github.com/1ay1/maya)) that pushes real coding-agent
+sessions to the screen at a few thousand frames without a stutter. None of
+this is exotic; it's the natural consequence of what a terminal frame
+*is* as a data structure, compared to what a browser has to maintain.
 
-```
-$ python3 -c "
-import subprocess, time
-times = []
-for _ in range(30):
-    t0 = time.perf_counter()
-    subprocess.run(['claude', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    times.append((time.perf_counter() - t0) * 1000)
-times.sort()
-n = len(times)
-print(f'n={n} min={times[0]:.1f}ms p50={times[n//2]:.1f}ms p95={times[int(n*0.95)]:.1f}ms')
-"
-n=30 min=117.8ms p50=122.4ms p95=144.3ms
-```
+## The whole screen is a flat array
 
-```
-$ python3 -c "... same loop, agentty --version ..."
-n=50 min=1.073ms p50=1.206ms p95=1.601ms
+A terminal is `rows × cols` cells, and nothing else. No box model, no
+flex/grid layout, no z-index stacking contexts, no CSS cascade to
+resolve. So the canvas backing every frame is exactly that: a flat array
+of packed 64-bit integers, one per cell —
+
+```cpp
+// Canvas is the rendering surface: a width x height grid of packed 64-bit
+// cells. Each cell holds a Unicode code point, a style ID (interned via
+// StylePool), a hyperlink ID, and a width marker for CJK/wide characters.
+//
+// The 64-bit packing enables O(1) cell comparison in the diff algorithm --
+// two cells are identical iff their packed representations are equal.
 ```
 
-Same box, same shell, same minute. **~100x**, p50 to p50. Not a number from
-a slide deck — reproduce it yourself, methodology below. That gap has
-*nothing* to do with which model answers your prompt. It's entirely the
-cost of the wrapper around the model, and it's worth understanding exactly
-where it comes from, because "the model is the bottleneck" — which is true
-for token generation — quietly stops being true for everything else you do
-in a session.
+A code point, a style ID, a hyperlink ID, and a wide-character marker,
+bit-packed into one `uint64_t`. That one design decision is what makes
+everything downstream cheap: comparing "did this cell change" is a single
+integer equality check, not a deep-equal over a style object graph.
 
-## Where 120ms actually goes
+## Style comparison without comparing styles
 
-`claude --version` doesn't touch the network — it's a pure local cold
-start, and it's still ~120ms because the binary is a POSIX shell shim that
-`exec`s into a Node app:
+A `Style` (foreground, background, bold, underline, ...) is a real struct
+with several fields — expensive to compare field-by-field on every cell,
+every frame. So styles aren't stored per-cell at all; they're interned
+once into a pool and referenced by a 16-bit ID, open-addressed by hash:
 
-```
-#!/bin/sh
-export DISABLE_UPDATES=1
-export DISABLE_INSTALLATION_CHECKS=1
-exec /opt/claude-code/bin/claude "$@"
-```
-
-Isolating just the interpreter's own boot floor, no app code at all:
-
-```
-$ time node -e '1'
-min=41.7ms p50=46.3ms max=53.3ms   (n=20)
+```cpp
+[[nodiscard]] MAYA_ALWAYS_INLINE uint16_t intern(const Style& s) {
+    std::size_t h = hash_style(s);
+    std::size_t idx = h & mask_;
+    while (true) {
+        auto& slot = slots_[idx];
+        if (slot.hash == 0) [[unlikely]] {
+            // Empty slot — insert new style.
+            ...
 ```
 
-So roughly a third of the 122ms is V8 spinning up before a single line of
-the CLI's own code runs — `require()` graph walked, JIT warming, module
-resolution across however many `node_modules` packages the tool ships.
-The other ~80ms is the app's own init on top of that floor. Compare install
-footprints while we're here:
+Two cells with the same visual style always carry the same 16-bit ID, so
+"did the style change" becomes another integer comparison, and transitioning
+the terminal from one style to another becomes a lookup of a pre-built
+escape sequence rather than re-deriving SGR codes on the fly:
 
-```
-/opt/claude-code       224M
-~/.local/bin/agentty     16M
-```
-
-agentty is one statically-linked ELF binary — no `node_modules`, no
-interpreter to boot, no JIT to warm. `poll(2)`, a state machine, a render
-loop. There's no 40ms floor to pay because there's no VM underneath it.
-
-## The latency chain nobody benchmarks
-
-"Time to first token from the API" is the number every provider publishes.
-It's also the *smallest* piece of what you experience in a live session,
-because a coding session isn't one long generation — it's dozens of short
-round trips (a quick question, a tool call, a diff approval, an "undo
-that"), and the fixed per-interaction overhead compounds every single one:
-
-1. **Cold start of the app itself** — measured above: ~120ms for a
-   Node-shimmed CLI vs. ~1ms for a static binary, before either has done
-   any actual work.
-2. **Keystroke → input handler → virtual DOM diff** — a web textarea's
-   keystrokes round-trip through a framework's event system and often a
-   re-render, even for "just" a controlled input.
-3. **Send → network hop to a hosted backend** — a browser-hosted tool
-   inserts a hop the terminal agent skips entirely: browser → your ISP →
-   the vendor's edge → their orchestration layer → the model provider.
-   Each hop is TCP/TLS overhead and jitter you don't control, paid on
-   *every message*, independent of the model's own latency.
-4. **Streaming tokens → DOM mutation, layout, paint** — each streamed
-   token becomes a DOM mutation, triggers style recalc, gets painted.
-   Browsers batch this well, but it isn't free — re-highlighting a growing
-   code fence on every chunk is a classic web-tool stutter source, and if
-   the UI runs on a garbage-collected runtime, a GC pause can land mid-stream
-   and drop a frame.
-5. **Your eyes → your hands, but your hands never left the mouse** — every
-   "approve this edit," "switch model," "open this file" that requires a
-   *click* costs a keyboard→pointer→keyboard context switch, on the order
-   of 200-400ms of motor-planning overhead per round trip.
-
-A terminal-first agent collapses 1, 2, and 4 to near-zero and skips 5
-outright, because the entire interface — including tool-call approval,
-model switching, and history — lives on the keyboard's turf, not a
-browser's.
-
-## No DOM, no GC pauses — just a redraw loop
-
-agentty's render loop ([built on maya](https://github.com/1ay1/maya), its
-own C++ TUI engine) is a `poll(2)` over the model stream and your input
-file descriptor: a chunk arrives, state updates, one frame diff computes
-against a cell buffer, only the changed terminal cells get written. No
-layout pass, no paint pass, no reflow — a terminal cell grid has no CSS
-box model cascading through it. And because the binary has no garbage
-collector, nothing can pause the draw loop mid-stream. Chunk N and chunk
-10,000 land on the next frame with the same latency.
-
-## The honest counterargument
-
-"The model is the bottleneck, not the UI" is *correct* for the thing it's
-usually said about — one long generation, tokens/sec, time-to-first-token.
-No client trick makes the model answer faster. Where it stops applying is
-the other 90% of a session: the short round trips where fixed per-message
-overhead, not model throughput, dominates what you feel. A tool adding
-120ms of chrome to every one of those round trips adds up across a session
-even when the model behind both tools is byte-for-byte identical.
-
-It's also fair to push back that 120ms is imperceptible *once* — and it
-is. The case isn't "you'll notice one cold start." It's that the same
-category of overhead (chrome, not model) recurs on every keystroke, every
-streamed token, and every mouse trip for the whole session, and *that*
-compounds into something you feel even if no single instance of it does.
-
-## "Yeah, compiled beats a Node CLI, no kidding"
-
-Fair, and worth saying out loud instead of hoping nobody notices: none of
-this is a novel discovery. Native binaries beating interpreted, GC'd
-runtimes at cold start is not news to anyone who's shipped both. The point
-of this post isn't "static linking is fast" — it's that this well-known,
-unglamorous fact has a *compounding* effect on a specific, popular category
-of software (chat-driven coding agents) that mostly gets discussed in terms
-of model quality and pricing, never in terms of the wrapper's own latency
-budget. Nobody benchmarks the wrapper. I think they should, because for the
-short, frequent interactions that make up most of a session, the wrapper's
-cost is the *whole* cost — the model isn't even involved yet.
-
-The other fair pushback: `--version` isn't a full session. It's a
-deliberately minimal, reproducible proxy for "cost paid before your prompt
-even reaches the model," not a claim that every subsequent interaction is
-100x apart too. Streaming, tool-call latency, and network RTT to the
-provider are shared costs both tools pay once a request is actually in
-flight. What differs, and what this post is actually about, is everything
-*around* that shared cost — the four extra taxes in the chain above, paid
-by a browser-hosted UI on every single round trip, not just the first one.
-
-## Reproduce it yourself
-
-```bash
-# cold start, apples to apples
-python3 -c "
-import subprocess, time
-times = []
-for _ in range(30):
-    t0 = time.perf_counter()
-    subprocess.run(['<your-tool>', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    times.append((time.perf_counter() - t0) * 1000)
-times.sort()
-n = len(times)
-print(f'min={times[0]:.1f}ms p50={times[n//2]:.1f}ms p95={times[int(n*0.95)]:.1f}ms')
-"
+```cpp
+// Generates the minimal escape sequence to transition from one Style to
+// another. This is critical for rendering performance: instead of resetting
+// and re-applying every attribute on every cell, we only emit what changed.
 ```
 
-Or just watch it: stream a long response with a big syntax-highlighted
-code block in a browser-hosted tool, then do the same in a terminal agent.
-The terminal one won't drop a frame — a direct, structural consequence of
-having no DOM, no GC, and no network hop to a hosted UI to pay for.
+Even the *overflow* case is deliberate: the ID space is a `uint16_t`
+(65,535 styles), and if something pathological — an animation minting a
+fresh color shade every frame, say — blows through that budget, new
+styles collapse to the default style rather than silently aliasing onto
+whatever the 65,534th style happened to be. Wrong-but-plain beats
+wrong-and-misattributed, and it's a self-announcing failure instead of a
+silent one.
 
-## Frequently asked
+## Diffing at SIMD width, not cell-by-cell
 
-**Is a terminal AI tool actually faster, or does it just feel faster?**
-Both, and they're the same thing measured two ways. Cold start is a
-number you can log (1.2ms vs. 122ms above), and "feel" is human
-perception of the *other* costs — DOM mutation, layout, GC pauses — that
-don't show up in a tokens/sec benchmark but do show up in every keystroke.
+Two full-frame `uint64_t` arrays — front (what the terminal currently
+shows) and back (what should be shown next) — get compared every frame.
+The naive version of that is a scalar loop over a few thousand cells. The
+actual implementation compares whole SIMD lanes at once and skips entire
+runs of unchanged cells in one instruction:
 
-**Does this apply to every web-based AI tool, or just bad ones?**
-The category, not the implementation quality. Even a perfectly engineered
-web app still boots a JS runtime, hydrates a framework, and mutates a DOM
-per token — that's the platform's floor, not a bug. A terminal binary's
-floor is a `poll()` loop and a cell-buffer diff, structurally lower no
-matter how well either side is written.
-
-**Is this specific to agentty, or true of terminal tools generally?**
-The category argument (no DOM, no browser hop, no GC-driven jank) holds
-for any native terminal tool. The specific numbers above are agentty's —
-a static C++26 binary with [its own TUI renderer](https://github.com/1ay1/maya),
-not a wrapped web view — and claude-code's, measured on the same box.
-
-**Does terminal-first mean I lose a GUI entirely?**
-No — agentty also runs natively [inside Zed over ACP](/docs/acp), same
-zero-DOM render loop, with an editor's chrome around it instead of a
-raw terminal.
-
-## Get it
-
-```bash
-curl -fsSL https://agentty.org/install.sh | sh
+```cpp
+// Hardware-accelerated comparison of packed 64-bit cell arrays. Uses
+// AVX-512F (8 cells/cycle), AVX2 (4 cells/cycle), SSE2 (2 cells/cycle,
+// x86-64 baseline), or NEON (2 cells/cycle, ARM64). Scalar fallback for
+// everything else.
 ```
 
-agentty is a single 16MB static binary, MIT-licensed.
-[Source](https://github.com/1ay1/agentty) — the render loop is short
-enough to read in one sitting, so don't take the numbers above on faith
-either.
+Most of a terminal frame is unchanged between renders — a status line
+tick, one line of new streamed text, a cursor blink — so a row-skip that
+tests eight cells per cycle and moves on the instant they're all equal is
+the difference between "diff cost scales with screen size" and "diff cost
+scales with what actually changed."
+
+## Writing the diff without allocating
+
+The naive design for "turn a cell diff into terminal output" builds an
+intermediate list of operations (move cursor, set style, write chars) and
+then serializes that list to bytes. maya's differ skips the intermediate
+representation entirely and writes ANSI bytes straight into the output
+buffer as it walks the diff:
+
+```cpp
+// Key design: instead of building a vector<RenderOp> and then serializing,
+// we write ANSI sequences directly into the caller's string buffer. This
+// eliminates every heap allocation that the old RenderOp path incurred —
+// one per changed cell for cursor positioning, one per style change, one
+// per character batch. On a typical 80x24 frame with 10% changed cells,
+// that's ~192 fewer allocations per render cycle.
+```
+
+~192 allocations is a small number in isolation. At 60fps sustained over
+a session, it's the difference between a render loop the allocator never
+has to think about and one that's doing real, avoidable work every 16ms —
+work that, on a garbage-collected runtime, eventually has to be *collected*
+too, on its own schedule, possibly mid-frame.
+
+## No GC pause waiting to happen
+
+That last point is the structural one, and it's not about any particular
+language being "faster" — it's about what's *absent*. A render pipeline
+built on manually-managed, stack- and pool-allocated buffers has nothing
+for a garbage collector to walk, because there is no garbage collector.
+There's no equivalent of a DOM node tree retained across frames that has
+to be walked, diffed by a separate reconciler, and then thrown away. The
+only persistent state is two flat arrays of integers and a style pool,
+and the only per-frame work is: compare arrays at SIMD width, write bytes
+for what changed, swap front and back. Nothing in that loop can pause
+unpredictably, because nothing in that loop defers work to a scheduler
+that isn't the one you wrote.
+
+## The general point
+
+None of the individual techniques here are novel — packed representations,
+interning, SIMD comparison, and zero-allocation serialization are all old
+ideas. What's worth noticing is how well they compound specifically for a
+*terminal* frame: it's small (a few thousand cells, not an arbitrarily
+deep DOM), flat (no layout pass, because a character grid has no box
+model), and already discrete (cells either match or they don't — no
+sub-pixel anti-aliasing, no partial repaint of a shape). A rendering
+target that constrained is exactly the case where "compare integers, skip
+what's equal, allocate nothing" stops being a micro-optimization and
+becomes the entire architecture.
+
+[Source](https://github.com/1ay1/maya) — `include/maya/render/canvas.hpp`
+and `include/maya/render/diff.hpp` are short enough to read end to end in
+one sitting, packed-cell layout and all.
