@@ -190,6 +190,8 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
   transition: border-color .15s, background .15s;
 }
 .ghbtn:hover { border-color: var(--accent); background: var(--bg-soft); text-decoration: none; }
+.discordbtn:hover { border-color: #5865F2; color: #fff; background: #5865F2; }
+.discordbtn:hover svg { color: #fff; }
 
 /* ---------- BUTTONS ---------- */
 .btn {
@@ -557,7 +559,7 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
 .quote .by { display: block; font-size: 15px; color: var(--text-faint); margin-top: 14px; letter-spacing: 0; }
 
 /* ---------- BIG BOXES ---------- */
-.boxrow { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.boxrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
 .bigbox { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; transition: border-color .25s ease, transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease; }
 .bigbox:hover { border-color: rgba(88, 166, 255,0.4); transform: translateY(-3px); box-shadow: 0 22px 48px -28px rgba(88, 166, 255,0.4); }
 .bigbox h3 { margin: 0 0 8px; font-size: 19px; }
@@ -598,6 +600,7 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
   .brand-ver { display: none; }
   .ghbtn { padding: 7px 9px; }
   .ghbtn span { display: none; }
+  .discordbtn span { display: none; }
   .nav-cta { gap: 6px; }
   .nav-inner { gap: 10px; }
   .nav-toggle { display: flex; align-items: center; justify-content: center; }

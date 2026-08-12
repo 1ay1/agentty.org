@@ -288,6 +288,11 @@ export default function Home() {
               <p>Bug reports, fixes, and well-scoped features are all welcome. Start with the contributing guide.</p>
               <Link className="btn btn-ghost" href="/contributing" data-magnetic>How to contribute →</Link>
             </div>
+            <div className="bigbox tilt" data-reveal>
+              <h3>Join the community</h3>
+              <p>Hang out in the Discord to ask questions, share sessions, and get help — there&apos;s an AI helper bot that answers agentty questions using the real agent.</p>
+              <a className="btn btn-primary" href={site.discord} target="_blank" rel="noopener noreferrer" data-magnetic>Join the Discord →</a>
+            </div>
           </div>
         </div>
       </section>
@@ -303,6 +308,7 @@ export default function Home() {
           </div>
           <div className="hero-actions" style={{ justifyContent: "center", marginTop: 26 }}>
             <Link className="btn btn-primary" href="/docs/quick-start" data-magnetic>Quick start guide</Link>
+            <a className="btn btn-ghost" href={site.discord} target="_blank" rel="noopener noreferrer" data-magnetic>Join the Discord →</a>
             <a className="btn btn-ghost" href={site.github} target="_blank" rel="noopener noreferrer" data-magnetic>Star on GitHub →</a>
           </div>
         </div>
