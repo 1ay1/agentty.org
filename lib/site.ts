@@ -8,6 +8,7 @@ export const site = {
   releases: "https://github.com/1ay1/agentty/releases",
   releasesLatest: "https://github.com/1ay1/agentty/releases/latest",
   issues: "https://github.com/1ay1/agentty/issues",
+  discord: "https://discord.gg/qhb9AZ8f3c",
   license: "MIT",
   maya: "https://github.com/1ay1/maya",
   installOneLiner:

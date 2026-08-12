@@ -34,6 +34,7 @@ export function SiteFooter() {
           </div>
           <div>
             <h2 className="foot-h">Community</h2>
+            <a href={site.discord} target="_blank" rel="noopener noreferrer">Discord</a>
             <Link href="/community">Get Involved</Link>
             <a href={site.issues} target="_blank" rel="noopener noreferrer">Report a Bug</a>
             <Link href="/acknowledgements">Acknowledgements</Link>
