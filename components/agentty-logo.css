@@ -25,8 +25,8 @@
   user-select: none;
   text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
   /* heartbeat — a brief hard white flash of the whole mark. Period 5.76 s,
-     ~200 ms (3.5%) bright, held magenta the rest. Delayed past Phase 1. */
-  animation: logo-pulse 5.76s steps(1, end) 2.16s infinite;
+     the white spike is ~150 ms; magenta is held the rest of the cycle. */
+  animation: logo-pulse 5.76s linear 2.16s infinite;
 }
 
 /* one letter = a vertical stack of half-block rows, animated as a unit */
@@ -89,14 +89,14 @@
 }
 
 @keyframes logo-pulse {
-  /* ~200 ms / 5760 ms ≈ 3.5% of the cycle is bright_white, the rest holds the
-     brand magenta — a hard "system alive" blink layered on top of the wave,
-     exactly like the TUI's 80 ms/3200 ms heartbeat (scaled 1.8×). */
-  0%, 3.5%, 100% {
+  /* Magenta for ~97% of the loop; a quick white blip (~2.6% ≈ 150 ms of the
+     5.76 s cycle) that ramps in and back out — the TUI's 80 ms/3200 ms
+     heartbeat, scaled. Held magenta the rest so the mark never sits washed. */
+  0%, 94%, 100% {
     color: var(--logo-mag);
     text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
   }
-  0.01%, 3.49% {
+  96%, 97% {
     color: #ffffff;
     text-shadow: 0 0 26px rgba(255, 255, 255, 0.5);
   }
