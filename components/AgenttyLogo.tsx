@@ -132,11 +132,16 @@ export function AgenttyLogo() {
           style={
             {
               "--li": li,
-              // Perpetual bob, no cascade. The brand welcome renderer offsets
-              // each letter's sine by 0.45 rad (BOB_LETTER_PHASE); as a time
-              // offset over the 4000ms loop that is li * 0.45/(2π) * 4000 ≈
-              // li*286ms EARLIER, giving the same left→right traveling wave.
-              "--bob-delay": `${-li * 286}ms`,
+              // Cascade drop: 180ms stagger per letter (TUI kStaggerMs 100ms,
+              // slowed 1.8×). Runs once.
+              "--delay": `${li * 180}ms`,
+              // Bob phase: in the TUI each glyph starts its sine bob when its
+              // drop ends (drop_end = li*180 + 900), and the L→R traveling wave
+              // comes from the 0.7 rad/letter phase — as a time offset over the
+              // 4000ms loop that is li * 0.7/(2π) * 4000 ≈ li*446ms EARLIER. Net
+              // animation-delay = (li*180 + 900) - li*446 so the bob neither
+              // fights the drop nor loses the wave.
+              "--bob-delay": `${li * 180 + 900 - li * 446}ms`,
             } as React.CSSProperties
           }
         >
