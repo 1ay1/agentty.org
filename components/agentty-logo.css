@@ -1,8 +1,13 @@
 /* agentty pixel-art wordmark — half-block cells, monospace grid.
-   Mirrors maya/widget/welcome_screen.hpp rendering. All motion is CSS-driven
-   (composited transform + color) so the main thread stays idle. */
+   Motion mirrors the canonical brand welcome animation
+   (agentty-community/brand/make_welcome_gif.py): the wordmark is ALWAYS fully
+   drawn and perpetually in a slow, subtle, seamless bob, with one soft
+   heartbeat per 4 s loop that blends ~35% toward white (never a hard flash).
+   All motion is CSS-driven (composited transform + color) so the main thread
+   stays idle. */
 .agentty-logo {
-  --logo-mag: #e29be0; /* bright_magenta (role_brand_alt) */
+  --logo-mag: #ff5fd2;      /* gradient start #ff5fd2 */
+  --logo-mag-2: #c04bff;    /* gradient end   #c04bff */
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   line-height: 1;
   letter-spacing: 0;
@@ -12,10 +17,10 @@
   color: var(--logo-mag);
   user-select: none;
   text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
-  /* heartbeat — periodic white flash of the whole mark. The TUI fires it
-     only AFTER the cascade settles: kPhase1End = (8-1)*100 + 500 = 1200ms,
-     then every kPulsePeriod (3200ms) for kPulseWidth (80ms ≈ 2.5% of period). */
-  animation: logo-pulse 3.2s ease-in-out 1.2s infinite;
+  /* soft heartbeat — one gentle ramp toward white per 4 s loop, centered
+     mid-loop. PULSE_PERIOD == LOOP_MS in the brand renderer, so exactly one
+     pulse per bob cycle and the seam stays perfect. */
+  animation: logo-pulse 4s ease-in-out infinite;
 }
 
 /* one letter = a vertical stack of half-block rows, animated as a unit */
@@ -24,14 +29,10 @@
   flex-direction: column;
   margin-right: 1ch;          /* SPACER between glyphs */
   will-change: transform;
-  /* drop-in cascade then a perpetual bob.
-     The drop runs ONCE, staggered by --delay (100ms/letter cascade).
-     The bob loops forever, phase-shifted by --bob-delay (a negative
-     offset ≈ 245ms/letter) so the sine wave travels left→right at the
-     same per-glyph phase (0.7 rad) the TUI uses. */
-  animation:
-    logo-drop 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) both var(--delay),
-    logo-bob 2.2s ease-in-out infinite var(--bob-delay);
+  /* Perpetual slow bob — no intro drop. One gentle sine cycle over the 4 s
+     loop (BOB_PERIOD == LOOP_MS), phase-shifted per letter by --bob-delay so
+     the wave travels left→right at the brand's 0.45 rad/letter. */
+  animation: logo-bob 4s ease-in-out infinite var(--bob-delay);
 }
 .logo-letter:last-child { margin-right: 0; }
 
@@ -48,6 +49,17 @@
 }
 .agentty-logo .px.off { visibility: hidden; }
 
+/* magenta gradient across each letter, matching the brand C0→C1 fill. The
+   pulse animates `color` (the fallback / text-shadow tint); the gradient is
+   painted via background-clip so the wordmark reads as the brand ramp. */
+.agentty-logo .px.on {
+  background: linear-gradient(105deg, var(--logo-mag), var(--logo-mag-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
 /* size presets */
 .agentty-logo.lg { font-size: 22px; }
 .agentty-logo.md { font-size: 15px; }
@@ -57,27 +69,29 @@
   .agentty-logo.lg { font-size: clamp(9px, 2.7vw, 22px); }
 }
 
-@keyframes logo-drop {
-  /* TUI starts each glyph at -(kFontH + kPadTop + 1) = -9px on a 9px-tall
-     canvas ≈ -1em, then eases in with ease-out cubic. */
-  from { transform: translateY(-1em); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
-
-/* ±1.5px bob on a 9px canvas ≈ ±0.16em; the per-letter delay makes the
-   wave travel L→R. Symmetric around 0 so the resting row is the home row. */
+/* One slow, smooth sine cycle per loop (BOB_AMP 1.0 cell ≈ ±0.16em on the
+   9-cell canvas). Symmetric around 0 so the resting row is the home row; the
+   per-letter --bob-delay makes the wave travel L→R and keeps the seam clean. */
 @keyframes logo-bob {
   0%   { transform: translateY(0); }
   25%  { transform: translateY(-0.16em); }
+  50%  { transform: translateY(0); }
   75%  { transform: translateY(0.16em); }
   100% { transform: translateY(0); }
 }
 
 @keyframes logo-pulse {
-  /* 80ms / 3200ms = 2.5% of the cycle flashes bright_white, the rest holds
-     the brand magenta — a sharp "system alive" blink, not a slow glow. */
-  0%, 3%, 100% { color: var(--logo-mag); }
-  1%, 2%       { color: #ffffff; }
+  /* Soft heartbeat: a smooth ramp centered mid-loop that blends the wordmark
+     ~35% toward white and eases back — never a hard flash. `brightness` lifts
+     the gradient-clipped glyph fill; the text-shadow glow blooms with it. */
+  0%, 100% {
+    filter: brightness(1);
+    text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
+  }
+  50% {
+    filter: brightness(1.35);
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.55);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
