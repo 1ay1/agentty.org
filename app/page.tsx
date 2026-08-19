@@ -20,7 +20,7 @@ export default function Home() {
               <AgenttyLogo />
             </div>
             <h1>
-              Blazing-fast <span className="grad">coding agent</span>
+              Blazing-fast <span className="grad">coding&nbsp;agent</span>
               <br /> in your terminal.
             </h1>
             <p className="lede">

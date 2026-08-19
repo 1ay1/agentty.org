@@ -1220,13 +1220,16 @@ body::before {
 }
 
 @media (max-width: 720px) {
-  /* Headline: allow long words to break instead of forcing horizontal scroll */
-  .hero h1, .section-title, .cta h2,
+  /* Headings wrap on spaces only (not mid-word); nbsp keeps phrases like
+     "coding agent" intact. break-word only where truly needed (docs/blog). */
+  .hero h1, .section-title, .cta h2 {
+    overflow-wrap: break-word;
+  }
   .docs-main h1, .docs-main h2, .docs-main h3,
   .blog-post-title, .blog-featured-title, .blog-card-title {
     overflow-wrap: anywhere; word-break: break-word;
   }
-  .hero h1 { font-size: clamp(30px, 8.5vw, 44px); line-height: 1.08; }
+  .hero h1 { font-size: clamp(28px, 7.6vw, 40px); line-height: 1.1; letter-spacing: -0.04em; }
   .lede { font-size: 15.5px; }
 
   /* The live TUI window scaling is handled in the dedicated TUI MOBILE FIT
@@ -1263,7 +1266,7 @@ body::before {
 /* Very small phones (<=380px): last-mile tightening */
 @media (max-width: 380px) {
   .wrap { padding: 0 15px; }
-  .hero h1 { font-size: clamp(26px, 8vw, 34px); }
+  .hero h1 { font-size: clamp(24px, 7.4vw, 30px); }
   .btn { padding: 11px 16px; font-size: 14px; }
   .stats { grid-template-columns: 1fr; }
   .docs-main h1 { font-size: 24px; }
