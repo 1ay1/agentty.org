@@ -1137,6 +1137,19 @@ html[data-theme="light"] .cmdk { background: #fff; }
   box-shadow: 0 10px 30px -18px rgba(0,0,0,0.8);
 }
 
+/* Feature bento: a clean, EVEN 3-up grid where every card is the same size.
+   The old "lead card spans 2 cols" created ragged rows + dead gaps whenever a
+   neighbour was taller. Uniform cells = normal, predictable, no voids. */
+.feat-cards { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+.feat-cards .card.lead {
+  grid-column: auto; grid-row: auto;
+  background: var(--bg-card);
+  border-color: var(--border);
+}
+.feat-cards .card.lead::before { display: none; }
+.feat-cards .card.lead h4 { font-size: 16px; margin-bottom: 8px; }
+.feat-cards .card.lead p { font-size: 14px; }
+
 /* Primary button: solid, confident, one accent moment. Ghost stays truly
    quiet (no brackets). Both use the sans for calm, not mono-shouting. */
 .btn-primary {
