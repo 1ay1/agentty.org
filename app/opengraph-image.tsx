@@ -19,7 +19,7 @@ export default function OpengraphImage() {
           padding: "80px",
           backgroundColor: "#0b0810",
           backgroundImage:
-            "radial-gradient(1000px 560px at 84% -12%, rgba(217, 70, 239,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(34, 211, 238,0.18), transparent 58%)",
+            "radial-gradient(1000px 560px at 84% -12%, rgba(217, 70, 239,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(45, 212, 212,0.18), transparent 58%)",
           fontFamily: "monospace",
         }}
       >
@@ -28,7 +28,7 @@ export default function OpengraphImage() {
             display: "flex",
             alignItems: "center",
             gap: "18px",
-            color: "#e879f9",
+            color: "#ea8bfb",
             fontSize: "34px",
             fontWeight: 700,
             letterSpacing: "-0.02em",
@@ -53,7 +53,7 @@ export default function OpengraphImage() {
           Blazing-fast&nbsp;
           <span
             style={{
-              backgroundImage: "linear-gradient(110deg,#d946ef,#22d3ee)",
+              backgroundImage: "linear-gradient(110deg,#d946ef,#2dd4d4)",
               backgroundClip: "text",
               color: "transparent",
             }}
@@ -82,7 +82,7 @@ export default function OpengraphImage() {
             alignItems: "center",
             gap: "14px",
             fontSize: "26px",
-            color: "#22d3ee",
+            color: "#2dd4d4",
           }}
         >
           <span style={{ color: "#d946ef" }}>$</span>

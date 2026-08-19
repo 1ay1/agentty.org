@@ -39,7 +39,7 @@ export default async function Image({
           padding: "76px 80px",
           backgroundColor: "#0b0810",
           backgroundImage:
-            "radial-gradient(1000px 560px at 84% -12%, rgba(217, 70, 239,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(34, 211, 238,0.16), transparent 58%)",
+            "radial-gradient(1000px 560px at 84% -12%, rgba(217, 70, 239,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(45, 212, 212,0.16), transparent 58%)",
           fontFamily: "monospace",
         }}
       >
@@ -67,7 +67,7 @@ export default async function Image({
             gap: "22px",
           }}
         >
-          <div style={{ fontSize: "22px", color: "#22d3ee", letterSpacing: "0.02em" }}>
+          <div style={{ fontSize: "22px", color: "#2dd4d4", letterSpacing: "0.02em" }}>
             {meta}
           </div>
           <div
@@ -91,7 +91,7 @@ export default async function Image({
               key={t}
               style={{
                 fontSize: "22px",
-                color: "#e879f9",
+                color: "#ea8bfb",
                 border: "1px solid rgba(217, 70, 239,0.4)",
                 borderRadius: "999px",
                 padding: "6px 20px",
