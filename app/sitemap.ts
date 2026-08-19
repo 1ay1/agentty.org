@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 import { docsNav } from "@/lib/site";
 import { getAllPosts } from "@/lib/blog";
+import { getComparePages, getAlternativePages } from "@/lib/seo-pages";
 
 export const dynamic = "force-static";
 
@@ -43,5 +44,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticEntries, ...docEntries, ...blogEntries];
+  // SEO landing pages (compare / alternatives) — high commercial intent, so
+  // they get strong priority. Auto-included as soon as a markdown file lands.
+  const seoPages = [...getComparePages(), ...getAlternativePages()];
+  const seoEntries: MetadataRoute.Sitemap = seoPages.map((p) => ({
+    url: `${site.url}${p.href}/`,
+    lastModified: new Date(`${p.updated}T00:00:00Z`),
+    changeFrequency: "monthly",
+    priority: 0.85,
+  }));
+
+  return [...staticEntries, ...docEntries, ...blogEntries, ...seoEntries];
 }

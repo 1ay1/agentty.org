@@ -1292,3 +1292,23 @@ body::before {
   .btn:hover, .stat:hover { transform: none; }
   .card.tilt:hover, .bigbox.tilt:hover { transform: none; }
 }
+
+/* ---------- SEO landing pages (compare / alternatives) ---------- */
+.seo-page h1 { font-size: clamp(28px, 4.5vw, 40px); margin: 10px 0 18px; letter-spacing: -0.03em; }
+.seo-cta {
+  margin: 44px 0 8px; padding: 26px 28px;
+  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: var(--radius); background: var(--bg-card);
+}
+.seo-cta p { margin: 0 0 12px; color: var(--text); font-size: 16px; }
+.seo-cta code {
+  display: block; font-family: var(--mono); font-size: 13.5px; color: var(--accent-2);
+  background: var(--code-bg); border: 1px solid var(--border-soft);
+  border-radius: 8px; padding: 12px 14px; margin: 0 0 16px; overflow-x: auto;
+}
+.seo-cta-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.seo-related { margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--border-soft); }
+.seo-related .t { color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; font-weight: 700; margin: 0 0 12px; font-family: var(--mono); }
+.seo-related ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.seo-related a { color: var(--accent-2); font-size: 15px; }
+.seo-related a:hover { text-decoration: underline; }
