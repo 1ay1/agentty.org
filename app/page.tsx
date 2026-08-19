@@ -19,12 +19,6 @@ export default function Home() {
             <div className="hero-logo">
               <AgenttyLogo />
             </div>
-            <div className="hero-prompt" aria-hidden="true">
-              <span className="hp-path">~/your-project</span>
-              <span className="hp-git">git:(main)</span>
-              <span className="hp-caret">❯</span>
-              <span className="hp-cmd">agentty</span>
-            </div>
             <h1>
               Blazing-fast <span className="grad">coding agent</span>
               <br /> in your terminal.
