@@ -59,11 +59,19 @@ deploy_once() {
   fi
 
   log "running deploy.sh"
+  # Retry once on failure: the Next static-export step can flake transiently
+  # (ENOENT under .next). deploy.sh now cleans .next up front, but a retry makes
+  # the headless path self-healing so a one-off blip never leaves the site stale.
   if ./deploy.sh >>"$LOG" 2>&1; then
     log "deploy OK — https://agentty.org is live"
   else
-    log "deploy.sh FAILED (see above)"
-    return 1
+    log "deploy.sh failed — retrying once"
+    if ./deploy.sh >>"$LOG" 2>&1; then
+      log "deploy OK on retry — https://agentty.org is live"
+    else
+      log "deploy.sh FAILED twice (see above)"
+      return 1
+    fi
   fi
 }
 

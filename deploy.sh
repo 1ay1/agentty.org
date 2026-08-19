@@ -11,6 +11,14 @@ DOMAIN="agentty.org"
 echo "==> Building static site"
 cd "$PROJECT"
 
+# Clean stale build artifacts before every build. Next's static-export step
+# intermittently fails with an ENOENT rename/open under .next/export or
+# .next/server/pages (500.html / *.nft.json) when a previous build's .next is
+# reused. A pristine .next makes the build deterministic — critical for the
+# HEADLESS autodeploy path, which otherwise fails silently and leaves the old
+# site live. Cheap: a cold Next build here is ~40s regardless.
+rm -rf "$PROJECT/.next" "$PROJECT/out" "$PROJECT/node_modules/.cache" 2>/dev/null || true
+
 echo "==> Syncing docs from the agentty repo (docs/website/*.md)"
 # Pulls the docs source of truth out of 1ay1/agentty into content/docs/ and
 # regenerates the frontmatter-derived sidebar (lib/docs-nav.generated.ts).
