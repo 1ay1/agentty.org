@@ -174,26 +174,36 @@
 .ttui .i       { font-style: italic; }
 .term-cursor   { background: #6fe0ee; color: #010409; }
 
-@media (max-width: 640px) {
-  .ttui-body {
-    font-size: 10.5px; padding: 12px 12px; height: 420px;
-    /* long fixed-width monospace lines (panels/prose) can exceed a phone's
-       width — allow the body to scroll horizontally instead of clipping the
-       text off the right edge. */
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
+/* On phones the TUI is a fixed ~80-column terminal artifact that can't reflow
+   to ~40 columns without breaking its ASCII box-drawing. So we render it at a
+   fixed design width and ZOOM the whole window down to fit the viewport — like
+   the browser's own zoom-out. `zoom` (unlike transform:scale) actually reflows
+   layout, so it leaves no leftover whitespace and needs no margin hacks.
+   Supported in all current Chrome/Edge/Safari and Firefox 126+. */
+@media (max-width: 720px) {
+  .hero-tui { max-width: 100%; overflow: hidden; }
+  .ttui {
+    width: 640px; max-width: 640px;
+    zoom: calc((100vw - 40px) / 640);
   }
-  .ttui-status { font-size: 10px; }
-  .ttui-title { font-size: 11px; }
-  .ttui { margin-left: 0; margin-right: 0; max-width: 100%; }
-  /* prose + panels wrap where they can so most content fits without scroll */
-  .ttui-body .row, .ttui-prose { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
 }
 @media (max-width: 460px) {
-  .ttui-body { font-size: 9.5px; height: 400px; padding: 10px; }
-  .ttui-status { font-size: 9px; }
-  .ttui-bar { padding: 8px 11px; }
-  .ttui-dot { width: 9px; height: 9px; }
+  .ttui { zoom: calc((100vw - 30px) / 640); }
 }
-@media (max-width: 380px) {
-  .ttui-body { font-size: 8.8px; height: 380px; }
+
+/* Fallback for browsers without `zoom` (older Firefox): transform:scale +
+   a wrapper that clips the leftover height. The TUI is ~600px tall at design
+   width; we cap the parent so the page doesn't get a big gap. */
+@supports not (zoom: 1) {
+  @media (max-width: 720px) {
+    .hero-tui { height: calc((100vw - 40px) / 640 * 600px); overflow: hidden; }
+    .ttui {
+      transform: scale(calc((100vw - 40px) / 640));
+      transform-origin: top left;
+    }
+  }
+  @media (max-width: 460px) {
+    .hero-tui { height: calc((100vw - 30px) / 640 * 600px); }
+    .ttui { transform: scale(calc((100vw - 30px) / 640)); }
+  }
 }
