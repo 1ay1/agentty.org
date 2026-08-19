@@ -33,6 +33,14 @@ export function SiteFooter() {
             <Link href="/security">Security</Link>
           </div>
           <div>
+            <h2 className="foot-h">Compare</h2>
+            <Link href="/alternatives/claude-code-alternative">Claude Code alternative</Link>
+            <Link href="/alternatives/aider-alternative">Aider alternative</Link>
+            <Link href="/alternatives/cursor-alternative">Cursor alternative</Link>
+            <Link href="/compare">All comparisons</Link>
+            <Link href="/guides">Guides</Link>
+          </div>
+          <div>
             <h2 className="foot-h">Community</h2>
             <a href={site.discord} target="_blank" rel="noopener noreferrer">Discord</a>
             <Link href="/community">Get Involved</Link>

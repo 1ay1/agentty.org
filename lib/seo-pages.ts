@@ -16,7 +16,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { markdownToHtml } from "./markdown";
 
-export type SeoKind = "compare" | "alternative";
+export type SeoKind = "compare" | "alternative" | "guide";
 
 export type SeoPage = {
   slug: string;
@@ -47,10 +47,12 @@ function parseFrontmatter(raw: string): { data: Record<string, string>; body: st
 }
 
 function loadDir(kind: SeoKind): SeoPage[] {
-  const dirName = kind === "compare" ? "compare" : "alternatives";
+  const dirName =
+    kind === "compare" ? "compare" : kind === "guide" ? "guides" : "alternatives";
   const dir = join(process.cwd(), "content", dirName);
   if (!existsSync(dir)) return [];
-  const base = kind === "compare" ? "/compare" : "/alternatives";
+  const base =
+    kind === "compare" ? "/compare" : kind === "guide" ? "/guides" : "/alternatives";
   return readdirSync(dir)
     .filter((f) => f.endsWith(".md"))
     .map((file) => {
@@ -75,6 +77,7 @@ function loadDir(kind: SeoKind): SeoPage[] {
 
 let compareCache: SeoPage[] | null = null;
 let altCache: SeoPage[] | null = null;
+let guideCache: SeoPage[] | null = null;
 
 export function getComparePages(): SeoPage[] {
   return (compareCache ??= loadDir("compare"));
@@ -82,8 +85,11 @@ export function getComparePages(): SeoPage[] {
 export function getAlternativePages(): SeoPage[] {
   return (altCache ??= loadDir("alternative"));
 }
+export function getGuidePages(): SeoPage[] {
+  return (guideCache ??= loadDir("guide"));
+}
 export function getAllSeoPages(): SeoPage[] {
-  return [...getComparePages(), ...getAlternativePages()];
+  return [...getComparePages(), ...getAlternativePages(), ...getGuidePages()];
 }
 
 export function getComparePage(slug: string): SeoPage | undefined {
@@ -91,4 +97,7 @@ export function getComparePage(slug: string): SeoPage | undefined {
 }
 export function getAlternativePage(slug: string): SeoPage | undefined {
   return getAlternativePages().find((p) => p.slug === slug);
+}
+export function getGuidePage(slug: string): SeoPage | undefined {
+  return getGuidePages().find((p) => p.slug === slug);
 }

@@ -480,7 +480,7 @@ td.mono, th.mono { font-family: var(--mono); }
 
 /* ---------- FOOTER ---------- */
 footer.foot { border-top: 1px solid var(--border-soft); padding: 48px 0 40px; margin-top: 40px; }
-.foot-grid { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 32px; }
+.foot-grid { display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 32px; }
 .foot-grid .foot-h { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin: 0 0 14px; font-weight: 700; line-height: 1.15; }
 .foot-grid a { display: block; color: var(--text-dim); font-size: 14px; padding: 4px 0; }
 .foot-grid a:hover { color: var(--text); text-decoration: none; }
@@ -1312,3 +1312,17 @@ body::before {
 .seo-related ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .seo-related a { color: var(--accent-2); font-size: 15px; }
 .seo-related a:hover { text-decoration: underline; }
+
+/* index / hub page lists */
+.seo-index { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.seo-index > li > a {
+  display: block; padding: 18px 20px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg-card); transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.seo-index > li > a:hover {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+  background: var(--bg-soft); transform: translateY(-2px); text-decoration: none;
+}
+.seo-index .si-title { display: block; color: var(--text); font-weight: 600; font-size: 16px; letter-spacing: -0.01em; }
+.seo-index .si-sub { display: block; color: var(--text-dim); font-size: 13.5px; margin-top: 5px; line-height: 1.55; }
