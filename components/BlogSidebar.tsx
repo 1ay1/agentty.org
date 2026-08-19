@@ -28,37 +28,48 @@ export function BlogSidebar({
       })),
     );
 
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]) setActive(visible[0].target.id);
-      },
-      { rootMargin: "-80px 0px -70% 0px", threshold: [0, 1] },
-    );
-    nodes.forEach((n) => obs.observe(n));
+    const navH =
+      parseInt(
+        getComputedStyle(document.documentElement).getPropertyValue("--nav-h"),
+      ) || 64;
+    const readLine = navH + 24;
 
-    // reading progress over the article body
+    // reading progress over the article body + scroll-spy in one rAF pass
     const body = document.querySelector<HTMLElement>(".blog-body");
     let raf = 0;
     const onScroll = () => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
-        if (!body) return;
-        const rect = body.getBoundingClientRect();
-        const vh = window.innerHeight;
-        const total = rect.height - vh;
-        const done = Math.min(Math.max(-rect.top, 0), Math.max(total, 1));
-        setProgress(total > 0 ? Math.min(done / total, 1) : 0);
+        if (body) {
+          const rect = body.getBoundingClientRect();
+          const vh = window.innerHeight;
+          const total = rect.height - vh;
+          const done = Math.min(Math.max(-rect.top, 0), Math.max(total, 1));
+          setProgress(total > 0 ? Math.min(done / total, 1) : 0);
+        }
+        // scroll-spy: last heading above the reading line; pin last at page end
+        if (nodes.length) {
+          const docH = document.documentElement.scrollHeight;
+          if (window.scrollY + window.innerHeight >= docH - 2) {
+            setActive(nodes[nodes.length - 1].id);
+          } else {
+            let current = nodes[0].id;
+            for (const n of nodes) {
+              if (n.getBoundingClientRect().top <= readLine) current = n.id;
+              else break;
+            }
+            setActive(current);
+          }
+        }
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
     onScroll();
     return () => {
-      obs.disconnect();
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
     };
   }, []);
 

@@ -62,7 +62,7 @@ export function CopyRow({ cmd, typed = false }: { cmd: string; typed?: boolean }
   }, [cmd, typed]);
 
   const copy = () => {
-    navigator.clipboard?.writeText(cmd);
+    navigator.clipboard?.writeText(cmd).catch(() => {});
     setCopied(true);
     setFlash(true);
     setTimeout(() => setFlash(false), 520);

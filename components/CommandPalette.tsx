@@ -101,6 +101,7 @@ export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
           <input
             ref={inputRef}
             className="cmdk-input"
+            aria-label="Search pages and docs"
             placeholder="jump to a page or doc…"
             value={q}
             onChange={(e) => setQ(e.target.value)}

@@ -144,7 +144,7 @@ pre.code::-webkit-scrollbar,
 
 .skip {
   position: absolute; left: -9999px; top: 0;
-  background: var(--accent); color: var(--on-accent); padding: 8px 14px; border-radius: 8px; z-index: 100;
+  background: var(--accent); color: var(--on-accent); padding: 8px 14px; border-radius: 8px; z-index: 200;
 }
 .skip:focus { left: 12px; top: 12px; }
 
