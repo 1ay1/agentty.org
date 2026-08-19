@@ -294,8 +294,13 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
   -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 2px 20px rgba(217,70,239,0.28));
 }
-.lede { font-size: clamp(17px, 2.1vw, 20px); color: var(--text-dim); max-width: 600px; margin: 0 0 34px; line-height: 1.6; }
+.lede { font-size: clamp(17px, 2.1vw, 20px); color: var(--text-dim); max-width: 600px; margin: 0 0 34px; line-height: 1.62; }
 .lede strong { color: var(--text); font-weight: 600; }
+.lede code {
+  font-family: var(--mono); font-size: 0.88em; color: var(--text);
+  background: var(--bg-elev); border: 1px solid var(--border-soft);
+  padding: 1px 6px; border-radius: 5px; white-space: nowrap;
+}
 .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 34px; }
 
 .copyrow {
@@ -313,19 +318,20 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
 
 /* ---------- INSTALL BAND ---------- */
 .install-band {
-  padding: 0 0 8px;
-  margin-top: -8px;
+  padding: 8px 0 8px;
+  margin-top: 4px;
 }
 .install-inner {
-  display: flex; flex-direction: column; align-items: center; text-align: center;
+  display: flex; flex-direction: column; align-items: flex-start; text-align: left;
 }
 .install-kicker {
-  color: var(--text-faint); font-size: 12px; font-weight: 600;
-  letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 14px;
+  color: var(--text-faint); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase; margin: 0 0 12px;
+  font-family: var(--mono);
 }
 .install-band .copyrow {
-  width: 100%; max-width: 660px;
-  box-shadow: 0 0 0 1px rgba(217, 70, 239,0.10), 0 18px 50px -28px rgba(217, 70, 239,0.45);
+  width: 100%; max-width: 560px;
+  box-shadow: none;
 }
 .install-band .copyrow code { font-size: 13.5px; }
 .install-note { color: var(--text-dim); font-size: 14px; margin: 16px 0 0; }

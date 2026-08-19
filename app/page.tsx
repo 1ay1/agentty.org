@@ -30,14 +30,12 @@ export default function Home() {
               <br /> in your terminal.
             </h1>
             <p className="lede">
-              A drop-in alternative to <code>claude-code</code>, written in C++26.{" "}
-              <strong>{stats.sizeMB}&nbsp;binary</strong>, <strong>millisecond cold start</strong>,{" "}
-              <strong>sandboxed by default</strong>, SSH air-gap in one command, and{" "}
-              <strong>runs inside Zed</strong> over ACP. Signs in with your
-              existing <strong>Claude Pro/Max</strong> &mdash; or point it at{" "}
-              <strong>OpenAI, Groq, OpenRouter, Cerebras</strong>, or a local{" "}
-              <strong>Ollama</strong> model. No Node, Python, Electron, or{" "}
-              <code>npm install</code>.
+              A drop-in alternative to <code>claude-code</code>, written in C++26.
+              A <strong>{stats.sizeMB} static binary</strong> with millisecond cold
+              start, sandboxed by default, one-command SSH air-gap, and it runs
+              inside Zed over ACP. Sign in with your existing Claude&nbsp;Pro/Max
+              &mdash; or point it at OpenAI, Groq, OpenRouter, Cerebras, or a local
+              Ollama model. No Node, no Python, no <code>npm install</code>.
             </p>
             <div className="hero-actions">
               <Link className="btn btn-primary" href="/docs/installation" data-magnetic>
