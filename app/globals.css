@@ -275,7 +275,10 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
 }
 
 @media (max-width: 960px) {
-  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+  /* single column; minmax(0,1fr) (NOT the default 1fr=minmax(auto,1fr)) so the
+     column can shrink BELOW the TUI's intrinsic ~640px content width instead of
+     forcing the page to overflow. This is THE fix for the TUI mobile overflow. */
+  .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .hero-inner { align-items: center; text-align: center; }
   .hero-logo { align-self: center; }
   .hero-inner .lede { margin-left: auto; margin-right: auto; }
@@ -1310,26 +1313,38 @@ body::before {
 .seo-index .si-sub { display: block; color: var(--text-dim); font-size: 13.5px; margin-top: 5px; line-height: 1.55; }
 
 /* ============================================================
-   TUI MOBILE FIT  (must be LAST — it overrides every earlier
-   .hero-tui / .hero-tui .ttui rule by source order)
-   The demo is a fixed ~80-column terminal; it can't reflow to a
-   phone without breaking its ASCII box-drawing + right-aligned
-   timestamps. So render it at a fixed 640px design width and
-   transform:scale the whole window to fit. The parent is
-   height-constrained + clipped so no gap and no page overflow.
+   TUI MOBILE FIT  (must be LAST — overrides earlier .hero-tui rules)
+   The demo is a fixed ~80-column terminal. We DON'T scale it (transform
+   keeps the 640px layout box and overflows the page). Instead the WINDOW
+   is width-constrained to the viewport, and its body scrolls horizontally
+   INSIDE the window. So the page never overflows; only the terminal body
+   scrolls if a line is wide. Fonts shrink so most content fits without scroll.
    ============================================================ */
 @media (max-width: 720px) {
-  .hero-tui {
-    max-width: 100% !important; overflow: hidden;
-    height: calc((100vw - 40px) / 640 * 596px);
-  }
+  .hero-tui { max-width: 100% !important; width: 100%; min-width: 0; overflow: hidden; }
   .hero-tui .ttui {
-    width: 640px !important; max-width: 640px !important; margin: 0 !important;
-    transform: scale(calc((100vw - 40px) / 640));
-    transform-origin: top left;
+    width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+    margin: 0 !important; transform: none !important;
   }
+  /* the scrolling conversation area — clip long lines to the window, scroll x */
+  .ttui-body { font-size: 11px; padding: 14px 12px; overflow: hidden; }
+  .ttui-stage { min-width: 0; max-width: 100%; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+  /* pre-formatted rows (headers, panel lines, status) can't wrap — let the
+     conversation area scroll horizontally INSIDE the window instead of pushing
+     the window (and page) wider. */
+  .ttui-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  .ttui-chrome { overflow-x: auto; }
+  /* prose can wrap; it doesn't need the fixed grid */
+  .ttui-prose { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+  .ttui-status { font-size: 10px; }
+  .ttui-title { font-size: 11.5px; }
 }
 @media (max-width: 460px) {
-  .hero-tui { height: calc((100vw - 28px) / 640 * 596px); }
-  .hero-tui .ttui { transform: scale(calc((100vw - 28px) / 640)); }
+  .ttui-body { font-size: 10px; padding: 12px 10px; }
+  .ttui-status { font-size: 9px; }
+  .ttui-bar { padding: 8px 12px; }
+  .ttui-dot { width: 9px; height: 9px; }
+}
+@media (max-width: 380px) {
+  .ttui-body { font-size: 9px; }
 }
