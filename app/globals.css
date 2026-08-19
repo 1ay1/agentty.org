@@ -1067,3 +1067,150 @@ html[data-theme="light"] .cmdk { background: #fff; }
   .blog-featured-title { font-size: 24px; }
   .blog-featured-body { padding: 24px 22px; }
 }
+
+/* ============================================================
+   TERMINAL SKIN — a hard, mono-first blueprint identity.
+   Overrides the soft/rounded/glowy defaults so the site reads
+   as a real TUI, not a dark SaaS template.
+   ============================================================ */
+
+:root, html[data-theme="dark"] {
+  /* warmer charcoal, phosphor-magenta, functional amber/cyan/green like a
+     16-colour terminal palette. Flat colours — gradients are the tell. */
+  --bg: #0a0a0c;
+  --bg-soft: #101014;
+  --bg-elev: #16161c;
+  --bg-card: #0d0d11;
+  --border: #262630;
+  --border-soft: #1b1b22;
+  --text: #e8e6ea;
+  --text-dim: #9a97a4;
+  --text-faint: #67646f;
+  --accent: #ff4fd8;          /* hot magenta phosphor */
+  --accent-hover: #ff7ee4;
+  --accent-2: #35e0c8;        /* terminal cyan-green */
+  --accent-warm: #ffb454;     /* amber */
+}
+
+/* sharp everything — kill the rounded-SaaS radii */
+html body :where(.card, .btn, .copyrow, .copybtn, .stat, .stats, .badge, .ghbtn,
+  .rm-item, .rm-badge, .term, .ttui, .feat-card, .prov-card, .tool-card,
+  .big-box, .cl-tag, .blog-card, input, select, textarea) {
+  border-radius: 2px !important;
+}
+:root { --radius: 2px; --radius-sm: 2px; --radius-lg: 3px; }
+
+/* whole page sits on a faint terminal cell-grid */
+html body::after {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mix-blend-mode: screen;
+}
+html body > * { position: relative; z-index: 1; }
+
+/* flat accent — no gradient text anywhere (that's the AI look) */
+.hero h1 .grad, .section-title .grad, .stat .num {
+  background: none !important; -webkit-text-fill-color: currentColor;
+  color: var(--accent) !important; filter: none !important;
+  text-shadow: 0 0 22px rgba(255,79,216,0.35);
+}
+.stat .num { color: var(--text) !important; text-shadow: none; }
+
+/* section eyebrows become real terminal prompts */
+.eyebrow {
+  color: var(--accent-2) !important; font-family: var(--mono);
+  letter-spacing: 0.12em; font-size: 12px;
+}
+.eyebrow::before { content: "▸ " !important; width: auto !important; height: auto !important; background: none !important; color: var(--accent) !important; }
+
+/* CARDS as ASCII-bracketed panels: hard border + corner ticks always on,
+   no lift-glow. Hover = accent border + inset scanline, like focus in a TUI. */
+.card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  transition: border-color .18s ease, background .18s ease !important;
+}
+.card::before {
+  content: "" !important; position: absolute; top: 0; left: 0;
+  width: 10px; height: 10px; opacity: 0.5 !important; transform: none !important;
+  border-top: 1px solid var(--accent); border-left: 1px solid var(--accent);
+}
+.card::after {
+  content: "" !important; position: absolute; bottom: 0; right: 0; inset: auto 0 0 auto;
+  width: 10px; height: 10px; border-radius: 0 !important;
+  background: none !important;
+  border-bottom: 1px solid var(--accent); border-right: 1px solid var(--accent);
+  opacity: 0.5 !important;
+}
+.card:hover {
+  transform: none !important;
+  border-color: var(--accent) !important;
+  background: var(--bg-soft) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,79,216,0.12) !important;
+}
+.card:hover::before, .card:hover::after { opacity: 1 !important; }
+
+/* buttons: flat, hard, mono-caps — like a keybinding, not a pill */
+.btn { border-radius: 2px !important; font-family: var(--mono); font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.btn-primary {
+  background: var(--accent) !important; color: #0a0a0c !important;
+  box-shadow: 0 0 0 1px var(--accent), 4px 4px 0 0 rgba(255,79,216,0.22) !important;
+  transition: box-shadow .14s ease, transform .1s ease !important;
+}
+.btn-primary:hover { transform: translate(-1px,-1px); box-shadow: 0 0 0 1px var(--accent), 6px 6px 0 0 rgba(255,79,216,0.3) !important; background: var(--accent) !important; }
+.btn-primary:active { transform: translate(2px,2px); box-shadow: 0 0 0 1px var(--accent), 1px 1px 0 0 rgba(255,79,216,0.3) !important; }
+.btn-ghost { background: transparent !important; border: 1px solid var(--border) !important; box-shadow: none !important; }
+.btn-ghost:hover { border-color: var(--accent) !important; background: var(--bg-elev) !important; box-shadow: none !important; }
+.btn-ghost::before { content: "[ "; color: var(--text-faint); }
+.btn-ghost::after  { content: " ]"; color: var(--text-faint); }
+
+/* stats band: hard mono ledger, monospace figures, vertical rules */
+.stats { border-radius: 2px !important; box-shadow: none !important; background: var(--border) !important; }
+.stat { background: var(--bg-card) !important; }
+.stat::after { display: none !important; }
+.stat .num { font-family: var(--mono) !important; font-weight: 700 !important; letter-spacing: -0.02em; }
+.stat:hover { background: var(--bg-soft) !important; }
+
+/* section titles: flat, tight, with a mono index tag rendered via ::before on the eyebrow row already */
+.section-title { letter-spacing: -0.03em; }
+
+/* copyrow: reads like a real prompt line */
+.copyrow { border-radius: 2px !important; background: var(--code-bg) !important; box-shadow: none !important; }
+.copyrow:hover { border-color: var(--accent) !important; }
+
+/* nav: flat rule under it, mono links */
+.nav-links a { font-family: var(--mono); font-size: 13px; letter-spacing: 0.01em; }
+.brand-mark { text-shadow: 0 0 12px rgba(255,79,216,0.7); }
+
+/* kill the soft ambient orb backdrop — replace with a single hard vignette */
+body::before {
+  background:
+    radial-gradient(1200px 600px at 82% -10%, rgba(255,79,216,0.10), transparent 60%),
+    radial-gradient(800px 500px at 4% 2%, rgba(53,224,200,0.06), transparent 58%) !important;
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) { html body::after { display: none; } }
+
+/* hero prompt line — the signature: the tagline reads as a shell session */
+.hero-prompt {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 14px; margin: 4px 0 20px;
+  opacity: 0; animation: hp-in .5s ease .15s forwards;
+}
+@keyframes hp-in { to { opacity: 1; } }
+.hp-path { color: var(--accent-2); }
+.hp-git  { color: var(--accent-warm); }
+.hp-caret{ color: var(--accent); font-weight: 700; }
+.hp-cmd  { color: var(--text); position: relative; }
+.hp-cmd::after {
+  content: ""; display: inline-block; width: 8px; height: 1.05em;
+  margin-left: 3px; background: var(--accent); vertical-align: -2px;
+  animation: hp-blink 1.05s steps(1) infinite;
+}
+@keyframes hp-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hero-prompt { opacity: 1; animation: none; } .hp-cmd::after { animation: none; } }

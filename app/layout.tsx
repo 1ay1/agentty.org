@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -9,12 +9,12 @@ import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
 
-const inter = Inter({
+const inter = Space_Grotesk({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
-  // Variable font — one file covers every weight we use (450–800),
-  // instead of shipping a separate woff2 per discrete weight.
+  // Space Grotesk: a geometric grotesk with a monospace-adjacent, technical
+  // character — deliberately NOT Inter, to escape the default AI-SaaS look.
   fallback: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
   adjustFontFallback: true,
 });
