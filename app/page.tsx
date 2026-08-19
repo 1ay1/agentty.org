@@ -45,22 +45,19 @@ export default function Home() {
                 Read the docs →
               </Link>
             </div>
+
+            <div className="hero-install">
+              <p className="install-kicker">Install in one line</p>
+              <CopyRow cmd={site.installOneLiner} typed />
+              <p className="install-note">
+                No Node, no Python, no <code>npm install</code> — just a single {stats.sizeMB} static binary.
+              </p>
+            </div>
           </div>
 
           <div className="hero-tui">
             <AgenttyTui />
           </div>
-        </div>
-      </section>
-
-      {/* INSTALL */}
-      <section className="install-band">
-        <div className="wrap install-inner">
-          <p className="install-kicker">Install in one line</p>
-          <CopyRow cmd={site.installOneLiner} typed />
-          <p className="install-note">
-            No Node, no Python, no <code>npm install</code> — just a single {stats.sizeMB} static binary.
-          </p>
         </div>
       </section>
 
