@@ -174,36 +174,6 @@
 .ttui .i       { font-style: italic; }
 .term-cursor   { background: #6fe0ee; color: #010409; }
 
-/* On phones the TUI is a fixed ~80-column terminal artifact that can't reflow
-   to ~40 columns without breaking its ASCII box-drawing. So we render it at a
-   fixed design width and ZOOM the whole window down to fit the viewport — like
-   the browser's own zoom-out. `zoom` (unlike transform:scale) actually reflows
-   layout, so it leaves no leftover whitespace and needs no margin hacks.
-   Supported in all current Chrome/Edge/Safari and Firefox 126+. */
-@media (max-width: 720px) {
-  .hero-tui { max-width: 100%; overflow: hidden; }
-  .ttui {
-    width: 640px; max-width: 640px;
-    zoom: calc((100vw - 40px) / 640);
-  }
-}
-@media (max-width: 460px) {
-  .ttui { zoom: calc((100vw - 30px) / 640); }
-}
-
-/* Fallback for browsers without `zoom` (older Firefox): transform:scale +
-   a wrapper that clips the leftover height. The TUI is ~600px tall at design
-   width; we cap the parent so the page doesn't get a big gap. */
-@supports not (zoom: 1) {
-  @media (max-width: 720px) {
-    .hero-tui { height: calc((100vw - 40px) / 640 * 600px); overflow: hidden; }
-    .ttui {
-      transform: scale(calc((100vw - 40px) / 640));
-      transform-origin: top left;
-    }
-  }
-  @media (max-width: 460px) {
-    .hero-tui { height: calc((100vw - 30px) / 640 * 600px); }
-    .ttui { transform: scale(calc((100vw - 30px) / 640)); }
-  }
-}
+/* Mobile scaling for the TUI window lives in app/globals.css (alongside the
+   other .hero-tui .ttui rules) so source order + specificity are controlled
+   in one place — see the "TUI MOBILE FIT" block there. */

@@ -1226,8 +1226,8 @@ body::before {
   .hero h1 { font-size: clamp(30px, 8.5vw, 44px); line-height: 1.08; }
   .lede { font-size: 15.5px; }
 
-  /* The live TUI window fills the column width on phones */
-  .hero-tui .ttui { max-width: 100%; }
+  /* The live TUI window scaling is handled in the dedicated TUI MOBILE FIT
+     block at the very end of this file (needs last source order to win). */
 
   /* Docs: tighten the reading frame for phones */
   .docs-main { font-size: 15.5px; line-height: 1.7; }
@@ -1308,3 +1308,28 @@ body::before {
 }
 .seo-index .si-title { display: block; color: var(--text); font-weight: 600; font-size: 16px; letter-spacing: -0.01em; }
 .seo-index .si-sub { display: block; color: var(--text-dim); font-size: 13.5px; margin-top: 5px; line-height: 1.55; }
+
+/* ============================================================
+   TUI MOBILE FIT  (must be LAST — it overrides every earlier
+   .hero-tui / .hero-tui .ttui rule by source order)
+   The demo is a fixed ~80-column terminal; it can't reflow to a
+   phone without breaking its ASCII box-drawing + right-aligned
+   timestamps. So render it at a fixed 640px design width and
+   transform:scale the whole window to fit. The parent is
+   height-constrained + clipped so no gap and no page overflow.
+   ============================================================ */
+@media (max-width: 720px) {
+  .hero-tui {
+    max-width: 100% !important; overflow: hidden;
+    height: calc((100vw - 40px) / 640 * 596px);
+  }
+  .hero-tui .ttui {
+    width: 640px !important; max-width: 640px !important; margin: 0 !important;
+    transform: scale(calc((100vw - 40px) / 640));
+    transform-origin: top left;
+  }
+}
+@media (max-width: 460px) {
+  .hero-tui { height: calc((100vw - 28px) / 640 * 596px); }
+  .hero-tui .ttui { transform: scale(calc((100vw - 28px) / 640)); }
+}
