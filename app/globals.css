@@ -438,18 +438,18 @@ section.block:nth-of-type(even) { background: linear-gradient(180deg, var(--bg-s
   content: ""; display: inline-block; vertical-align: middle;
 }
 /* the cards: a responsive 3-up grid where the LEAD card spans two columns */
-.feat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; grid-auto-rows: 1fr; }
+.feat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: start; }
 .feat-cards .card { padding: 22px; }
 .feat-cards .card h4 { font-size: 16px; margin: 0 0 8px; letter-spacing: -0.02em; color: var(--text); }
 .feat-cards .card p { color: var(--text-dim); margin: 0; font-size: 14px; line-height: 1.6; }
 .feat-cards .card.lead {
-  grid-column: span 2; grid-row: span 2;
+  grid-column: span 2; grid-row: auto;
   background: linear-gradient(158deg, var(--bg-elev), var(--bg-card));
   border-color: rgba(217, 70, 239,0.28);
 }
 /* accent hairline across the top of the lead card */
 .feat-cards .card.lead::before {
-  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  content: ""; display: block; position: absolute; top: 0; left: 0; right: 0; height: 2px;
   background: linear-gradient(90deg, var(--accent), var(--accent-2), transparent);
   border-radius: var(--radius) var(--radius) 0 0;
 }
