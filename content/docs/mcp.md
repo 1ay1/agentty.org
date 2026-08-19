@@ -20,7 +20,7 @@ Just want to add a tool (a browser driver, a database client)? See **[Plugins](/
 agentty mcp-serve
 ```
 
-The served tools are the same native tools the TUI uses: file `read`/`write`/`edit`/`move`/`remove`, shell `bash`, long-running `process_*` sessions, focused `test`, code search (`grep`/`glob`/`find_definition`/`find_references`), web fetch/search, diagnostics, and the `git_*` family including `git_show` and `git_blame`. Filesystem tools stay sandboxed to the workspace boundary and shell/process calls run inside the OS sandbox, exactly as they do interactively.
+The served tools are the same native tools the TUI uses: file `read`/`write`/`edit`/`move`/`remove`, shell `bash`, long-running `process_*` sessions, focused `test`, code search (`grep`/`glob`/`find_definition`/`search_structural`/`repo_map`), web fetch/search, diagnostics, and the `git_*` family including `git_show` and `git_blame`. Filesystem tools stay sandboxed to the workspace boundary and shell/process calls run inside the OS sandbox, exactly as they do interactively.
 
 `mcp-serve` is deliberately **native-only**. A configured external MCP server is never re-exported implicitly, preventing credential leaks and recursive MCP proxy loops.
 
@@ -41,9 +41,11 @@ Any MCP client can launch agentty as a stdio server. For a client that reads a J
 
 ## Consuming other MCP servers
 
-The reverse also works: drop a `.agentty/mcp.json` in your project and agentty connects to those servers on startup. External tools receive stable provenance names such as `mcp__playwright__browser_click`; they can never collide with or impersonate native tools. `tools/list_changed` is honoured live, including removals and schema replacements.
+The reverse of serving is **consuming** — agentty adds tools to a thread by connecting to external MCP servers listed in an `mcp.json`, which is exactly what a **[plugin](/docs/plugins)** is. See that page for the practical how-to (`agentty plugin add`, the Plugins picker, project vs user scope, and the [trust gate](/docs/plugin-trust) on repo-shipped servers). The rest of this section is the protocol-level behaviour:
 
-To keep provider requests fast and tool choice accurate, agentty sends all native and pinned tools plus at most 16 MCP tools ranked for the current user request. The always-available `mcp_search_tools` and `mcp_call` broker exposes the long tail without injecting hundreds of schemas into every turn.
+- **Provenance naming.** External tools get stable, namespaced names such as `mcp__playwright__browser_click`; they can never collide with or impersonate native tools.
+- **Live catalog.** `tools/list_changed` is honoured live, including removals and schema replacements.
+- **Tool budget / brokering.** To keep provider requests fast and tool choice accurate, agentty sends all native and pinned tools plus at most 16 MCP tools ranked for the current request. The always-available `mcp_search_tools` and `mcp_call` broker exposes the long tail without injecting hundreds of schemas into every turn.
 
 ```json
 {
@@ -133,7 +135,7 @@ A statically-configured `Authorization` header in `mcp.json` still wins, so you 
 
 ## External ACP agents
 
-When an external ACP agent is selected, trusted servers from the same MCP configuration are passed through `session/new.mcpServers`. The delegated agent owns those calls and agentty renders their ACP tool updates as observed activity; it does not execute them a second time. Workspace-local MCP configuration still requires `AGENTTY_MCP_ALLOW_PROJECT=1`.
+When an external ACP agent is selected, trusted servers from the same MCP configuration are passed through `session/new.mcpServers`. The delegated agent owns those calls and agentty renders their ACP tool updates as observed activity; it does not execute them a second time. Workspace-local MCP servers are passed through only once trusted — per-server [content-hash approval](/docs/plugin-trust) or the blanket `AGENTTY_MCP_ALLOW_PROJECT=1`.
 
 Agentty does not silently inject a nested unrestricted `agentty mcp-serve` into delegated agents. That would duplicate built-ins, bypass clear execution ownership, and make recursive `task` flows possible.
 

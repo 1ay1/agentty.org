@@ -27,7 +27,7 @@
 .live-term .xterm-viewport { background: transparent !important; }
 /* thin scrollbar to match the site */
 .live-term .xterm-viewport::-webkit-scrollbar { width: 8px; }
-.live-term .xterm-viewport::-webkit-scrollbar-thumb { background: rgba(88, 166, 255,0.22); border-radius: 8px; }
+.live-term .xterm-viewport::-webkit-scrollbar-thumb { background: rgba(217, 70, 239,0.22); border-radius: 8px; }
 
 .live-hint {
   flex-shrink: 0; height: 34px; display: flex; align-items: center; justify-content: center;
@@ -47,11 +47,11 @@
 .live-ended p { margin: 0; color: #8b949e; font-size: 15px; max-width: 460px; }
 .live-ended .live-fine { color: #656d76; font-size: 13px; margin-top: 8px; }
 .live-ended button {
-  background: #58a6ff; color: #0d1117; border: none; border-radius: 10px;
+  background: #d946ef; color: #0b0810; border: none; border-radius: 10px;
   padding: 11px 22px; font-weight: 700; font-size: 14px; cursor: pointer;
   font-family: var(--font-sans), system-ui, sans-serif;
 }
-.live-ended button:hover { background: #79c0ff; }
+.live-ended button:hover { background: #e879f9; }
 .live-ended code {
   background: #161b22; border: 1px solid #30363d; border-radius: 8px;
   padding: 9px 14px; color: #7ee787; font-size: 13px;

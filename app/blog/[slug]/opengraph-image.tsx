@@ -37,9 +37,9 @@ export default async function Image({
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "76px 80px",
-          backgroundColor: "#0d1117",
+          backgroundColor: "#0b0810",
           backgroundImage:
-            "radial-gradient(1000px 560px at 84% -12%, rgba(88, 166, 255,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(210, 168, 255,0.16), transparent 58%)",
+            "radial-gradient(1000px 560px at 84% -12%, rgba(217, 70, 239,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(34, 211, 238,0.16), transparent 58%)",
           fontFamily: "monospace",
         }}
       >
@@ -53,9 +53,9 @@ export default async function Image({
             letterSpacing: "-0.02em",
           }}
         >
-          <span style={{ color: "#58a6ff" }}>▌</span>
-          <span style={{ color: "#e6edf3" }}>agentty</span>
-          <span style={{ color: "#5b6472", fontSize: "24px", fontWeight: 500 }}>
+          <span style={{ color: "#d946ef" }}>▌</span>
+          <span style={{ color: "#f2ecfb" }}>agentty</span>
+          <span style={{ color: "#7a6e91", fontSize: "24px", fontWeight: 500 }}>
             / blog
           </span>
         </div>
@@ -67,7 +67,7 @@ export default async function Image({
             gap: "22px",
           }}
         >
-          <div style={{ fontSize: "22px", color: "#d2a8ff", letterSpacing: "0.02em" }}>
+          <div style={{ fontSize: "22px", color: "#22d3ee", letterSpacing: "0.02em" }}>
             {meta}
           </div>
           <div
@@ -76,7 +76,7 @@ export default async function Image({
               fontWeight: 800,
               lineHeight: 1.06,
               letterSpacing: "-0.035em",
-              color: "#e6edf3",
+              color: "#f2ecfb",
               maxWidth: "1040px",
               display: "flex",
             }}
@@ -91,8 +91,8 @@ export default async function Image({
               key={t}
               style={{
                 fontSize: "22px",
-                color: "#b9a8f0",
-                border: "1px solid rgba(88, 166, 255,0.4)",
+                color: "#e879f9",
+                border: "1px solid rgba(217, 70, 239,0.4)",
                 borderRadius: "999px",
                 padding: "6px 20px",
                 display: "flex",

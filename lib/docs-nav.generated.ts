@@ -52,6 +52,8 @@ export const docsNav: NavSection[] = [
       { title: "Zed / ACP", href: "/docs/acp" },
       { title: "MCP Server", href: "/docs/mcp" },
       { title: "Plugins (MCP servers)", href: "/docs/plugins" },
+      { title: "Build a Plugin", href: "/docs/build-a-plugin" },
+      { title: "Plugin Trust", href: "/docs/plugin-trust" },
       { title: "Agent Skills", href: "/docs/skills" },
       { title: "Corporate Proxies", href: "/docs/proxies" },
       { title: "Building from Source", href: "/docs/building" },

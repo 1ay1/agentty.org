@@ -24,8 +24,8 @@
   position: absolute;
   inset: -2px;
   background-image:
-    linear-gradient(rgba(88, 166, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(88, 166, 255, 0.045) 1px, transparent 1px);
+    linear-gradient(rgba(217, 70, 239, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.045) 1px, transparent 1px);
   background-size: 44px 44px;
   -webkit-mask-image: radial-gradient(900px 520px at 78% 4%, #000, transparent 72%);
   mask-image: radial-gradient(900px 520px at 78% 4%, #000, transparent 72%);
@@ -38,7 +38,7 @@
   height: 720px;
   top: -260px;
   left: 8%;
-  background: radial-gradient(circle, rgba(88, 166, 255, 0.16), transparent 62%);
+  background: radial-gradient(circle, rgba(217, 70, 239, 0.18), transparent 62%);
   filter: blur(8px);
   will-change: transform, opacity;
   transform: translateZ(0);

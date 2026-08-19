@@ -17,9 +17,9 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          backgroundColor: "#0d1117",
+          backgroundColor: "#0b0810",
           backgroundImage:
-            "radial-gradient(1000px 560px at 84% -12%, rgba(88, 166, 255,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(210, 168, 255,0.18), transparent 58%)",
+            "radial-gradient(1000px 560px at 84% -12%, rgba(217, 70, 239,0.28), transparent 62%), radial-gradient(720px 460px at 6% 110%, rgba(34, 211, 238,0.18), transparent 58%)",
           fontFamily: "monospace",
         }}
       >
@@ -28,14 +28,14 @@ export default function OpengraphImage() {
             display: "flex",
             alignItems: "center",
             gap: "18px",
-            color: "#e29be0",
+            color: "#e879f9",
             fontSize: "34px",
             fontWeight: 700,
             letterSpacing: "-0.02em",
           }}
         >
-          <span style={{ color: "#58a6ff" }}>▌</span>
-          <span style={{ color: "#e6edf3" }}>agentty</span>
+          <span style={{ color: "#d946ef" }}>▌</span>
+          <span style={{ color: "#f2ecfb" }}>agentty</span>
         </div>
 
         <div
@@ -45,7 +45,7 @@ export default function OpengraphImage() {
             fontWeight: 800,
             lineHeight: 1.05,
             letterSpacing: "-0.04em",
-            color: "#e6edf3",
+            color: "#f2ecfb",
             display: "flex",
             flexWrap: "wrap",
           }}
@@ -53,7 +53,7 @@ export default function OpengraphImage() {
           Blazing-fast&nbsp;
           <span
             style={{
-              backgroundImage: "linear-gradient(110deg,#58a6ff,#d2a8ff)",
+              backgroundImage: "linear-gradient(110deg,#d946ef,#22d3ee)",
               backgroundClip: "text",
               color: "transparent",
             }}
@@ -67,7 +67,7 @@ export default function OpengraphImage() {
           style={{
             marginTop: "30px",
             fontSize: "30px",
-            color: "#8b949e",
+            color: "#a99bc0",
             lineHeight: 1.4,
             maxWidth: "1000px",
           }}
@@ -82,11 +82,11 @@ export default function OpengraphImage() {
             alignItems: "center",
             gap: "14px",
             fontSize: "26px",
-            color: "#d2a8ff",
+            color: "#22d3ee",
           }}
         >
-          <span style={{ color: "#58a6ff" }}>$</span>
-          <span style={{ color: "#e6edf3" }}>
+          <span style={{ color: "#d946ef" }}>$</span>
+          <span style={{ color: "#f2ecfb" }}>
             curl -fsSL agentty.org/install.sh | sh
           </span>
         </div>

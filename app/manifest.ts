@@ -10,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "A native C++26 terminal coding agent. One static binary, sandboxed by default.",
     start_url: "/",
     display: "browser",
-    background_color: "#0d1117",
-    theme_color: "#0d1117",
+    background_color: "#0b0810",
+    theme_color: "#0b0810",
     icons: [{ src: "/favicon.svg", sizes: "any", type: "image/svg+xml" }],
   };
 }
