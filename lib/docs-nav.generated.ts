@@ -58,6 +58,7 @@ export const docsNav: NavSection[] = [
       { title: "Corporate Proxies", href: "/docs/proxies" },
       { title: "Building from Source", href: "/docs/building" },
       { title: "Architecture", href: "/docs/architecture" },
+      { title: "Performance", href: "/docs/performance" },
       { title: "Why modern C++ (not Rust)", href: "/docs/why-not-rust" },
       { title: "The Rust critique, answered", href: "/docs/rust-critique" },
     ],
