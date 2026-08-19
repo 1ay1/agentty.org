@@ -64,7 +64,7 @@ export default function Home() {
             <div className="stat" data-reveal><CountUp value="0" /><div className="lbl">Runtime dependencies</div></div>
             <div className="stat" data-reveal><div className="num">C++26</div><div className="lbl">Native, no GC</div></div>
             <a className="stat stat-link" data-reveal href={repo.url} target="_blank" rel="noreferrer">
-              <div className="num">&#9733;&nbsp;<CountUp value={starLabel} /></div>
+              <div className="num num-row"><span className="stat-star">&#9733;</span><CountUp value={starLabel} /></div>
               <div className="lbl">Stars on GitHub</div>
             </a>
           </div>

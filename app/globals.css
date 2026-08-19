@@ -790,6 +790,12 @@ html.fx-ready [data-reveal].revealed { opacity: 1; transform: none; }
 
 /* ---------- count-up: keep gradient number stable while ticking ---------- */
 .stat .num { font-variant-numeric: tabular-nums; min-height: 1.05em; }
+/* stars stat: keep the ★ and the count on ONE row (CountUp renders its own
+   .num div, so we lay them out as an inline flex row and strip the inner div's
+   block sizing). */
+.stat .num-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.stat .num-row .num { min-height: 0; display: inline; }
+.stat .num-row .stat-star { font-size: 0.82em; line-height: 1; }
 
 /* ---------- typed copy-row caret + copy flash ---------- */
 .copyrow-caret {
