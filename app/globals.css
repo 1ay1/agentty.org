@@ -1069,148 +1069,118 @@ html[data-theme="light"] .cmdk { background: #fff; }
 }
 
 /* ============================================================
-   TERMINAL SKIN — a hard, mono-first blueprint identity.
-   Overrides the soft/rounded/glowy defaults so the site reads
-   as a real TUI, not a dark SaaS template.
+   REFINED IDENTITY — restraint over excess.
+   Research-backed: the sites that DON'T look AI-made (Linear,
+   Stripe, Vercel) win through fewer, intentional choices — a
+   distinctive typeface, a semantic/flat palette, a real spacing
+   & radius SCALE (variation, not uniformity), and one signature
+   moment. So: no page-grid overlay, no scanlines, no brackets-
+   on-everything, no glow-on-everything. One idea, done well:
+   the tagline reads as a real shell session.
    ============================================================ */
 
 :root, html[data-theme="dark"] {
-  /* warmer charcoal, phosphor-magenta, functional amber/cyan/green like a
-     16-colour terminal palette. Flat colours — gradients are the tell. */
-  --bg: #0a0a0c;
-  --bg-soft: #101014;
-  --bg-elev: #16161c;
-  --bg-card: #0d0d11;
-  --border: #262630;
-  --border-soft: #1b1b22;
-  --text: #e8e6ea;
-  --text-dim: #9a97a4;
-  --text-faint: #67646f;
-  --accent: #ff4fd8;          /* hot magenta phosphor */
-  --accent-hover: #ff7ee4;
-  --accent-2: #35e0c8;        /* terminal cyan-green */
-  --accent-warm: #ffb454;     /* amber */
+  /* Warm-neutral graphite canvas (not blue-black), a single confident
+     magenta, and a restrained ink-cyan used only for functional accents.
+     Flat — no decorative gradients (the #1 AI tell). */
+  --bg: #0b0b0d;
+  --bg-soft: #121214;
+  --bg-elev: #17171b;
+  --bg-card: #101013;
+  --border: #242428;
+  --border-soft: #1a1a1e;
+  --text: #ededf0;
+  --text-dim: #a3a1aa;
+  --text-faint: #6b6975;
+  --accent: #e64bc4;        /* one confident magenta */
+  --accent-hover: #f06fd3;
+  --accent-2: #4ad3c0;      /* used sparingly, for state/links only */
+  --accent-warm: #f0a848;
+  /* a real radius SCALE — variation creates hierarchy (research: uniform
+     radius everywhere is a slop tell) */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 18px;
 }
 
-/* sharp everything — kill the rounded-SaaS radii */
-html body :where(.card, .btn, .copyrow, .copybtn, .stat, .stats, .badge, .ghbtn,
-  .rm-item, .rm-badge, .term, .ttui, .feat-card, .prov-card, .tool-card,
-  .big-box, .cl-tag, .blog-card, input, select, textarea) {
-  border-radius: 2px !important;
+/* Restraint pass: flat accent text (no gradient headlines), calmer motion.
+   Deliberately NO !important sprawl — we set a few tokens and let the
+   existing, well-structured stylesheet do the rest. */
+.hero h1 .grad, .section-title .grad {
+  background: none; -webkit-text-fill-color: currentColor;
+  color: var(--accent); filter: none;
 }
-:root { --radius: 2px; --radius-sm: 2px; --radius-lg: 3px; }
-
-/* whole page sits on a faint terminal cell-grid */
-html body::after {
-  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.014) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.014) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mix-blend-mode: screen;
+.stat .num {
+  background: none; -webkit-text-fill-color: currentColor; color: var(--text);
+  font-family: var(--mono); letter-spacing: -0.02em;
 }
-html body > * { position: relative; z-index: 1; }
 
-/* flat accent — no gradient text anywhere (that's the AI look) */
-.hero h1 .grad, .section-title .grad, .stat .num {
-  background: none !important; -webkit-text-fill-color: currentColor;
-  color: var(--accent) !important; filter: none !important;
-  text-shadow: 0 0 22px rgba(255,79,216,0.35);
-}
-.stat .num { color: var(--text) !important; text-shadow: none; }
-
-/* section eyebrows become real terminal prompts */
-.eyebrow {
-  color: var(--accent-2) !important; font-family: var(--mono);
-  letter-spacing: 0.12em; font-size: 12px;
-}
-.eyebrow::before { content: "▸ " !important; width: auto !important; height: auto !important; background: none !important; color: var(--accent) !important; }
-
-/* CARDS as ASCII-bracketed panels: hard border + corner ticks always on,
-   no lift-glow. Hover = accent border + inset scanline, like focus in a TUI. */
+/* Cards: quiet by default, one clear focus state on hover. No permanent
+   corner ticks or glows — hierarchy comes from the border + a subtle lift. */
+.card::before, .card::after { display: none; }
 .card {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: none !important;
-  transition: border-color .18s ease, background .18s ease !important;
-}
-.card::before {
-  content: "" !important; position: absolute; top: 0; left: 0;
-  width: 10px; height: 10px; opacity: 0.5 !important; transform: none !important;
-  border-top: 1px solid var(--accent); border-left: 1px solid var(--accent);
-}
-.card::after {
-  content: "" !important; position: absolute; bottom: 0; right: 0; inset: auto 0 0 auto;
-  width: 10px; height: 10px; border-radius: 0 !important;
-  background: none !important;
-  border-bottom: 1px solid var(--accent); border-right: 1px solid var(--accent);
-  opacity: 0.5 !important;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  transition: border-color .2s ease, transform .2s ease, background .2s ease;
 }
 .card:hover {
-  transform: none !important;
-  border-color: var(--accent) !important;
-  background: var(--bg-soft) !important;
-  box-shadow: inset 0 0 0 1px rgba(255,79,216,0.12) !important;
+  transform: translateY(-3px);
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+  background: var(--bg-soft);
+  box-shadow: 0 10px 30px -18px rgba(0,0,0,0.8);
 }
-.card:hover::before, .card:hover::after { opacity: 1 !important; }
 
-/* buttons: flat, hard, mono-caps — like a keybinding, not a pill */
-.btn { border-radius: 2px !important; font-family: var(--mono); font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+/* Primary button: solid, confident, one accent moment. Ghost stays truly
+   quiet (no brackets). Both use the sans for calm, not mono-shouting. */
 .btn-primary {
-  background: var(--accent) !important; color: #0a0a0c !important;
-  box-shadow: 0 0 0 1px var(--accent), 4px 4px 0 0 rgba(255,79,216,0.22) !important;
-  transition: box-shadow .14s ease, transform .1s ease !important;
+  background: var(--accent); color: #0b0b0d; font-weight: 600;
+  box-shadow: none;
+  transition: background .18s ease, transform .12s ease, box-shadow .2s ease;
 }
-.btn-primary:hover { transform: translate(-1px,-1px); box-shadow: 0 0 0 1px var(--accent), 6px 6px 0 0 rgba(255,79,216,0.3) !important; background: var(--accent) !important; }
-.btn-primary:active { transform: translate(2px,2px); box-shadow: 0 0 0 1px var(--accent), 1px 1px 0 0 rgba(255,79,216,0.3) !important; }
-.btn-ghost { background: transparent !important; border: 1px solid var(--border) !important; box-shadow: none !important; }
-.btn-ghost:hover { border-color: var(--accent) !important; background: var(--bg-elev) !important; box-shadow: none !important; }
-.btn-ghost::before { content: "[ "; color: var(--text-faint); }
-.btn-ghost::after  { content: " ]"; color: var(--text-faint); }
+.btn-primary:hover {
+  background: var(--accent-hover); transform: translateY(-1px);
+  box-shadow: 0 8px 24px -10px rgba(230,75,196,0.7);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-ghost { background: var(--bg-elev); border: 1px solid var(--border); box-shadow: none; }
+.btn-ghost:hover { border-color: var(--accent); background: var(--bg-soft); box-shadow: none; }
 
-/* stats band: hard mono ledger, monospace figures, vertical rules */
-.stats { border-radius: 2px !important; box-shadow: none !important; background: var(--border) !important; }
-.stat { background: var(--bg-card) !important; }
-.stat::after { display: none !important; }
-.stat .num { font-family: var(--mono) !important; font-weight: 700 !important; letter-spacing: -0.02em; }
-.stat:hover { background: var(--bg-soft) !important; }
+/* Eyebrows: mono, quiet, a single caret — not a full prompt on every heading */
+.eyebrow { color: var(--accent); font-family: var(--mono); letter-spacing: 0.1em; font-size: 11.5px; }
+.eyebrow::before { content: ""; width: 18px; height: 1px; background: var(--accent); }
 
-/* section titles: flat, tight, with a mono index tag rendered via ::before on the eyebrow row already */
-.section-title { letter-spacing: -0.03em; }
+/* Stats: clean ledger, mono figures, subtle divider — no per-cell glow */
+.stat::after { display: none; }
+.stat:hover { background: var(--bg-soft); }
 
-/* copyrow: reads like a real prompt line */
-.copyrow { border-radius: 2px !important; background: var(--code-bg) !important; box-shadow: none !important; }
-.copyrow:hover { border-color: var(--accent) !important; }
+/* Nav & copyrow: return to calm; accent only on interaction */
+.nav-links a { font-family: var(--mono); font-size: 13px; }
+.brand-mark { text-shadow: none; }
+.copyrow:hover { border-color: var(--accent); }
 
-/* nav: flat rule under it, mono links */
-.nav-links a { font-family: var(--mono); font-size: 13px; letter-spacing: 0.01em; }
-.brand-mark { text-shadow: 0 0 12px rgba(255,79,216,0.7); }
-
-/* kill the soft ambient orb backdrop — replace with a single hard vignette */
+/* Ambient backdrop: ONE soft, static wash — not animated orbs everywhere */
 body::before {
   background:
-    radial-gradient(1200px 600px at 82% -10%, rgba(255,79,216,0.10), transparent 60%),
-    radial-gradient(800px 500px at 4% 2%, rgba(53,224,200,0.06), transparent 58%) !important;
-  animation: none !important;
+    radial-gradient(1100px 560px at 84% -14%, rgba(230,75,196,0.08), transparent 60%);
+  animation: none;
 }
 
-@media (prefers-reduced-motion: reduce) { html body::after { display: none; } }
-
-/* hero prompt line — the signature: the tagline reads as a shell session */
+/* ── the single signature: the hero tagline as a live shell session ── */
 .hero-prompt {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  font-family: var(--mono); font-size: 14px; margin: 4px 0 20px;
-  opacity: 0; animation: hp-in .5s ease .15s forwards;
+  display: inline-flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 13.5px; margin: 2px 0 22px;
+  padding: 7px 12px; border: 1px solid var(--border-soft); border-radius: var(--radius-sm);
+  background: var(--bg-card); color: var(--text-dim);
 }
-@keyframes hp-in { to { opacity: 1; } }
 .hp-path { color: var(--accent-2); }
-.hp-git  { color: var(--accent-warm); }
+.hp-git  { color: var(--text-faint); }
 .hp-caret{ color: var(--accent); font-weight: 700; }
 .hp-cmd  { color: var(--text); position: relative; }
 .hp-cmd::after {
-  content: ""; display: inline-block; width: 8px; height: 1.05em;
-  margin-left: 3px; background: var(--accent); vertical-align: -2px;
-  animation: hp-blink 1.05s steps(1) infinite;
+  content: ""; display: inline-block; width: 7px; height: 1.05em;
+  margin-left: 2px; background: var(--accent); vertical-align: -2px;
+  animation: hp-blink 1.1s steps(1) infinite;
 }
 @keyframes hp-blink { 50% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .hero-prompt { opacity: 1; animation: none; } .hp-cmd::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .hp-cmd::after { animation: none; } }
