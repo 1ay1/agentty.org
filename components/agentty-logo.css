@@ -68,7 +68,18 @@
 .agentty-logo.sm { font-size: 11px; }
 
 @media (max-width: 720px) {
-  .agentty-logo.lg { font-size: clamp(9px, 2.7vw, 22px); }
+  /* The wordmark is a fixed-cell pixel font ~56ch wide (8 glyphs × 6 cells
+     + 1ch spacer). To never run off the right edge it must scale to the
+     available width, not a raw vw guess: 56ch ≈ 33.6em, so it fits a
+     column of width W when font-size ≤ W/33.6. The hero column is the
+     viewport minus the .wrap padding (2×18px), with an extra safety
+     margin. 2.2vw clears a 390px phone with room to spare and still tops
+     out at the 22px desktop size on the way up. */
+  .agentty-logo.lg { font-size: clamp(8px, 2.2vw, 22px); }
+}
+
+@media (max-width: 380px) {
+  .agentty-logo.lg { font-size: 8px; }
 }
 
 @keyframes logo-drop {
