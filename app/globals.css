@@ -307,16 +307,16 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
 .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 26px; }
 
 .copyrow {
-  display: flex; align-items: center; gap: 10px; max-width: 600px;
+  display: flex; align-items: center; gap: 10px; max-width: 100%; width: 100%;
   background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 60%), var(--code-bg);
   border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px;
   font-family: var(--mono); font-size: 14px; color: var(--text);
   transition: border-color .25s ease, box-shadow .25s ease;
 }
 .copyrow:hover { border-color: rgba(217,70,239,0.4); }
-.copyrow .prompt { color: var(--accent); user-select: none; text-shadow: 0 0 10px rgba(217,70,239,0.5); }
-.copyrow code { flex: 1; overflow-x: auto; white-space: nowrap; }
-.copybtn { background: var(--bg-elev); border: 1px solid var(--border); color: var(--text-dim); border-radius: 7px; padding: 5px 11px; font-size: 12px; cursor: pointer; font-family: var(--sans); transition: color .15s, border-color .15s, background .15s; }
+.copyrow .prompt { color: var(--accent); user-select: none; text-shadow: 0 0 10px rgba(217,70,239,0.5); flex: none; }
+.copyrow code { flex: 1 1 auto; min-width: 0; overflow-x: auto; white-space: nowrap; }
+.copybtn { flex: none; background: var(--bg-elev); border: 1px solid var(--border); color: var(--text-dim); border-radius: 7px; padding: 5px 11px; font-size: 12px; cursor: pointer; font-family: var(--sans); transition: color .15s, border-color .15s, background .15s; }
 .copybtn:hover { color: var(--text); border-color: var(--accent); background: var(--bg-soft); }
 
 /* ---------- INSTALL (in hero left column) ---------- */
