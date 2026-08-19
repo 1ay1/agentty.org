@@ -175,10 +175,25 @@
 .term-cursor   { background: #6fe0ee; color: #010409; }
 
 @media (max-width: 640px) {
-  .ttui-body { font-size: 11px; padding: 14px; height: 440px; }
-  .ttui-status { font-size: 10.5px; }
-  .ttui { margin-left: 0; margin-right: 0; }
+  .ttui-body {
+    font-size: 10.5px; padding: 12px 12px; height: 420px;
+    /* long fixed-width monospace lines (panels/prose) can exceed a phone's
+       width — allow the body to scroll horizontally instead of clipping the
+       text off the right edge. */
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .ttui-status { font-size: 10px; }
+  .ttui-title { font-size: 11px; }
+  .ttui { margin-left: 0; margin-right: 0; max-width: 100%; }
+  /* prose + panels wrap where they can so most content fits without scroll */
+  .ttui-body .row, .ttui-prose { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
 }
-@media (max-width: 400px) {
-  .ttui-body { height: 400px; font-size: 10px; }
+@media (max-width: 460px) {
+  .ttui-body { font-size: 9.5px; height: 400px; padding: 10px; }
+  .ttui-status { font-size: 9px; }
+  .ttui-bar { padding: 8px 11px; }
+  .ttui-dot { width: 9px; height: 9px; }
+}
+@media (max-width: 380px) {
+  .ttui-body { font-size: 8.8px; height: 380px; }
 }
