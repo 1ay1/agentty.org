@@ -1214,3 +1214,81 @@ body::before {
 }
 @keyframes hp-blink { 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .hp-cmd::after { animation: none; } }
+
+/* ============================================================
+   MOBILE HARDENING — make every surface truly responsive.
+   Consolidated, load-bearing overrides (this block is LAST so it
+   wins). Targets real overflow/legibility risks at phone widths
+   rather than relying on body{overflow-x:hidden} to hide them.
+   ============================================================ */
+
+/* When the hero stacks & centers (<=960px), the install block, prompt line and
+   shell-prompt were left-aligned inline elements that broke the centering. */
+@media (max-width: 960px) {
+  .hero-install { margin-left: auto; margin-right: auto; text-align: left; }
+  .hero-prompt { align-self: center; }
+  .hero-install .copyrow { width: 100%; }
+}
+
+@media (max-width: 720px) {
+  /* Headline: allow long words to break instead of forcing horizontal scroll */
+  .hero h1, .section-title, .cta h2,
+  .docs-main h1, .docs-main h2, .docs-main h3,
+  .blog-post-title, .blog-featured-title, .blog-card-title {
+    overflow-wrap: anywhere; word-break: break-word;
+  }
+  .hero h1 { font-size: clamp(30px, 8.5vw, 44px); line-height: 1.08; }
+  .lede { font-size: 15.5px; }
+
+  /* Shell-prompt chip: shrink + let it wrap so it never runs off-screen */
+  .hero-prompt { font-size: 12px; gap: 7px; padding: 6px 10px; }
+
+  /* The live TUI window fills the column width on phones */
+  .hero-tui .ttui { max-width: 100%; }
+
+  /* Docs: tighten the reading frame for phones */
+  .docs-main { font-size: 15.5px; line-height: 1.7; }
+  .docs-main h1 { font-size: 27px; }
+  .docs-main h2 { font-size: 21px; margin: 40px 0 12px; padding-top: 20px; }
+  .docs-main h3 { font-size: 17px; }
+  .docs-main .lead { font-size: 16.5px; }
+
+  /* Any code block / table / inline-scroll region: momentum scroll on iOS */
+  pre.code, .tablewrap, .copyrow code, .blog-body pre.code {
+    -webkit-overflow-scrolling: touch;
+  }
+  pre.code, .blog-body pre.code { font-size: 12.5px; padding: 14px 15px; }
+
+  /* Blog reading column tuning on narrow screens */
+  .blog-body { font-size: 16px; }
+  .blog-body > p:first-of-type::first-letter { font-size: 2.6em; padding: 4px 8px 0 0; }
+
+  /* Stats: make sure big mono numbers don't overflow a cell */
+  .stat .num { font-size: clamp(22px, 6.5vw, 30px); overflow-wrap: anywhere; }
+
+  /* Multi-col grids collapse cleanly */
+  .grid-2, .grid-3, .boxrow, .foot-grid { grid-template-columns: 1fr; }
+
+  /* Command palette: full-width with side gutters on phones */
+  .cmdk { max-width: calc(100vw - 28px); }
+  .cmdk-overlay { padding-top: 8vh; padding-left: 14px; padding-right: 14px; }
+}
+
+/* Very small phones (<=380px): last-mile tightening */
+@media (max-width: 380px) {
+  .wrap { padding: 0 15px; }
+  .hero h1 { font-size: clamp(26px, 8vw, 34px); }
+  .hero-prompt { font-size: 11px; }
+  .btn { padding: 11px 16px; font-size: 14px; }
+  .stats { grid-template-columns: 1fr; }
+  .docs-main h1 { font-size: 24px; }
+  .cta h2 { font-size: 26px; }
+}
+
+/* Touch devices: disable hover-lift transforms that feel broken on tap
+   (element stays "stuck" lifted after a touch). */
+@media (hover: none) {
+  .card:hover, .blog-card:hover, .blog-featured:hover,
+  .btn:hover, .stat:hover { transform: none; }
+  .card.tilt:hover, .bigbox.tilt:hover { transform: none; }
+}
