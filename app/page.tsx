@@ -27,9 +27,10 @@ export default function Home() {
               A drop-in alternative to <code>claude-code</code>, written in C++26.
               A <strong>{stats.sizeMB} static binary</strong> with millisecond cold
               start, sandboxed by default, one-command SSH air-gap, and it runs
-              inside Zed over ACP. Sign in with your existing Claude&nbsp;Pro/Max
-              &mdash; or point it at OpenAI, Groq, OpenRouter, Cerebras, or a local
-              Ollama model. No Node, no Python, no <code>npm install</code>.
+              inside Zed over ACP. Sign in with your existing
+              Claude&nbsp;Pro/Max, ChatGPT, Copilot, or Kimi &mdash; or point it
+              at DeepSeek, Gemini, Grok, OpenAI, Groq, or a local Ollama model.
+              No Node, no Python, no <code>npm install</code>.
             </p>
             <div className="hero-actions">
               <Link className="btn btn-primary" href="/docs/installation" data-magnetic>
@@ -127,7 +128,7 @@ export default function Home() {
             <div className="feat-group" data-reveal>
               <div className="feat-head"><span className="fg-ico">🔌</span><h3>Models &amp; auth</h3></div>
               <div className="feat-cards">
-                <div className="card tilt lead"><h4>Any model</h4><p>Claude by default via your Pro/Max subscription &mdash; or GPT, Groq, OpenRouter, Together, Cerebras, and local Ollama. Switch backends and models live with <code>^P</code>&nbsp;/&nbsp;<code>^/</code>, no restart. <Link href="/docs/providers">Providers &rarr;</Link></p></div>
+                <div className="card tilt lead"><h4>Any model</h4><p>Claude by default via your Pro/Max subscription &mdash; or sign in with ChatGPT, Copilot, or Kimi, or key in DeepSeek, Gemini, Grok, GPT, Groq, OpenRouter, Together, Cerebras, and local Ollama. Switch backends and models live with <code>^P</code>&nbsp;/&nbsp;<code>^/</code>, no restart. <Link href="/docs/providers">Providers &rarr;</Link></p></div>
                 <div className="card tilt"><h4>Adjustable reasoning</h4><p>Dial thinking effort per model &mdash; fast answers for small edits, deep reasoning for hard refactors, without leaving the thread.</p></div>
                 <div className="card tilt"><h4>Paste images</h4><p>Drop a PNG/JPEG/GIF/WebP path or <code>^V</code> from the clipboard &mdash; screenshots, diagrams, and mockups go to the model inline.</p></div>
               </div>
@@ -221,7 +222,7 @@ export default function Home() {
                 <tr><td>Air-gapped mode</td><td><span className="win">Yes (SOCKS5/SSH)</span></td><td>No</td><td>No</td></tr>
                 <tr><td>Editor integration (ACP)</td><td><span className="win">Yes (Zed)</span></td><td>Yes (Zed)</td><td>No</td></tr>
                 <tr><td>Auth</td><td>OAuth (Pro/Max) + API key</td><td>OAuth + API key</td><td>per-provider env vars</td></tr>
-                <tr><td>Models</td><td><span className="win">Claude · GPT · Groq · OpenRouter · Together · Cerebras · Ollama</span></td><td>Claude (Anthropic)</td><td>many providers</td></tr>
+                <tr><td>Models</td><td><span className="win">Claude · ChatGPT · Copilot · Kimi · DeepSeek · Gemini · Grok · GPT · Groq · Ollama</span></td><td>Claude (Anthropic)</td><td>many providers</td></tr>
               </tbody>
             </table>
           </div>
