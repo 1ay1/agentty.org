@@ -512,6 +512,12 @@ export default function DevTerminal() {
   // ── run a live agent turn ──
   const runTurn = useCallback(
     (prompt: string) => {
+      // Clear any still-pending timers from a prior turn and start the array
+      // fresh, so timers.current can't accumulate thousands of stale IDs across
+      // a long demo session (each turn schedules one per typed char).
+      timers.current.forEach((t) => window.clearTimeout(t));
+      timers.current = [];
+
       const s = pickScenario(prompt);
       const n = turn + 1;
       setTurn(n);
