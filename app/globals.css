@@ -372,9 +372,11 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
    window instead of leaving a dead gap under the CTA buttons. */
 .hero-install {
   margin-top: 30px;
+  width: 100%;
   max-width: 560px;
+  min-width: 0;
 }
-.hero-install .copyrow { width: 100%; }
+.hero-install .copyrow { width: 100%; max-width: 100%; }
 .install-kicker {
   color: var(--text-faint); font-size: 11px; font-weight: 600;
   letter-spacing: 0.16em; text-transform: uppercase; margin: 0 0 12px;
@@ -1446,6 +1448,10 @@ body::before {
   .ttui-status { font-size: 9px; }
   .ttui-bar { padding: 8px 12px; }
   .ttui-dot { width: 9px; height: 9px; }
+  /* the fixed-width status row can't fit the t/s sparkline + context meter on a
+     narrow phone; drop those (keeping ⚡ t/s + the model name) so the bar reads
+     cleanly instead of being clipped mid-glyph. */
+  .ttui-hide-sm { display: none; }
 }
 @media (max-width: 380px) {
   .ttui-body { font-size: 9px; }
