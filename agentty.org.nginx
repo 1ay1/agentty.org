@@ -91,8 +91,28 @@ server {
     # (zero CPU at request time, smaller than on-the-fly gzip level 6).
     gzip_static on;
 
+    # HTML is the deploy-fresh entry point: every request must revalidate so a
+    # new deploy is picked up instantly. The fingerprinted /_next/static assets
+    # it references stay immutable + 1y-cached below, so this costs almost
+    # nothing. Applied to `location /` because static-export routes are
+    # extensionless (`/`, `/docs`, `/compare/...`) — try_files resolves them to
+    # .html internally, but the *request* URI has no extension, so a
+    # `~ \.html$` location would never match them.
     location / {
         try_files $uri $uri/ $uri.html $uri/index.html =404;
+        add_header Cache-Control "no-cache" always;
+        # Re-assert the security headers: defining add_header inside a location
+        # replaces (does not inherit) the server-level set in nginx.
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+        add_header Cross-Origin-Opener-Policy "same-origin" always;
+        add_header Cross-Origin-Resource-Policy "same-origin" always;
+        add_header X-Permitted-Cross-Domain-Policies "none" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), browsing-topics=()" always;
+        add_header Content-Security-Policy $csp always;
+        add_header Content-Security-Policy-Report-Only "require-trusted-types-for 'script'; trusted-types 'allow-duplicates'" always;
     }
 
     # The one-line installer advertised on the site & social cards.
