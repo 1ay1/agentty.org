@@ -527,7 +527,7 @@ footer.foot { border-top: 1px solid var(--border-soft); padding: 48px 0 40px; ma
 .docs-side a:hover { color: var(--text); background: var(--bg-elev); text-decoration: none; }
 .docs-side a.active { color: var(--accent); background: rgba(217, 70, 239,0.08); border-left-color: var(--accent); font-weight: 600; }
 
-.docs-main { min-width: 0; --doc-measure: 74ch; font-size: 16.5px; line-height: 1.75; }
+.docs-main { min-width: 0; overflow-x: clip; --doc-measure: 74ch; font-size: 16.5px; line-height: 1.75; }
 .docs-main h1 { font-size: 36px; margin: 0 0 10px; letter-spacing: -0.03em; line-height: 1.15; }
 .docs-main .lead { color: var(--text-dim); font-size: 18.5px; line-height: 1.6; margin: 0 0 34px; max-width: var(--doc-measure); }
 /* h2 gets a hairline rule above it so long pages are easy to scan/section */
