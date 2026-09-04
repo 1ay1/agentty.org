@@ -101,7 +101,13 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-  icons: { icon: "/favicon.svg" },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   manifest: "/manifest.webmanifest",
   verification: {
     google: "7TjyM5swytiizAv-slWHVDdAEvklDKYmLQMGNqHkCJw",

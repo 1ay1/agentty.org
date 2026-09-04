@@ -139,6 +139,15 @@ server {
         add_header Cache-Control "public, max-age=3600" always;
     }
 
+    # Many crawlers, feed readers and legacy browsers still request /favicon.ico
+    # by convention even though we advertise an SVG icon. Serve the SVG there
+    # (correct content-type) instead of returning a 404.
+    location = /favicon.ico {
+        alias /var/www/agentty.org/favicon.svg;
+        types { } default_type image/svg+xml;
+        add_header Cache-Control "public, max-age=86400" always;
+    }
+
     location /_next/static/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
