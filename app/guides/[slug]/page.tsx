@@ -32,8 +32,14 @@ export async function generateMetadata({
       type: "article",
       url: `${site.url}${page.href}/`,
       siteName: "agentty",
+      images: [`${site.url}/opengraph-image`],
     },
-    twitter: { card: "summary_large_image", title: page.title, description: page.description },
+    twitter: {
+      card: "summary_large_image",
+      title: page.title,
+      description: page.description,
+      images: [`${site.url}/twitter-image`],
+    },
   };
 }
 

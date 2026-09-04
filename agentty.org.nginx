@@ -128,9 +128,16 @@ server {
     }
 
     # Next.js generates the social-share cards as extensionless routes;
-    # force the PNG content-type so crawlers (Google, Slack, X, …) accept them.
-    location = /opengraph-image { default_type image/png; }
-    location = /twitter-image { default_type image/png; }
+    # force the PNG content-type so crawlers (Google, Slack, X, LinkedIn, …)
+    # accept them. This must cover NESTED routes too
+    # (/blog/<post>/opengraph-image, /compare/<slug>/twitter-image, …), not
+    # just the root card — an exact `location =` only matched the homepage's,
+    # so every blog/compare/guide post card was served as octet-stream and
+    # silently refused to render on social platforms.
+    location ~* /(opengraph-image|twitter-image)$ {
+        default_type image/png;
+        add_header Cache-Control "public, max-age=3600" always;
+    }
 
     location /_next/static/ {
         expires 1y;
