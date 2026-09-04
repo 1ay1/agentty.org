@@ -40,7 +40,7 @@ const RAW = `https://raw.githubusercontent.com/${REPO}/${REF}/${BASE_PATH}`;
 const API = `https://api.github.com/repos/${REPO}/contents/${BASE_PATH}`;
 
 // The content sections we sync, in source → destination mapping.
-const SECTIONS = ["blog", "compare", "guides", "alternatives"];
+const SECTIONS = ["blog", "compare", "guides", "alternatives", "pages"];
 
 function log(msg) {
   console.log(`   [sync-content] ${msg}`);
