@@ -520,6 +520,15 @@ footer.foot { border-top: 1px solid var(--border-soft); padding: 48px 0 40px; ma
 
 /* ---------- DOCS LAYOUT ---------- */
 .docs-shell { display: grid; grid-template-columns: 250px minmax(0, 1fr) 200px; gap: 40px; max-width: 1320px; margin: 0 auto; padding: 36px 24px 80px; }
+
+/* Between the full 3-column layout and the single-column mobile collapse, the
+   250 + content + 200 + 80px-of-gaps chrome squeezes the reading column to
+   ~446px on iPad-landscape-class screens. Drop the right-hand TOC in this band
+   so the content column keeps a comfortable measure; the left nav sidebar stays. */
+@media (max-width: 1150px) {
+  .docs-shell { grid-template-columns: 240px minmax(0, 1fr); gap: 34px; }
+  .docs-toc { display: none; }
+}
 .docs-side { position: sticky; top: calc(var(--nav-h) + 24px); align-self: start; max-height: calc(100vh - var(--nav-h) - 48px); overflow-y: auto; }
 .docs-side .sec { margin-bottom: 22px; }
 .docs-side .sec-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-faint); margin: 0 0 8px; font-weight: 700; }
