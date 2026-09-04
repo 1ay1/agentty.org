@@ -1335,6 +1335,11 @@ body::before {
   .stats { grid-template-columns: 1fr; }
   .docs-main h1 { font-size: 24px; }
   .cta h2 { font-size: 26px; }
+  /* The Discord + GitHub icon buttons don't fit alongside brand + theme +
+     hamburger at ~320px and were pushing the toggle off-screen. They're both
+     already in the mobile menu, so drop them from the top bar here — leaving
+     brand · theme · hamburger, which fits cleanly. */
+  .nav-cta .ghbtn { display: none; }
 }
 
 /* Touch devices: disable hover-lift transforms that feel broken on tap
