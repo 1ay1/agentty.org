@@ -30,7 +30,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0b0810",
+  // Match the mobile browser chrome to the active theme.
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0b0810" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -160,11 +164,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
-        {/* Set the theme before first paint to avoid a flash. Dark is the
-            default; light only applies when the user explicitly chose it. */}
+        {/* Set the theme before first paint to avoid a flash. Priority:
+            explicit user choice (localStorage) → OS prefers-color-scheme →
+            dark default. Kept as a tiny blocking script so there's no FOUC. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t='dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`,
           }}
         />
         <script

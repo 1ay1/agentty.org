@@ -77,9 +77,16 @@ export function CopyRow({ cmd, typed = false }: { cmd: string; typed?: boolean }
         {shown}
         {caret && <span className="copyrow-caret" />}
       </code>
-      <button className="copybtn" onClick={copy}>
-        {copied ? "copied ✓" : "copy"}
+      <button
+        className="copybtn"
+        onClick={copy}
+        aria-label={copied ? "Command copied to clipboard" : `Copy command: ${cmd}`}
+      >
+        <span aria-hidden="true">{copied ? "copied ✓" : "copy"}</span>
       </button>
+      <span className="sr-only" role="status" aria-live="polite">
+        {copied ? "Copied to clipboard" : ""}
+      </span>
     </div>
   );
 }

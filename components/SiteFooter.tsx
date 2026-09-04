@@ -13,8 +13,8 @@ export function SiteFooter() {
               <span className="brand-name">agentty</span>
             </Link>
             <p className="foot-blurb">
-              Blazing-fast Claude in your terminal. A native C++26 coding agent —
-              one static binary, sandboxed by default.
+              A blazing-fast coding agent in your terminal. A native C++26 agent —
+              one static binary, sandboxed by default, bring any model.
             </p>
           </div>
           <div>
@@ -52,7 +52,7 @@ export function SiteFooter() {
         </div>
         <div className="foot-bottom">
           <span>© {year} agentty contributors · {site.license} Licensed</span>
-          <span>Built with C++26 · Powered by Claude</span>
+          <span>Built with C++26 · Bring your own model</span>
         </div>
       </div>
     </footer>

@@ -2,7 +2,7 @@
   "name": "agentpp-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Documentation and homepage for agentty — blazing-fast Claude in your terminal.",
+  "description": "Documentation and homepage for agentty — a blazing-fast coding agent in your terminal.",
   "scripts": {
     "dev": "next dev",
     "measure": "node scripts/measure-stats.mjs",
