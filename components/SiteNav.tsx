@@ -20,9 +20,6 @@ export function SiteNav() {
 
   const openPalette = () => {
     window.dispatchEvent(new Event("agentty:open-palette"));
-    window.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "k", metaKey: true }),
-    );
   };
 
   // Auto-close on route change so the drawer never lingers over a new page.

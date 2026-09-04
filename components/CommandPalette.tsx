@@ -64,8 +64,16 @@ export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
       }
       if (e.key === "Escape") setOpen(false);
     };
+    // The nav trigger + mobile "Search" dispatch this event; listening for it
+    // here (not just ⌘K) is what makes click-to-open work every time — the lazy
+    // wrapper only arms once, so after the first close it can't re-open us.
+    const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("agentty:open-palette", onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("agentty:open-palette", onOpen);
+    };
   }, []);
 
   useEffect(() => {
@@ -78,6 +86,13 @@ export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
 
   useEffect(() => setSel(0), [q]);
 
+  // Keep the highlighted result visible when arrowing past the fold.
+  const resultsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = resultsRef.current?.querySelector<HTMLElement>(".cmdk-item.sel");
+    el?.scrollIntoView({ block: "nearest" });
+  }, [sel]);
+
   const go = (it: Item) => {
     setOpen(false);
     if (it.external) window.open(it.href, "_blank", "noopener,noreferrer");
@@ -88,7 +103,13 @@ export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
 
   return (
     <div className="cmdk-overlay" onClick={() => setOpen(false)}>
-      <div className="cmdk" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="cmdk"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Jump to a page or doc"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="cmdk-top">
           <span className="cmdk-edge">╭</span>
           <span className="cmdk-fill" />
@@ -119,7 +140,7 @@ export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
           />
         </div>
 
-        <div className="cmdk-results">
+        <div className="cmdk-results" ref={resultsRef} role="listbox" aria-label="Results">
           {results.length === 0 && (
             <div className="cmdk-empty">no match for “{q}”</div>
           )}
@@ -127,6 +148,8 @@ export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
             <button
               key={r.href + r.title}
               className={`cmdk-item ${i === sel ? "sel" : ""}`}
+              role="option"
+              aria-selected={i === sel}
               onMouseEnter={() => setSel(i)}
               onClick={() => go(r)}
             >
