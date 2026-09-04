@@ -344,6 +344,26 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
 .copyrow:hover { border-color: rgba(217,70,239,0.4); }
 .copyrow .prompt { color: var(--accent); user-select: none; text-shadow: 0 0 10px rgba(217,70,239,0.5); flex: none; }
 .copyrow code { flex: 1 1 auto; min-width: 0; overflow-x: auto; white-space: nowrap; }
+.copyrow code .copyrow-cmd { display: inline-block; white-space: nowrap; }
+/* Marquee: when the command is wider than its box it ping-pongs left→right so
+   the whole line stays readable without a manual scroll. The JS sets
+   --marquee-shift to exactly the hidden overflow. Pauses at each end, pauses on
+   hover, and (via the reduced-motion guard below) doesn't run at all when the
+   user asks for less motion. */
+.copyrow code.marquee { overflow: hidden; }
+.copyrow code.marquee .copyrow-cmd {
+  animation: copyrow-marquee 6s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.copyrow:hover code.marquee .copyrow-cmd { animation-play-state: paused; }
+@keyframes copyrow-marquee {
+  0%, 18%   { transform: translateX(0); }
+  82%, 100% { transform: translateX(var(--marquee-shift, 0)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .copyrow code.marquee { overflow-x: auto; }
+  .copyrow code.marquee .copyrow-cmd { animation: none; transform: none; }
+}
 .copybtn { flex: none; background: var(--bg-elev); border: 1px solid var(--border); color: var(--text-dim); border-radius: 7px; padding: 5px 11px; font-size: 12px; cursor: pointer; font-family: var(--sans); transition: color .15s, border-color .15s, background .15s; }
 .copybtn:hover { color: var(--text); border-color: var(--accent); background: var(--bg-soft); }
 

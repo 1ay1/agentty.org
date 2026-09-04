@@ -8,8 +8,37 @@ export function CopyRow({ cmd, typed = false }: { cmd: string; typed?: boolean }
   const [flash, setFlash] = useState(false);
   const [shown, setShown] = useState(typed ? "" : cmd);
   const [caret, setCaret] = useState(typed);
+  const [marquee, setMarquee] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const codeRef = useRef<HTMLElement>(null);
   const ran = useRef(false);
+
+  // Marquee the command back-and-forth ONLY when it's wider than its box (i.e.
+  // truncated on narrow screens), so the whole line stays readable without a
+  // manual scroll. Measured after the text settles + on resize; disabled under
+  // reduced-motion.
+  useEffect(() => {
+    const measure = () => {
+      const el = codeRef.current;
+      if (!el || caret) return; // wait until typing is done
+      const inner = el.querySelector<HTMLElement>(".copyrow-cmd");
+      if (!inner) return;
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      // temporarily neutralise any transform so we measure true content width
+      const overflow = inner.scrollWidth - el.clientWidth;
+      if (reduce || overflow <= 2) {
+        setMarquee(false);
+        el.style.removeProperty("--marquee-shift");
+      } else {
+        // shift far enough to reveal the hidden tail, plus a little breathing room
+        el.style.setProperty("--marquee-shift", `-${overflow + 12}px`);
+        setMarquee(true);
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [shown, caret]);
 
   // type the command out, once, when it scrolls into view
   useEffect(() => {
@@ -71,11 +100,13 @@ export function CopyRow({ cmd, typed = false }: { cmd: string; typed?: boolean }
   };
 
   return (
-    <div className={`copyrow ${flash ? "flash" : ""}`} ref={rootRef}>
+    <div className={`copyrow ${flash ? "flash" : ""} ${marquee ? "has-marquee" : ""}`} ref={rootRef}>
       <span className="prompt">$</span>
-      <code>
-        {shown}
-        {caret && <span className="copyrow-caret" />}
+      <code ref={codeRef} className={marquee ? "marquee" : ""}>
+        <span className="copyrow-cmd">
+          {shown}
+          {caret && <span className="copyrow-caret" />}
+        </span>
       </code>
       <button
         className="copybtn"
