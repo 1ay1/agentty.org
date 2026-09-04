@@ -796,13 +796,10 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
   .feat-cards .card.lead { grid-column: auto; }
   .feat-groups { gap: 32px; }
 
-  /* install command: on phones the one-liner is truncated by the nowrap +
-     scroll (the critical `... | sh` tail is hidden off the right edge). Let it
-     WRAP so the whole command is visible — the prompt + code wrap as a unit and
-     the copy button drops to its own row, right-aligned. */
-  .copyrow { font-size: 13px; padding: 12px 13px; flex-wrap: wrap; }
-  .copyrow code { font-size: 12.5px; white-space: normal; overflow-wrap: anywhere; word-break: break-word; overflow-x: visible; }
-  .copybtn { margin-left: auto; }
+  /* install command: keep it a single-row box; the command stays on one line
+     and scrolls within the box if it's wider than the screen. */
+  .copyrow { font-size: 13px; padding: 12px 13px; }
+  .copyrow code { font-size: 12.5px; }
 
   .quote { font-size: 18px; padding-left: 18px; }
   .stat { padding: 22px 14px; }
