@@ -224,6 +224,25 @@ html[data-theme="light"] .copybtn:hover { color: #fff; border-color: var(--accen
 }
 .ghbtn:hover { border-color: rgba(217,70,239,0.5); background: var(--bg-soft); text-decoration: none; box-shadow: var(--glow); }
 .discordbtn:hover { border-color: #5865F2; color: #fff; background: #5865F2; }
+
+/* Progressive header trim BEFORE the hamburger kicks in at 720px, so the nav
+   never crowds or overflows on tablets / split-screen / small laptops.
+   ~1000px: shorten the ⌘K trigger to an icon (drops "Jump to…").
+   ~880px: collapse the CTA buttons to icons (drop "Discord"/"Star on GitHub"
+   text) and tighten the nav-link hit padding so all 5+ links still fit. */
+@media (max-width: 1000px) {
+  .cmdk-trigger-label { display: none; }
+  .cmdk-trigger { padding: 7px 9px; }
+  .nav-inner { gap: 16px; }
+}
+@media (max-width: 880px) {
+  .ghbtn span { display: none; }
+  .ghbtn { padding: 7px 9px; }
+  .nav-links { gap: 0; margin-left: 4px; }
+  .nav-links a { padding: 7px 9px; }
+  .nav-cta { gap: 6px; }
+  .nav-inner { gap: 12px; }
+}
 .discordbtn:hover svg { color: #fff; }
 
 /* ---------- BUTTONS ---------- */
