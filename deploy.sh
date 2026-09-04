@@ -26,6 +26,18 @@ echo "==> Syncing docs from the agentty repo (docs/website/*.md)"
 # the deploy — falls back to the committed content/docs on any error.
 node scripts/sync-docs.mjs || echo "   (docs sync skipped; using committed content/docs)"
 
+echo "==> Syncing site content from the agentty repo (blog + SEO pages)"
+# Pulls blog posts + compare/guides/alternatives landing pages out of
+# 1ay1/agentty (docs/website/content/) into content/. Same source resolution +
+# never-fails contract as sync-docs. Makes the agentty repo the single source of
+# truth for ALL site content — the site is a pure rendering runtime.
+node scripts/sync-content.mjs || echo "   (content sync skipped; using committed content)"
+
+echo "==> Syncing CHANGELOG.md from the agentty repo"
+# Pulls CHANGELOG.md → content/changelog.md for the /changelog page. Same
+# never-fails contract as the other syncs.
+node scripts/sync-changelog.mjs || echo "   (changelog sync skipped; using committed content/changelog.md)"
+
 echo "==> Measuring the real agentty binary (size + cold-start)"
 # Regenerates lib/stats.generated.ts so the site's numbers always match the
 # binary that's actually installed. Never fails the deploy if the binary is
