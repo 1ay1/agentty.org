@@ -1396,3 +1396,41 @@ body::before {
 @media (max-width: 380px) {
   .ttui-body { font-size: 9px; }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PRINT — docs pages are reference material people print / save to PDF.
+   Strip the chrome (nav, footer, TOC, animated background, interactive
+   overlays) and render clean black-on-white content with visible link URLs.
+   ───────────────────────────────────────────────────────────────────────── */
+@media print {
+  :root { --nav-h: 0px; }
+  html, body { background: #fff !important; color: #000 !important; }
+  body::before { display: none !important; }
+
+  /* hide everything that isn't the page content */
+  .nav, footer.foot, .docs-toc, .docs-sidebar, .docs-side, .hero-bg, .mobile-menu,
+    .cmdk-overlay, .scroll-progress, .skip, .edit-page, .devt-root,
+    .theme-toggle, .cmdk-trigger, .nav-toggle, .nav-cta, .docs-side-toggle {
+    display: none !important;
+  }
+
+  /* content spans the full page, no sticky offsets or grid columns */
+  .docs-shell { display: block !important; max-width: 100% !important; padding: 0 !important; }
+  .docs-main { max-width: 100% !important; }
+  main, .page, .wrap { margin: 0 !important; padding: 0 !important; max-width: 100% !important; }
+
+  a { color: #000 !important; text-decoration: underline; }
+  /* surface link targets so a printed page keeps its references */
+  .docs-main a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.85em; color: #444; word-break: break-all; }
+
+  pre, code, .copyrow, blockquote, table, img { break-inside: avoid; }
+  pre, .copyrow code {
+    white-space: pre-wrap !important; word-break: break-word;
+    background: #f4f4f4 !important; color: #000 !important;
+    border: 1px solid #ccc !important;
+  }
+  h1, h2, h3, h4 { break-after: avoid; color: #000 !important; }
+
+  /* no animations / transitions on paper */
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
