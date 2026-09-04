@@ -105,7 +105,13 @@ const sizeMB = (sizeBytes / 1048576).toFixed(1);
 
 let version = "";
 try {
-  version = execFileSync(bin, ["--version"], { encoding: "utf8" }).trim().split(/\s+/).pop() || "";
+  const out = execFileSync(bin, ["--version"], { encoding: "utf8" });
+  // `agentty --version` prints e.g. "agentty 0.7.0\nlog: /path/to/agentty.log".
+  // Extract the semver token directly — NOT split().pop(), which grabbed the
+  // trailing log path from the 2nd line and leaked it into the JSON-LD
+  // softwareVersion field.
+  const m = out.match(/\b(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\b/);
+  version = m ? m[1] : (out.split(/\r?\n/)[0].trim().split(/\s+/).pop() || "");
 } catch {}
 
 const verMs = timeRun(bin, ["--version"]);
