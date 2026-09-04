@@ -68,6 +68,7 @@ html[data-theme="light"] {
 * { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 16px); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
   margin: 0;
@@ -661,7 +662,11 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
   .feat-cards .card.lead { grid-column: 1 / -1; grid-row: auto; }
   .grid-2, .foot-grid, .boxrow { grid-template-columns: 1fr; }
   .foot-grid { grid-template-columns: 1fr 1fr; }
+  /* 5 stats in a 2-col grid leaves a dead 6th cell (bare gap-coloured square,
+     since only real .stat cells carry the card bg). Let the last stat span the
+     full row so the strip reads as a clean, filled block. */
   .stats { grid-template-columns: 1fr 1fr; }
+  .stats > :last-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 720px) {
@@ -710,6 +715,31 @@ html[data-theme="light"] .theme-icon.moon { display: block; }
     background: var(--bg-elev); color: var(--text); text-decoration: none;
     border-color: var(--border-soft);
   }
+  .mobile-menu a[aria-current="page"] {
+    color: var(--accent); border-color: var(--border-soft); background: var(--bg-elev);
+  }
+  .mobile-menu-links { display: flex; flex-direction: column; gap: 2px; }
+
+  /* utilities row: search + theme, always reachable on mobile even though the
+     desktop nav hides them here */
+  .mobile-menu-utils {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-top: 10px; padding-top: 12px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .mobile-util {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 14px; border-radius: 10px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--text-dim); font: inherit; font-size: 14.5px; font-weight: 500;
+    cursor: pointer;
+    transition: color .15s, background .15s, border-color .15s;
+  }
+  .mobile-util:hover, .mobile-util:active { color: var(--text); border-color: var(--accent); }
+  .mobile-util-ico { font-family: var(--mono); font-size: 13px; opacity: .7; }
+  .mobile-util-theme { justify-content: space-between; cursor: default; }
+  .mobile-util-theme:hover { color: var(--text-dim); border-color: var(--border); }
+  .mobile-util-theme .theme-toggle { margin: -6px; }
 
   /* hero: keep the tightened bottom (install band sits right under) */
   .hero { padding: 36px 0 0; }
@@ -789,6 +819,9 @@ html.fx-ready [data-reveal].revealed { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card.tilt:hover, .bigbox.tilt:hover { transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-menu { animation: none; }
 }
 
 /* ---------- count-up: keep gradient number stable while ticking ---------- */
@@ -1159,8 +1192,12 @@ html[data-theme="light"] .cmdk { background: #fff; }
 
 /* Feature bento: a clean, EVEN 3-up grid where every card is the same size.
    The old "lead card spans 2 cols" created ragged rows + dead gaps whenever a
-   neighbour was taller. Uniform cells = normal, predictable, no voids. */
-.feat-cards { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+   neighbour was taller. Uniform cells = normal, predictable, no voids.
+   NB: only override `align-items` here — the responsive column collapse
+   (3 → 2 → 1) is owned by the media queries above, which this block MUST NOT
+   clobber. Setting grid-template-columns unconditionally here forced 3-across
+   down to 360px and squished the cards. */
+.feat-cards { align-items: stretch; }
 .feat-cards .card.lead {
   grid-column: auto; grid-row: auto;
   background: var(--bg-card);
