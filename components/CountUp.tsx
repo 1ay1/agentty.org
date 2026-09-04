@@ -20,7 +20,12 @@ export function CountUp({ value }: { value: string }) {
 
     // parse: optional prefix, a number, optional suffix
     const m = value.match(/^(\D*?)([\d.]+)(.*)$/s);
-    if (reduce || !m) {
+    // Only animate when the prefix is punctuation/symbol/space ("< ", "~", "$").
+    // If it contains a LETTER (e.g. "C++26" → prefix "C++"), the string isn't a
+    // metric — it's a label like a version, so fade it in verbatim instead of
+    // counting "C++0 → C++26". Matches the component's documented contract.
+    const prefixHasLetter = m ? /\p{L}/u.test(m[1]) : false;
+    if (reduce || !m || prefixHasLetter) {
       setDisplay(value);
       return;
     }
