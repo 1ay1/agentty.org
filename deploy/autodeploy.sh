@@ -67,7 +67,12 @@ deploy_once() {
   # failing the deploy.
   content_repo="${CONTENT_REPO:-/home/ayush/projects/agentty}"
   if [ -d "$content_repo/.git" ]; then
-    if [ -n "$(git -C "$content_repo" status --porcelain 2>/dev/null)" ]; then
+    # --ignore-submodules=all: submodule POINTER drift (maya/mcp-cpp moving
+    # ahead locally) is routine on a dev box and says nothing about the site
+    # content under docs/website/. Only real tracked-file edits should block
+    # the pull, otherwise this guard latches on forever and we're back to
+    # silently building stale content.
+    if [ -n "$(git -C "$content_repo" status --porcelain --ignore-submodules=all 2>/dev/null)" ]; then
       log "WARNING: content repo $content_repo is dirty — NOT pulling; site may build from stale content"
     else
       c_before=$(git -C "$content_repo" rev-parse --short HEAD 2>/dev/null)
