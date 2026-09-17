@@ -136,9 +136,27 @@ const server = createServer((req, res) => {
       return res.end("deploy queued\n");
     }
 
-    if (event === "release" && payload.action === "published") {
-      log(`release published on ${payload.repository?.full_name} → deploy (refresh version/sizes)`);
-      triggerDeploy("release published");
+    // A release changes what the site advertises (version, asset sizes, notes),
+    // so any action that mutates a PUBLISHED release must trigger a rebuild —
+    // not just "published". Release notes are routinely tweaked after the fact
+    // ("edited" is by far the most common action), and those edits used to be
+    // picked up only by the 30-min backstop timer. Drafts are skipped: they are
+    // not public yet and fetch-release.mjs resolves the latest non-draft.
+    if (event === "release") {
+      const action = payload.action;
+      const deployActions = new Set(["published", "released", "edited", "deleted", "unpublished"]);
+      if (!deployActions.has(action)) {
+        log(`ignored release.${action}`);
+        res.writeHead(202);
+        return res.end("ignored\n");
+      }
+      if (payload.release?.draft) {
+        log(`ignored release.${action} (draft)`);
+        res.writeHead(202);
+        return res.end("ignored (draft)\n");
+      }
+      log(`release ${action} on ${payload.repository?.full_name} → deploy (refresh version/sizes)`);
+      triggerDeploy(`release ${action}`);
       res.writeHead(202);
       return res.end("deploy queued\n");
     }
