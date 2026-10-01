@@ -8,6 +8,7 @@ import { DeferredFX } from "@/components/DeferredFX";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
+import { release } from "@/lib/release";
 
 const inter = Space_Grotesk({
   subsets: ["latin"],
@@ -128,7 +129,10 @@ const jsonLd = {
       description: site.description,
       url: site.url,
       downloadUrl: site.releasesLatest,
-      softwareVersion: stats.version,
+      // The PUBLISHED release, not whichever binary sits on the build host.
+      // stats.version measures a local file: it read 0.9.16 while the
+      // release was 0.9.17, so one page advertised two versions.
+      softwareVersion: release.version,
       license: "https://opensource.org/licenses/MIT",
       programmingLanguage: "C++",
       isAccessibleForFree: true,
