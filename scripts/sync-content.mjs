@@ -51,8 +51,9 @@ function localBase() {
   if (process.env.AGENTTY_CONTENT_DIR && existsSync(process.env.AGENTTY_CONTENT_DIR)) {
     return process.env.AGENTTY_CONTENT_DIR;
   }
-  const sibling = join(ROOT, "..", "agentty", "docs", "website", "content");
-  if (existsSync(sibling)) return sibling;
+  // No implicit sibling-checkout source -- see sync-docs.mjs. The site must
+  // not build from whatever is checked out on the build host; that is how
+  // stale docs shipped while every deploy reported OK.
   return null;
 }
 

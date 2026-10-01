@@ -58,39 +58,19 @@ deploy_once() {
     log "site repo $before → $after"
   fi
 
-  # Refresh the CONTENT repo before building. sync-content.mjs/sync-docs.mjs
-  # prefer the local sibling checkout over GitHub, so a stale ../agentty here
-  # SHADOWS origin and the site silently rebuilds from an old content snapshot
-  # (this is exactly how a published blog post stayed invisible while every
-  # deploy still reported OK). Fast-forward only, and never fatal: if the
-  # checkout is dirty or diverged we log it and fall through rather than
-  # failing the deploy.
-  content_repo="${CONTENT_REPO:-/home/ayush/projects/agentty}"
-  if [ -d "$content_repo/.git" ]; then
-    # --ignore-submodules=all: submodule POINTER drift (maya/mcp-cpp moving
-    # ahead locally) is routine on a dev box and says nothing about the site
-    # content under docs/website/. Only real tracked-file edits should block
-    # the pull, otherwise this guard latches on forever and we're back to
-    # silently building stale content.
-    if [ -n "$(git -C "$content_repo" status --porcelain --ignore-submodules=all 2>/dev/null)" ]; then
-      log "WARNING: content repo $content_repo is dirty — NOT pulling; site may build from stale content"
-    else
-      c_before=$(git -C "$content_repo" rev-parse --short HEAD 2>/dev/null)
-      if git -C "$content_repo" fetch --quiet origin master 2>/dev/null &&
-         git -C "$content_repo" merge --ff-only origin/master --quiet 2>/dev/null; then
-        c_after=$(git -C "$content_repo" rev-parse --short HEAD 2>/dev/null)
-        if [ "$c_before" = "$c_after" ]; then
-          log "content repo already current at $c_after"
-        else
-          log "content repo $c_before → $c_after"
-        fi
-      else
-        log "WARNING: content repo fast-forward failed (diverged?) — building from $c_before"
-      fi
-    fi
-  else
-    log "content repo $content_repo not found — sync scripts will fall back to GitHub"
-  fi
+  # No local content checkout to babysit any more.
+  #
+  # This used to fast-forward ../agentty, because sync-docs.mjs/sync-content.mjs
+  # PREFERRED that checkout over GitHub -- so the site built from whatever was
+  # on this box. The guard skipped the pull whenever the tree was dirty, and
+  # four orphaned submodule directories made it dirty forever, so it latched
+  # exactly as its own comment warned: /docs/sandboxing/ served a page written
+  # before claybin existed while master's copy was current, and every deploy
+  # reported OK.
+  #
+  # The sync scripts now fetch from the remote repo at $AGENTTY_DOCS_REF
+  # (default master) with no implicit local source, which removes the failure
+  # mode rather than guarding it.
 
   log "running deploy.sh"
   # Retry once on failure: the Next static-export step can flake transiently

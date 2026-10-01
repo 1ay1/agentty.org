@@ -74,11 +74,11 @@ async function gather() {
     log(`source: local dir ${process.env.AGENTTY_DOCS_DIR}`);
     return fromLocal(process.env.AGENTTY_DOCS_DIR);
   }
-  const sibling = join(ROOT, "..", "agentty", "docs", "website");
-  if (existsSync(sibling)) {
-    log(`source: sibling checkout ${sibling}`);
-    return fromLocal(sibling);
-  }
+  // No implicit sibling-checkout source: the site must not build from
+  // whatever happens to be on the build host. That preference is why
+  // /docs/sandboxing/ served a pre-claybin page for days while master's copy
+  // was current -- the local checkout was 132 commits behind and every deploy
+  // still reported OK. AGENTTY_DOCS_DIR above remains for local iteration.
   log(`source: GitHub ${REPO}@${REF}`);
   return fromGitHub();
 }
