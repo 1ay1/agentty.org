@@ -21,6 +21,9 @@ import {
   rmSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -69,6 +72,35 @@ async function fromGitHub() {
   return out;
 }
 
+
+// Clone the repo and read docs/website off disk.
+//
+// Preferred over the contents API because that API is 60 req/h
+// unauthenticated and its failure path here was "use committed content" --
+// which is a tracked, months-stale copy that `git reset --hard` restores every
+// deploy. The site served a pre-claybin /docs/sandboxing/ for exactly that
+// reason, logging SKIPPED on every run.
+//
+// A sparse shallow clone is one request, no auth, no limit, and no partial
+// state: either we have every file or we throw.
+function fromClone() {
+  const dir = mkdtempSync(join(tmpdir(), "agentty-docs-"));
+  const run = (args, cwd) =>
+    execFileSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      timeout: 120000,
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+  run([
+    "clone", "--depth", "1", "--filter=blob:none", "--sparse",
+    "--branch", REF, `https://github.com/${REPO}.git`, dir,
+  ]);
+  run(["sparse-checkout", "set", "docs/website"], dir);
+  log(`source: git clone ${REPO}@${REF} (sparse)`);
+  return fromLocal(join(dir, "docs", "website"));
+}
+
 async function gather() {
   if (process.env.AGENTTY_DOCS_DIR && existsSync(process.env.AGENTTY_DOCS_DIR)) {
     log(`source: local dir ${process.env.AGENTTY_DOCS_DIR}`);
@@ -79,7 +111,14 @@ async function gather() {
   // /docs/sandboxing/ served a pre-claybin page for days while master's copy
   // was current -- the local checkout was 132 commits behind and every deploy
   // still reported OK. AGENTTY_DOCS_DIR above remains for local iteration.
-  log(`source: GitHub ${REPO}@${REF}`);
+  // Clone first: no API, no rate limit. Only fall back to the contents API
+  // if git itself is unusable.
+  try {
+    return fromClone();
+  } catch (e) {
+    log(`clone failed (${e.message.split("\n")[0]}) — trying the contents API`);
+  }
+  log(`source: GitHub API ${REPO}@${REF}`);
   return fromGitHub();
 }
 

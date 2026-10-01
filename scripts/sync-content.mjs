@@ -51,10 +51,33 @@ function localBase() {
   if (process.env.AGENTTY_CONTENT_DIR && existsSync(process.env.AGENTTY_CONTENT_DIR)) {
     return process.env.AGENTTY_CONTENT_DIR;
   }
-  // No implicit sibling-checkout source -- see sync-docs.mjs. The site must
-  // not build from whatever is checked out on the build host; that is how
-  // stale docs shipped while every deploy reported OK.
-  return null;
+  // No implicit local CHECKOUT -- that is how the site built from a
+  // 132-commit-stale box. But a fresh sparse CLONE is exactly what we want:
+  // it IS the remote repo, just materialised on disk.
+  //
+  // Preferred over the contents API because that API is 60 req/h
+  // unauthenticated and this script calls it once PER SECTION, then falls back
+  // to "committed content" -- a tracked, stale copy that `git reset --hard`
+  // restores every deploy. That is why published pages went stale while every
+  // run logged success.
+  try {
+    const dir = mkdtempSync(join(tmpdir(), "agentty-content-"));
+    const run = (args, cwd) =>
+      execFileSync("git", args, {
+        cwd,
+        encoding: "utf8",
+        timeout: 120000,
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+    run([
+      "clone", "--depth", "1", "--filter=blob:none", "--sparse",
+      "--branch", REF, `https://github.com/${REPO}.git`, dir,
+    ]);
+    run(["sparse-checkout", "set", BASE_PATH], dir);
+    return join(dir, BASE_PATH);
+  } catch {
+    return null;
+  }
 }
 
 function fromLocalSection(base, section) {
