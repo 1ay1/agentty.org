@@ -22,6 +22,7 @@
 import {
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readdirSync,
   readFileSync,
   writeFileSync,
@@ -29,6 +30,8 @@ import {
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -75,7 +78,11 @@ function localBase() {
     ]);
     run(["sparse-checkout", "set", BASE_PATH], dir);
     return join(dir, BASE_PATH);
-  } catch {
+  } catch (e) {
+    // Never silent. This catch previously discarded the reason, which hid a
+    // missing-import ReferenceError as "the clone just didn't happen" and sent
+    // the script to the rate-limited API instead.
+    log(`clone failed (${String(e.message || e).split("\n")[0]}) — falling back to the API`);
     return null;
   }
 }
