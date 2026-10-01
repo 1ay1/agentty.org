@@ -3,8 +3,8 @@
 // version / size / per-platform downloads never drift. Last fetched: 2026-09-04T06:11:18.675Z.
 
 export const latestRelease = {
-  "version": "0.7.0",
-  "tag": "v0.7.0",
+  "version": "0.9.18",
+  "tag": "v0.9.18",
   "name": "v0.7.0",
   "htmlUrl": "https://github.com/1ay1/agentty/releases/tag/v0.7.0",
   "publishedAt": "2026-09-04T03:37:24Z",

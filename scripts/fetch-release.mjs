@@ -11,6 +11,7 @@
 //   GITHUB_TOKEN=ghp_… node scripts/...       # authenticated (5000/hr)
 
 import { writeFileSync, existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,7 +20,58 @@ const OUT = join(__dirname, "..", "lib", "release.generated.ts");
 const REPO = process.env.AGENTTY_REPO || "1ay1/agentty";
 const API = `https://api.github.com/repos/${REPO}/releases/latest`;
 
+// The version, straight from git refs. No API, no token, no rate limit, ~0.5s.
+//
+// This exists because the API path has a 60 req/h unauthenticated ceiling and
+// its failure mode was to keep lib/release.generated.ts as committed -- a
+// 2026-09-04 file pinning 0.7.0. Combined with `git reset --hard` in
+// autodeploy, a single rate limit rolled the published version back four
+// months and kept it there.
+function versionFromGit() {
+  try {
+    const out = execFileSync(
+      "git",
+      ["ls-remote", "--tags", "--refs", "--sort=-v:refname",
+       `https://github.com/${REPO}.git`, "v*"],
+      { encoding: "utf8", timeout: 20000, stdio: ["ignore", "pipe", "ignore"] },
+    );
+    const m = out.match(/refs\/tags\/v(\d+\.\d+\.\d+)/);
+    return m ? m[1] : "";
+  } catch {
+    return "";
+  }
+}
+
+// Called when the API is unusable (403, network, malformed).
+//
+// It must NOT simply keep the committed file: that is what published 0.7.0.
+// If git can tell us the real version, rewrite the generated file with it and
+// keep whatever per-asset data was last known -- a correct version with stale
+// byte counts beats a wrong version. Only when git ALSO fails do we leave the
+// committed data alone.
 function bail(msg) {
+  const gitVer = versionFromGit();
+  if (gitVer) {
+    try {
+      const prev = existsSync(OUT) ? readFileSync(OUT, "utf8") : "";
+      const m = prev.match(/"version":\s*"([^"]*)"/);
+      if (m && m[1] !== gitVer) {
+        const fixed = prev
+          .replace(/"version":\s*"[^"]*"/, `"version": "${gitVer}"`)
+          .replace(/"tag":\s*"[^"]*"/, `"tag": "v${gitVer}"`);
+        writeFileSync(OUT, fixed);
+        console.warn(
+          `[fetch-release] ${msg} — API unusable, but git says v${gitVer}: ` +
+          `corrected version (asset sizes may be stale).`,
+        );
+        process.exit(0);
+      }
+      console.warn(`[fetch-release] ${msg} — committed data already at v${gitVer}.`);
+      process.exit(0);
+    } catch {
+      // fall through to the plain warning
+    }
+  }
   console.warn(`[fetch-release] ${msg} — keeping committed release data.`);
   process.exit(0); // never break the deploy
 }
