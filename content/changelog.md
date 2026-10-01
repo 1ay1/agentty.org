@@ -4,6 +4,456 @@ All notable changes to agentty. Versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.13] - 2026-09-27
+
+Diagnostics. Fewer knobs, more of them documented, and a headless run you
+can actually measure.
+
+### Added
+- **`agentty run --events jsonl`** — one JSON object per line on stderr for each tool a headless run executes: `{"ev":"tool","seq":3,"tool":"read","ms":12,"ok":true,"args_sha":"a3f1c09d"}`. stdout keeps the answer, so a script can capture both. Until now the only machine-visible signal was a glyph in the rendered activity view — which a plain `run` never emits — so harnesses driving agentty had no way to count tool calls at all. `args_sha` is a hash rather than the arguments: it answers "were these two calls identical" without putting your paths and command lines in a log.
+- **`--log-file PATH`** sets where the diagnostic log goes. It's a flag now rather than an environment variable, because a destination is not a capture policy — and a flag is the part that shows up in `--help`.
+
+### Changed
+- **The diagnostic log is genuinely one switch now.** Four profiling variables (`AGENTTY_CACHE_PROF` and friends) each used to write their own file under `/tmp`, which put timings outside the level filter, the crash-time ring buffer and the redaction pass. They're a `perf` channel: `AGENTTY_LOG=perf=debug` gives you TTFT per model, prompt-cache hit ratio, tool-batch width and thread-load cost, in the same file as everything else. Six logging variables became two, both answering "what to capture".
+- **Logging got ~3× cheaper.** An emitted event was ~4 µs, and most of it turned out to be the secret-redaction scan testing every byte against every key pattern. With a first-byte prefilter that's ~1.3 µs, and a site that *doesn't* fire costs ~0.5 ns — so `AGENTTY_LOG=perf=debug` is now something you can leave on in a release build when you want numbers.
+- **`--help` reflows to your terminal.** It was hand-aligned with counted spaces and a wrap width baked in at ~78 columns, so it broke on both narrow and wide terminals. Same plain text, no colour, no escape sequences — identical bytes whether you read it or pipe it — but the description column now follows the width you actually have.
+
+### Fixed
+- **`agentty run --agent <typo>` silently ran the wrong agent.** An unrecognised role fell back to `general` and reported success, so `--agent reviwer` quietly did something else. It's now rejected before the run starts, listing the roles that exist (including your own user-defined ones).
+- **`agentty run ""` reported `unknown arg:` with a blank name** instead of saying there was no prompt.
+- **Windows: `agentty` hung when stdin was a pipe that closed immediately** — `type NUL | agentty.exe`, or any launch whose input ends before it begins. The event loop couldn't tell an idle pipe from a finished one and waited on bytes that could never arrive.
+
+### Internal
+- A log site on a per-frame path must log at `trace`, never `debug` — at ~1.3 µs an enabled per-token site costs milliseconds per thousand tokens. That rule is now a compile error (`AGT_LOG_HOT`) rather than a convention.
+- The redaction tests were running with no log sink and passing vacuously — every assertion is "the secret is absent", which an empty string satisfies. They now fail if they can't read what they're checking. A leak in an unreleased commit was caught by CI because of it.
+
+## [0.9.12] - 2026-09-26
+
+The runtime underneath agentty was replaced. If nothing about this release is
+visible to you, it went the way it was meant to.
+
+### Changed
+- **agentty now runs on [jaal](https://github.com/1ay1/jaal), a typed Elm runtime, instead of its own hand-rolled one.** The shape of the program is unchanged — `(Model, Msg) -> (Model, Cmd)`, one pure reducer, maya drawing every pixel — but almost everything holding that shape up is gone, replaced by something that does the same job as a checked property rather than a convention:
+  - **Effects are values, not calls through a global.** `Deps` was a mutable global of 11 `std::function`s installed at startup and reached from 84 places inside reducers. A reducer now returns a *description* of what should happen and the host performs it, so a turn can be tested with no filesystem, no network and no threads.
+  - **A cancelled stream can no longer land a message in a model that stopped expecting it.** That was a real class of bug, previously held off by `m.s.active()` guards written by hand at each site. The streaming turn is a subscription now: it runs while subscribed and is cancelled when it isn't.
+  - **Auth needs no lock.** Workers used to read credentials the UI thread could swap underneath them, guarded by a snapshot plus a mutex. The shared value is now immutable, so there is no writer and nothing to race.
+  - **Message routing is checked by the compiler.** 23 domain reducers used to be dispatched through a hand-written 10-arm `visit`; a leaf nobody handled was silently dropped. It is now a compile error naming the domain file to open.
+  - Incremental builds got faster as a side effect: **1.19 s** for a domain translation unit, **1.77 s** for the loop, against 19 s before.
+
+### Fixed
+- **Korean text no longer drifts out of alignment as you type it** ([#55](https://github.com/1ay1/agentty/issues/55)). Typing through an IME does not always deliver a precomposed syllable — 한 can arrive as three codepoints that compose into one block on screen. agentty measured that as 4 columns instead of 2, so every character pushed the rest of the line two cells out of place and text overwrote itself. The table of zero-width codepoints behind this was written by hand and only covered Latin, Cyrillic, Hebrew and Arabic; it is now generated from the Unicode character database, which fixes the same misalignment in Thai, Devanagari, Bengali and Tamil. Checked against the system `wcwidth` for every codepoint in the BMP: 772 disagreements before, 40 after, all of them deliberate.
+- **Windows: agentty no longer hangs when stdin is a pipe that closes immediately.** `type NUL | agentty.exe` — and any launch whose input ends before it begins — waited forever instead of exiting. Two causes, both now fixed: a pipe read at end-of-file reported "no bytes yet" rather than EOF, and the event loop could not tell an idle pipe from a finished one, so it waited on bytes that could never arrive.
+- **Windows: the code-block runner is back.** Running a fenced code block from a thread failed to compile into the Windows binary at all, so the feature was missing there.
+- **MSVC builds work again.** Every program built with MSVC was rejected at compile time with a claim that its own message types were unsafe to send between threads — a check that cannot run on a compiler without C++26 structured binding packs, and that now correctly falls back instead of failing. Consumers of maya's headers also get the flags needed to parse them, so a UTF-8 glyph in a header no longer breaks the build.
+
+### Internal
+- **CI actually gates the Windows and macOS builds now.** The toolchain floor moved to GCC 16 / clang 22 (jaal needs P1061 structured binding packs), which unblocked lanes that had been failing on every push — including `examples (windows-msvc)`, which had never passed. Three of the bugs above were found by those lanes once they could run.
+
+## [0.9.11] - 2026-09-25
+
+### Performance
+- **Long threads no longer slow down as they grow.** A big thread got sluggish between turns even though the UI itself stayed responsive: the work done *per round* scaled with the whole transcript, so every extra turn made the next one slower. Four fixes, all measured on real threads:
+  - **Saves only write what changed.** A save ran at the end of every round and rewrote the entire thread — re-encoding every message, fsyncing the full log, then parsing it all back (reading every blob) to verify. agentty now fingerprints each message, cuts the log at the first one that changed, and appends from there, verifying only the new lines. History-rewriting paths (compaction, fork, edit, rewind) and the first save of a thread still do a full write. Building the save no longer copies the transcript either, and the fingerprint pass hashes four independent lanes at once. On a 2519-message, 29 MB thread: **~1178 ms → ~4 ms per round**, and flat as the thread grows.
+  - **Images are base64-encoded once, not every round.** A thread with a handful of screenshots rebuilt megabytes of base64 on every single request. The encoding is now computed once and shared.
+  - **Faster request-body encoding.** The JSON escaper copies runs of plain bytes instead of one byte at a time, the body buffer is sized from the content it is about to write instead of a flat 64 KiB guess, and capping/UTF-8-scrubbing a tool result no longer allocates a copy when the result already fits. Per round on a 1262-message thread: **17.0 ms → 10.8 ms**. The bytes on the wire are unchanged.
+  - **Less copying on the reducer.** Starting a turn no longer deep-copies the part of the transcript a compaction already replaced with its summary, and the todo sync after each tool result stops at the matching call instead of walking the whole thread.
+
+### Changed
+- **Debug builds no longer log entire request bodies.** They logged every request in full (multi-MB on a long thread) on the stream thread right before sending. Now it is the body size plus a 4 KB head; set `AGENTTY_LOG_BODIES=1` for the whole thing.
+
+## [0.9.10] - 2026-09-24
+
+### Fixed
+- **Local router: context window now tracks which model is actually loaded.** A llama.cpp router serving one model at a time (the normal `--models-max 1` setup) never showed context sizes for unloaded models, and switching models didn't re-check the window. The context bar and compaction both used stale numbers.
+  - Unloaded models now get a size from their launch args (`--ctx-size`, `--parallel`, `--kv-unified-per-slot`). Once the model loads, a lightweight re-probe corrects it to the real allocation.
+  - After every model switch and every finished turn, agentty re-checks the active model's live window. No extra work for hosted providers.
+- **Compaction uses the compaction model's own context window.** When Smart Mode routes compaction to a different (bigger-context) model, the summarisation payload is now sized to that model's window instead of the main model's.
+- **Compaction understands llama.cpp's context-overflow error.** The shrink-retry that halves the payload on "too long" now also fires on llama.cpp's "exceeds the available context size" wording, so a declared size larger than the real allocation recovers on the first retry.
+- **`--provider` hosts appear in the model picker.** A custom host passed with `--provider` was activated but never saved to `provider_keys`, so its models didn't show in the fused picker. Now it gets a picker row the moment its first model fetch succeeds.
+
+## [0.9.9] - 2026-09-24
+
+### Fixed
+- **Windows: agentty no longer crashes when it exits right after starting.** The daily blob cleanup ran on a detached thread. A process that exited at once (stdin at EOF, a pipe, a quick quit) could reach static destruction while that walk was still logging, and Windows killed it with an access violation (`0xC0000005`). The cleanup now runs on its own thread that starts after a 20 s delay, stops between files when asked, and is joined before shutdown on every exit path.
+- **ChatGPT / Codex login: a cancelled tool call no longer wedges the thread.** A `function_call` whose tool never finished was sent back with no `function_call_output`, and the Responses API rejects that with "No tool output found for function call" on every later request. It now gets a placeholder error result, like the other transports.
+- **MCP tools no longer bust the prompt cache.** External tools were sent in relevance order, so a new message that ranked the same tools differently reordered the start of the prompt and paid full price. The chosen tools now go out in a fixed order.
+
+### Changed
+- **Shell detours get precise advice, not a rewrite.** When the model uses the shell for something a native tool does better (`sed -n`, `grep -rn`, `cat`, `ls`, `git log`), the shell still runs, and a one-line tip names the exact native call with the parameters read off the model's own command (`read` with `start_line: 147, end_line: 162`, `grep` with `context: "8", glob: "*.cpp"`, `git_log` with `count: 5`). The decision uses a real bash parse, and anything that writes a file is never advised. From the third detour in a row a short reminder is added. `grep` gains `limit` and `exclude` (the native forms of `| head -N` and `| grep -v`), and its context window goes up to 60 lines. See `docs/SHELL_DETOURS.md`.
+
+## [0.9.8] - 2026-09-23
+
+### Fixed
+- **Headless runs now resolve the real context window, including on custom hosts.** `agentty run`, `agentty acp` and `agentty mcp-serve` never build a Model, so they installed the subagent seam with an empty model catalog — leaving `context_window` at 0 on every turn (the Ollama transport reads 0 as "use my tiny default" and truncates exactly the long runs headless exists for), `cheapest_capable_model()` with nothing to choose from, and Smart Mode's role resolver falling back to the parent model for every pinned slot. They now fetch the live catalog through the same seam the stream path dispatches on, layered over the bundled floor so an id that outlived its catalog row (a `-m` pinned in settings) still resolves. Verified: a custom OpenAI-compatible host goes from 0 to its advertised 131072.
+
+## [0.9.7] - 2026-09-23
+
+All about reaching **any** OpenAI-compatible endpoint, and telling the truth about what happened when you do.
+
+### Added
+- **Type an endpoint into `^P` and it offers to connect.** agentty has always spoken to any OpenAI-compatible server (`--provider host:port`, or the "Custom host…" row), but the picker never said so: typing a hostname made every familiar provider disappear and left one muted grey row behind, which reads as "no". Now a query that looks like an endpoint — a dot, a `host:port`, an `https://` — promotes a concrete **"Use `<host>` as a custom OpenAI-compatible host"** row to the TOP, and `Enter` carries the typed text straight into the connect probe instead of reopening an empty field. Saved custom hosts are searchable too (they used to vanish the moment you typed, so the only way back to one was scrolling past every built-in), the escape hatch is no longer painted in the muted style this TUI reserves for *unavailable*, and the footer says what `Enter` will actually do.
+- **The connect probe says what went wrong and what to do about it.** Three very different mistakes used to arrive as the same unhelpful string. A **200 with HTML** — what you get from pasting a dashboard URL instead of the API base — now reads "that's a web page, not an API — use the API base URL (usually ends in /v1)" instead of "HTTP 200, no model list at any known path". A **401/403** means the address was *right*, so it routes you straight to the key prompt instead of dumping you back into a URL field you typed correctly. And the probe now ranks its attempts, so a 401 on the configured path is no longer buried under a 404 from the `/v1` fallback.
+
+### Fixed
+- **A `Retry-After` measured in hours is a quota, not a burst limit.** A 429 carrying `retry-after: 29410` (8 hours, from a provider's daily free-tier cap) was clamped to 600s in the reducer and 30s in the agent loop, then retried three times — 95 seconds of waiting to print the exact message the *first* response already carried. agentty now honours a server hint up to 15 minutes and treats anything beyond it as terminal: **95s → 1.5s**, with the provider's own actionable text. Burst limits are unaffected, and the error is still classified `RateLimit` so the loop-backoff schedule is unchanged.
+- **A context window a gateway made up no longer breaks compaction.** The window drives the gauge *and* auto-compaction, and the extraction narrowed straight to `int` — so `18446744073709551615` became `-1`, `4000000000` became `-294967296`, and the string `"1e6"` became `1`. A **negative** window disables compaction entirely (every `used < window` test is false) and a window of **1** compacts every turn; both read as "agentty is broken" rather than "this gateway reported nonsense". Values are now validated before narrowing and rejected outside a plausible 1024–100M band, and a partial string parse is treated as a misread rather than a lenient read.
+- **Headless runs had an empty model catalog.** `agentty run` and `agentty acp` never build a Model, so the subagent config was installed without `candidates` — leaving `context_window` at 0 on every headless turn (the Ollama transport then fell back to the daemon's ~2k/4k default, truncating exactly the long runs headless is for), `cheapest_capable_model()` with nothing to choose from (read-only subagent roles never routed down), and Smart Mode's role resolver with no candidates (pinned slots silently fell back to the parent model). Seeded from the same bundled catalog the TUI uses.
+- **Reasoning text no longer disappears on gateways that send both spellings.** Some OpenRouter passthroughs emit an *empty* `reasoning_content` alongside a populated `reasoning`; taking the first key that merely exists dropped every reasoning token, silently.
+
+### Changed
+- **The OpenAI-compatible dialect is now observed through one table, not scattered `if`s.** Every way this spec-less wire spells a field — the two reasoning spellings, three error envelopes, Mistral's structured content parts, optional tool-call indices — lives in one place with the endpoint each was observed on. Two sites were separately parsing error envelopes by hand, neither knowing all three shapes; an unrecognised envelope reaches you as "the model stopped for no reason".
+- **What agentty sends, and to which endpoints, is now written down and enforced.** The request body is a pure function with unit tests, so the field policy is a contract rather than a comment. Notably `max_tokens` is sent deliberately instead of OpenAI's newer `max_completion_tokens`: vLLM, llama.cpp and Together accept only the old name, and OpenAI still honours it — one spelling that works everywhere beats conformance that works on one host.
+- **The context-window toast says where the number came from** — `131k ctx (advertised)` when the endpoint told us, `ctx: default` when nothing did. A window the server promised and one we assumed used to look identical, which made a wrong window impossible to debug.
+
+## [0.9.6] - 2026-09-23
+
+### Fixed
+- **An image pasted into Zed's agent panel now reaches the model.** The ACP
+  server had an empty visitor arm for `ImageContent`, so a screenshot was
+  silently dropped — the words went, the picture didn't, on a build whose TUI
+  has had vision for months. A dropped block is indistinguishable from a model
+  that ignored the image, which is why nobody reported it.
+  `promptCapabilities.image` is now declared, because it is now true.
+- **Client mistakes are reported as `InvalidParams`, not `InternalError`.**
+  Every ACP failure path threw a generic exception, which maps to
+  `InternalError` — so "unknown sessionId" or a mistyped config option told
+  the editor *the agent had crashed*. Zed branches on the code
+  (`AuthRequired` → sign-in, other → show the user, `InternalError` → treat as
+  a crash), so a user's typo was reported as our bug and the actionable
+  message was buried. All six paths now carry a typed code plus structured
+  data: the id that wasn't found, the values that *would* have worked.
+- **Tool-call locations are absolute**, so "follow along" keeps working. Zed
+  resolves a location only if the path is absolute; a relative one is silently
+  dropped and the cursor just stops moving. Tool args are whatever the model
+  typed, which is very often `src/main.cpp`.
+- **A cancelled terminal run leaves readable output.** The terminal is released
+  as the tool returns, and a released terminal's widget is dropped — so a
+  cancel left an empty card with no trace of what was cancelled. Every other
+  exit already left durable text; cancel was the one that didn't.
+- **MCP: `resultType` is emitted on every result.** Required from protocol
+  2026-07-28, which we advertise, and we emitted it on none of the eight
+  result types. Invisible locally — our own client defaults the field, so
+  agentty-to-agentty worked perfectly while a conformant third-party client
+  would reject the response.
+- **MCP: `ttlMs`/`cacheScope` are always sent, and never negative.** Both are
+  required on every cacheable result, but were skipped entirely when the TTL
+  was zero — and a zero TTL is the ordinary way to say *don't cache this*, so
+  the response that most needed to say it shipped malformed.
+- **The release audit no longer fails on channels that land a minute later.**
+  AUR's cgit and GitHub's PR search both lag the publish job, so a single read
+  straight afterwards saw a stale version and called it drift — four healthy
+  releases reported as broken. Both checks now retry before believing the
+  answer.
+
+### Added
+- **The ACP tool card carries the programmatic tool name** (`read`, `bash`)
+  alongside the human title, stabilised in ACP 1.8.0. A client that groups or
+  picks icons by tool identity cannot recover that from *"Reading
+  src/main.cpp"*.
+- **`tests/schema_conformance.py`** — checks our codecs against the MCP and ACP
+  schemas as a *type algebra* rather than by reading code: product shape, field
+  modality, carrier type, and enum values, following `$ref` and honouring
+  semantic constraints. Every protocol bug in this release was found by it or
+  by reading a reference client, not by inspection — the failures it catches
+  are the ones that are invisible when you only talk to yourself.
+
+### Documentation
+- **JetBrains IDEs** get their own setup section on the ACP page
+  ([#51](https://github.com/1ay1/agentty/issues/51)) — including the absolute
+  path requirement that is their most common startup failure, MCP passthrough,
+  and the WSL limitation.
+- **Package install commands are fixed**
+  ([#52](https://github.com/1ay1/agentty/issues/52)). Asset filenames carry the
+  version, so `latest/download/agentty-x86_64.rpm` always 404'd. Nine URLs were
+  wrong across the docs and README. Thanks to
+  [@TechPro424](https://github.com/TechPro424) for both.
+
+## [0.9.5] - 2026-09-22
+
+### Fixed
+- **`agentty run` takes its arguments in any order.** The parser scanned only
+  the leading arguments and stopped at the first option it didn't own, so a
+  prompt placed after a global flag was never claimed — it fell through and
+  died as `unknown arg: <prompt>`:
+
+  ```
+  agentty run --agent coder "prompt"           worked
+  agentty run --agent coder -w dir "prompt"    unknown arg: prompt
+  ```
+
+  The rule was really "a positional may not follow a global flag", and it was
+  invisible because the error named the *prompt* rather than the position — so
+  it read as a malformed prompt. All orders work now, and `--agent` still binds
+  the role in the ones that were broken. Thanks to
+  [@Eeems](https://github.com/Eeems) for reporting it.
+
+## [0.9.4] - 2026-09-22
+
+### Fixed
+- **Local servers now report the context window they actually serve**
+  ([#49](https://github.com/1ay1/agentty/issues/49)). Three separate bugs all
+  ended in the same 200k default. llama-server puts the window in a nested
+  `meta.n_ctx` and our ladder only looked at the top level of a row, so every
+  llama.cpp model advertised nothing. LM Studio's `/v1` shim reports
+  `max_context_length` — what the *architecture* supports — while the real
+  number lives on the native API at `loaded_instances[].config.context_length`;
+  a model capable of 262k loaded at 16k still refuses at 16k. And the probe
+  that could have corrected both was gated on "does any row have an unknown
+  window", which a declared ceiling satisfies — so it never ran, and a refresh
+  changed nothing. A *measured* runtime window now overrides a *declared* one
+  when it is smaller. Verified against a real llama-server (8192, not 200k) and
+  a real Ollama 0.34.2 daemon (4096 loaded, not the 40960 the GGUF declares).
+- **llama-server router mode** answers a bare `/props` with a placeholder
+  (`n_ctx: 0`), so the window only exists behind `?model=<name>`. Now queried
+  per model — with `autoload=false`, because the router's `models_autoload`
+  defaults to true and a naive query would load every model on the server just
+  to read a number.
+- **Ollama's `/api/tags` carries no window at all**, so those models fell back
+  to a guess. The loaded `context_length` from `/api/ps` is used instead.
+- **A server on your LAN counts as local.** The runtime probe was scoped to
+  loopback, which excluded the most common setup there is: the model server on
+  the box with the GPU, reached over the network. RFC1918, link-local, CGNAT,
+  IPv6 ULA, `*.local` and single-label hostnames are all recognised now.
+
+### Added
+- **Adding a custom host tells you its context window.** The add-host probe
+  already connected and read the response; it now reports what it found —
+  `✓ 3 models · openai-compatible · 12ms · 32k ctx` — instead of only that the
+  connection worked. The window is the fact that decides whether long sessions
+  work on that host.
+- **A self-hosted server is detected, not configured.** Answering `/props`,
+  `/api/ps` or `loaded_instances` is proof — no hosted API serves those — so a
+  host on a public-looking address that answers one is remembered, and every
+  later refresh probes it too. No toggle: the server already told us what it
+  is. `AGENTTY_PROBE_HOSTS` remains for a host that is silent about its window
+  *and* unrecognisable, where there is nothing to detect.
+- **Updates are automatic**, following Zed's model: an hourly re-check instead
+  of once at startup, and the download starts on its own rather than waiting to
+  be found in the palette. A finished update keeps asking for the restart it
+  still needs — the status chip becomes `↺ v0.9.4` and stays until you restart,
+  because the new binary is on disk but the running process is still the old
+  one. Gated on `self_update_possible()`, so package-manager and nix installs
+  are untouched; `AGENTTY_NO_AUTO_UPDATE=1` restores notify-only.
+- **The in-TUI download shows progress.** `perform_update()` always took a
+  progress callback and the shell path always used it; the TUI passed none, so
+  a ~15 MB download sat behind one frozen line — indistinguishable from a hang.
+
+### Changed
+- **winget submissions were failing silently.** `continue-on-error` was there
+  for the benign duplicate-submission case but swallowed every other cause, so
+  the job reported success while the step had failed on a missing token scope.
+  A failure that is not a duplicate now fails loudly and names the fix.
+
+## [0.9.3] - 2026-09-22
+
+### Added
+- **Every outbound request is audited before it goes out.** A typed
+  `audit_wire()` walks the messages the transport is about to send and reports
+  shape defects by name — a tool call with no name, a tool result with no call,
+  a call nobody answered, an image with no media type. It runs on the main loop
+  *and* the subagent loop (tagged `loop=main` / `loop=subagent`), so a malformed
+  request is described in the log **before** the server answers 400 instead of
+  after. The in-flight assistant slot is exempt: every turn appends the message
+  the model is about to fill, so it is empty by construction, and a warning that
+  fires on every healthy turn trains you to ignore the channel.
+- **Vision is gated on what the model and the account actually allow.**
+  `supports_vision` is a tristate on `ModelInfo`: unknown still sends (absence
+  of evidence is not evidence), an explicit `false` withholds. An organisation
+  policy rejection is recorded as `Fact::VisionOrgPolicy` — account-scoped, not
+  model-scoped, because "your org disabled images" says nothing about the model.
+  Per-request causes (bad media type, too many images) are never remembered as
+  facts about either.
+- **Compaction reports what it actually reclaimed.** `CompactionRecord` carries
+  before/after token counts and a `reclaimed()`; an unmeasured compaction is
+  *unknown*, not zero.
+
+### Fixed
+- **A tool still running no longer fails thread-save verification.** A save
+  fires every turn, including mid-tool, and the reader deliberately coerces a
+  pending call to `Failed{"interrupted"}` so a crashed process never reloads
+  waiting forever. The verifier compared that against memory, called the write
+  corrupt, and refused to retire the legacy document — on a live thread that was
+  37 failures in a row, healing only on a turn that happened to end without a
+  tool. Nothing was ever lost (the gate is fail-safe), but the migration never
+  completed and the error named no field. It now compares what the format
+  *promises*: unsettled calls are exempt, and the UTF-8 scrub applied on write
+  is accepted as the writer working rather than as corruption.
+- **One log event is one line.** Message bodies were copied verbatim, so any
+  payload containing a newline — every SSE frame, every request body — split one
+  record across many physical lines. That broke `grep ' E '`, made continuation
+  lines indistinguishable from real records, and let a payload quoting a site
+  name at the start of its own line impersonate an event. Newlines and CRs in
+  the body are now escaped in place, over the body region only, so the header
+  stays parseable.
+- **`agentty diagnostics` no longer reports a request body as the session
+  summary.** It scanned for `provider.select:` with a substring match over a
+  file that interleaves events with raw wire bytes, so a request body quoting
+  that string won — anyone debugging agentty *by talking to agentty* poisoned
+  their own bug report. It now matches the site field by position. The fallback
+  text also told you to set `AGENTTY_LOG=info` to capture `startup` /
+  `provider.select`; both are `warn` and already kept by default, so it now
+  names the real causes.
+- **The session banner could forge a log record.** It writes the process CWD,
+  and a directory name may legally contain a newline — so `mkdir $'x\n2026-…
+  dead E general auth'` put a line in the log that grepped as a genuine auth
+  error. Same rule as an event body now: only the newlines we write are
+  newlines.
+- **Encrypted reasoning only replays to the backend that minted it.** Blobs
+  carry their minting site and are withheld from any other, so ciphertext is
+  never handed to a backend that cannot read it.
+- **Context windows are read from every vendor's spelling.** `context_length`,
+  `context_window`, `max_context_length` (Mistral), `max_input_tokens`, `n_ctx`.
+  A GPT family name no longer implies a 200k window — the id doesn't determine
+  it, so inference now stays silent and the catalog/probe/env ladder decides.
+  Ollama's gauge and wire agree on one `effective_num_ctx()` instead of
+  disagreeing about the clamp.
+- **Mid-stream errors are typed from the wire.** The server's error type and
+  status decide the classification instead of prose pattern-matching.
+- **A standalone build no longer adopts a system simdjson.** `FIND_PACKAGE_ARGS`
+  is right for a distro build and wrong for the release binary, whose contract
+  is that it runs where none of this is installed. The macOS runners ship a
+  Homebrew simdjson, so the release job linked its dylib and failed its own
+  portability check — the reason the last three releases produced no macOS
+  binaries. Distro builds still reuse the system copy.
+- **Missing `<variant>` / `<string_view>` includes.** libstdc++ supplied them
+  transitively; libc++ and MSVC make no such promise.
+
+### Changed
+- **CI is ~58% faster** (38m49s → 16m28s on the Linux gate). Both ccaches were
+  configured smaller than a single build's output, so they evicted themselves
+  mid-build — 60 cleanups at a 26% hit rate on the release job, 321 at 5.5% on
+  the sanitizer job — and then missed on nearly everything. Sized to the real
+  working set, within GitHub's 10 GB per-repo budget. A new `prune-caches` job
+  keeps one entry per key prefix, since the cache action writes a fresh
+  timestamped key every run and never removes the one it superseded (the repo
+  had drifted to 9.70 of 10 GB, almost all of it dead copies).
+- **`scripts/check-submodules-pushed.sh`** refuses a push whose submodule
+  pointer names a commit no remote can fetch — the failure mode where the
+  superproject is clean, your machine builds fine, and every CI job dies at
+  "Init submodules" before compiling anything.
+
+## [0.9.2] - 2026-09-18
+
+### Added
+- **A skill can declare what it will do, and agentty gates on the content.**
+  Optional `effects:` in frontmatter (`read-fs`/`write-fs`/`net`/`exec` — the
+  same four bits tools already declare) plus `source:` for provenance. A skill
+  that declares effects installs through the new `agentty skill add|list|
+  remove|approve`, which prints a consent screen **agentty renders from the
+  declaration** — the skill author supplies a name, description and four bits,
+  never a sentence — and pins the approval to a hash of body+effects. Edit the
+  body, or keep the prose and add `exec`, and it re-gates (the MCPoison rule:
+  trust binds to content, never to a name). Approvals live in
+  `~/.agentty/skills_approved.json` under the user root, so a cloned repo can
+  never pre-approve its own skills. Skills with no `effects:` — every skill
+  written before this — are never gated, and that's a `static_assert`, not a
+  promise. Deliberately not a first-run screen and not a settings toggle: a
+  capability arrives because you named it. Docs:
+  [installing skills](docs/website/skill-install.md).
+  The frontmatter-capability idea came from #47 (Arag Agrawal, Cohesivity).
+
+### Fixed
+- **Builds on libc++ (Termux/Android).** `std::atomic<std::shared_ptr<T>>`
+  (P0718R2) is C++20 and libstdc++ has shipped it since GCC 12, but libc++
+  has not — so `util/snapshot.hpp` fell through to the primary `std::atomic`
+  template and failed with "_Atomic cannot be applied to type … not
+  trivially copyable". It now falls back to a mutex behind the same public
+  API, gated on `__cpp_lib_atomic_shared_ptr` rather than on the compiler. A
+  standalone test compiles the fallback path on toolchains that *do* have the
+  specialisation, so it can't rot unnoticed.
+- **Distro builds no longer clone at configure time.** `nlohmann_json` and
+  `simdjson` are declared with `FIND_PACKAGE_ARGS`, so an installed system
+  copy satisfies them; the pinned `GIT_TAG` still applies for anyone without
+  one. The version constraint is deliberately unpinned on the find_package
+  path — asking for `3.10` made CMake reject a system simdjson 4.x as
+  incompatible and clone anyway.
+- **The Termux recipe was stale and wrong.** It declared version 0.2.8,
+  passed a `-DAGENTTY_AUTO_PULL_MAYA` flag that no longer exists, and listed
+  build deps CMake ignored. It now builds from the self-contained release
+  tarball (all four submodules vendored) with `AGENTTY_USE_MIMALLOC=OFF`,
+  which removes the last configure-time download.
+- `key_routing_test` and `ui_prefs_test` didn't compile on master — `67797f6c`
+  moved `index`/`query` into `FilteredPicker` and left both callers stale.
+- **`all()` re-parsed every skill on every turn.** It built its mtime
+  signature by parsing each `SKILL.md` into a fresh vector, compared, then
+  threw the parse away on a hit — and `catalog_block()` calls it per request.
+  Split into a stat-only signature pass and a parse pass that runs only when
+  the signature moves: **3401µs → 491µs** with 40 skills. A budget test now
+  guards the regression shape.
+
+## [0.9.1] - 2026-09-17
+
+### Security
+- **Provider API keys were resting in plaintext in `settings.json`.** Hosted-preset keys ("openai", "groq", …) and custom-host keys (including the keyless localhost rows) were serialised under `provider_keys` into an unencrypted file — the same class of exposure as SECURITY_AUDIT finding #1, but one store over: credentials.json and accounts.json were already sealed with the machine-bound AES-256-GCM envelope, so a backup, a synced dotfiles repo, or a pasted bug report of settings.json walked away with every live key while the token stores stayed safe. All provider keys now persist through the same encryption framework: a new `auth::keys` vault writes them to `~/.agentty/credentials/provider-keys.json` — sealed with `crypt::seal`, mirrored into the OS keystore when `AGENTTY_USE_KEYSTORE` is enabled, atomically at 0600 — and `settings.json` carries no credential-shaped field at all (not even an empty `provider_keys` object). First load of an upgraded install imports the legacy plaintext keys into the vault and the next save strips them from settings.json, so no migration step is asked of the user; a sign-out that empties the map clears the vault at rest. The in-memory story is unchanged — selection, picker rows, and the central resolver keep reading `Settings.provider_keys`, so no workflow moves.
+
+### Removed
+- **The `bastion` sandbox backend.** Shipped in 0.9.0 as an opt-in alternative to bwrap (`AGENTTY_SANDBOX_BACKEND=bastion`); withdrawn while its embedding story is reworked. bwrap on Linux and sandbox-exec on macOS are unchanged and remain the default, so `--sandbox on` confines exactly as before. `AGENTTY_SANDBOX_BACKEND`, `AGENTTY_SANDBOX_TIER` and `AGENTTY_SANDBOX_NET` are no longer read, and `.agentty/bastion.toml` is ignored.
+
+### Fixed
+- **Reasoning blocks were invisible on the default theme.** Reported as dark-on-dark text you could select but not read (#45), and it was seven separate bugs wearing one costume — every one of them only reachable under `native`, which is why it survived review: everyone developing agentty runs a named scheme. The root cause is that a resolved colour is *paintable* but not necessarily *numeric*. Only a truecolor value carries channels; a palette colour keeps an **index** in the red byte with green and blue zero, and "terminal default" carries nothing at all. Every blend in the program read those bytes as channels anyway, so `bright_black` — palette index 8 — became `rgb(8,0,0)`: near-black, on a black terminal, for every line of every reasoning block. Blends now refuse to do arithmetic on a colour that has no numbers and degrade to no effect rather than to a computed wrong answer. Four more instances of the same family fell out of fixing it: the streaming reveal animation, the diff bands, the status banner and the model chip each carried a hardcoded palette that painted over whatever colours you had chosen.
+- **`native` reported itself as a *light* theme.** The polarity check projected "terminal default" through a lookup that answers white, so the one theme with no opinion about your background claimed to be the brightest possible — which is why setting Appearance → Dark did nothing for the reader who tried it. A theme that paints no canvas of its own now says so instead of guessing.
+- **Picking a theme needed two keypresses.** Arrowing onto certain schemes changed nothing until you pressed again or hit Enter. The frame gate hashes the theme name to decide whether anything visual moved, and it *sampled* the name — length plus first, middle and last byte — which is right for a 50 KB tool output and wrong for a 15-character scheme name: 76 of the 615 built-ins collided with another. Because the sample keys on the ends, the collisions landed between alphabetical neighbours — exactly the pairs you visit arrowing through the list (`Acid Lime` → `Adventure`, `Rose Pine Dawn` → `Rose Pine Moon`). The model changed, the theme was applied, and the repaint was gated away. Names are now hashed in full.
+- **Escaped punctuation printed its backslash in maths.** `\_ \% \$ \& \#` — the characters TeX reserves — rendered literally, so a snake_case identifier inside a formula came out as `bright\_black`. `\_` is the common one, because `_` is TeX's subscript operator and agentty's own output is full of C++ symbols.
+
+## [0.9.0] - 2026-09-16
+
+### Security
+- **`rm -rf /` was reachable through the shell guard.** The refusal matched four literal prefixes (`rm -rf `, `rm -fr `, `rm -r -f `, `rm -f -r `), so anything else went through. A probe of 22 filesystem-destroying commands found **19 of them ran**: `rm -Rf /` (one capital letter), `rm -rfv /`, `rm --recursive --force /`, `rm / -rf` (flags after the path), `rm -rf /tmp/../../` (traversal back to root), `rm -rf /tmp /` (a fatal path hiding behind a legitimate one), `rm -rf $HOME`, and `rm -rf .`. The guard now tokenizes the command, collects flags and paths in any order, resolves each path the way the kernel will, and judges every target on its own — 22/22 refused, with 20/20 legitimate deletes (`rm -rf build`, `$HOME/.cache/x`, `git rm -r --cached .`) still allowed, because a gate that blocks real work gets switched off and then protects nothing.
+- **Spawned tools inherited agentty's open file descriptors.** Access rights attach to the open file *description*, not to the path, so a descriptor agentty held stayed readable inside every tool it spawned — including, measured, a file that had already been `unlink`ed, where no path exists for any sandbox to deny. An agent host is precisely the program this hurts: it keeps credential stores, session files and logs open while running tools it does not trust. Every descriptor above stderr is now closed in the child on both spawn paths.
+
+### Added
+- **Sandbox backends are pluggable, and `bastion` is the first new one.** `AGENTTY_SANDBOX_BACKEND=bastion` selects Landlock path-set authority instead of bwrap's mount topology: no hand-maintained bind list, structured in-band denials with a remedy, and at `AGENTTY_SANDBOX_TIER=t3` a real per-host egress allowlist enforced by the kernel — closing the `--share-net` residual that let any approved command reach any host. Opt-in, and falls back to bwrap when unavailable rather than running unsandboxed.
+- **`head_lines` / `tail_lines` on the shell tool.** Bounds what comes back to the model without bounding what you see: a `| head -20` discards the rest before the terminal card ever gets it, so you lose output you were watching to save the model's context.
+- **Passthrough tools — proxy-injected tools now have an executor.** Running agentty behind a gateway that injects its own tool schemas (LiteLLM + headroom's `headroom_retrieve`, enterprise middleware)? Declare them in `mcp.json` as a `type: "passthrough"` server (`url` + tool names) — or press `^A` in the Plugins pane: `headroom --passthrough <url> <tool>` — and agentty fulfils each call by POSTing its arguments to your URL. Dispatch-only by default (the proxy owns the wire schema; `"advertise": true` makes it a full first-class tool), network-gated under the Ask/Minimal permission profiles, trust-gated in project configs, and rendered in the Plugins pane with a `⇄` badge showing exactly where calls go.
+
+### Fixed
+- **Every OAuth provider opened OpenAI's sign-in panel.** Picking GitHub Copilot — or Kimi — launched the ChatGPT/Codex browser flow, so agentty asked you to sign in to OpenAI in order to authenticate GitHub, and the device code Copilot needs never appeared. Two registry flags read like synonyms and are not: `oauth_native` is true of all three providers, while only ChatGPT uses the Codex flow.
+- **Tools silently stopped working on some models.** A missing capability key was read as "declares no tool support" instead of "unknown", so tools were withheld with no error anywhere — the turn succeeded and the model simply said it could not read files. Unknown now advertises tools; only an explicit `false` withholds.
+- **Tool timeouts counted the time you spent approving.** The deadline was measured from when the model *emitted* the call, not from when it began running, so approving after a pause failed the command instantly — reported as "ran 400s with no progress" about a tool that had not executed an instruction. (#40)
+- **Held arrow keys skipped rows.** A fast terminal delivers a whole key-repeat run in one read, and the loop reduced every event but painted once — so holding ↓ showed 2 → 4 → 6 while you pressed 1–6, felt as "one press does nothing, the next moves twice". Navigation keys now each get their own frame; typing and paste still batch.
+- **agentty pinned every core for ~6s at launch.** Reported as "350% CPU only for animation"; measured at ~1100%, and not animation at all — the workspace symbol prewarm ran `min(cores, 12)` workers at normal priority. It now uses at most 4, at idle scheduling priority, and takes 82% under contention instead of stealing from real work. (#38)
+- **`Animation: Reduced` was identical to `Full`.** It dropped only decorative glyph churn, which restyles bytes that were being sent anyway — so on a high-latency link the middle setting cost exactly what the expensive one did. It now also thins the repaint rate to a quarter. (#36)
+- **Context windows behind gateways read 200k.** Models served through LiteLLM and other proxies fell back to the default because the catalog rows carry no size. agentty now asks the gateway (`/v1/model/info`, llama.cpp `/props`) when a row says nothing, and shows `auto` rather than a blank column so the `^W` override is findable.
+- **Smart Mode settings did not commit.** "Cheapest main-turn role" and "Route the main turn" both reverted on the next redraw — the reducer read only numeric fields, so every other control type was dropped silently. (#42, thanks @sail3r)
+- **Terminals that report nothing get plain text.** `TERM=dumb` now means no escape sequences rather than merely no colour; the default theme states no colours of its own, so a light-background terminal keeps its own ink. (#37)
+- **`spawn failed: Function not implemented` on the static Linux binary.** The `posix_spawn` chdir guard keyed on a glibc version macro that musl deliberately doesn't define — so every shell call with a `cd` failed on the Alpine-built release while the same command without one worked. Affects all static-release Linux users.
+- **Todo-tool call loops with weak models.** An empty todo list returned an empty tool result, which some models read as "call was dropped" and retried identically for whole turns. The result now states the list's contents explicitly.
+- **Unknown-tool errors are actionable.** `unknown tool: X` now names agentty's real catalog and points a proxy-advertised call back at its channel, so a model self-corrects in one step instead of retrying.
+- **Skill path guessing.** The prompt's skills catalog now prints each skill's real directory (skills resolve across `.agentty/`, `.agents/`, `.claude/` roots — models guessed the wrong sibling), and a refused read lists the actual readable skill roots.
+
+### Changed
+- **Shell-out detection understands pipelines.** `grep … | head -20` is a result limit, not shell work — the detector used to bail on the first `|` and missed most of what it was built to catch (4/10 → 9/10 on a real session), while advising `read` for `sed -i` and `cat >`, which are writes. It now classifies intent before speaking, and names the parameter that replaces the pipe.
+- **One key grammar everywhere.** A bare letter now either types (into a filter, or straight into a text field) or does nothing at all — every action is a `^chord`, `Enter`, `Esc`, an arrow, or a digit selector. The old mix of vim aliases (`j/k/h/l/q`), bare letter commands (`a` add, `e` edit, `d` delete, `y` copy) and typing-as-filter is gone, so the same keystroke can no longer mean three things in three panels. Notable moves: Plugins/settings use `^A` add · `^E` edit · `^D` remove, the Smart Mode and Retrieval panes use `^E` for advanced rows, diff review uses `^Y`/`^N` per hunk, and the thread list uses `^N`/`^D`.
+- **Text fields are typed into directly — and save when you leave them.** No more Enter-to-start-editing and no more `^S` step: type on a text row and the edit begins, move off the row (Enter, Esc, arrow, PgUp…) and the value is written. `^S` still works everywhere for muscle memory. Partial values can never reach disk — you cannot leave a field mid-keystroke.
+- **The activity tape shows only real data now.** The hex-dump row under a working turn used to be decoration — a countdown offset and noise bytes with canned words scrolling by. It now has three honest modes: while waiting on the model it *reads* — a head scans the actual bytes of your prompt (offset = its true position); once output streams it *writes* — the newest bytes of the model's own answer with a true byte-count odometer, moving only when data arrives; and with nothing in flight it shows static pinned at `0x000000`. The words you glimpse in the gutter are the words the model is reading or writing at that instant — nothing is fabricated.
+- **`AGENTTY_NO_TAPE=1`** replaces the byte-level tape with a quiet muted `thinking…` row (same slot, same elapsed / tok-s numbers, zero animation) for anyone who finds the narration too busy.
+
+## [0.8.0] - 2026-09-04
+
+### Added
+- **The shell tool now reads images.** Running `read` on an image file (PNG/JPEG/GIF/WebP, sniffed by magic bytes, not extension) returns the actual picture to a vision-capable model instead of refusing it as binary — so the agent can *see* a screenshot it found via `shell`/`glob`. Images flow through a new tool-result image channel and are rendered as image blocks in the tool_result on **every** wire dialect (Anthropic, OpenAI Responses/ChatGPT, ollama), governed by a single image-policy SSOT so no provider silently drops them.
+- **The shell tool got more powerful and robust.** `cd` is now a real `chdir` in the child process (correct `$PWD` and relative paths) rather than a fragile `cd '<dir>' &&` string prefix; a new `env` argument lets a command set/override environment variables; and every command runs in a clean, non-interactive environment by default (`NO_COLOR`, `PAGER=cat`, `GIT_TERMINAL_PROMPT=0`, `TERM=dumb`, …) so output stays quiet and nothing blocks on a TTY prompt.
+- **The `⌃O` tool-output pane shows the full command.** A command-running tool's card now prints the complete `$ command` (wrapped, not clipped) above its output, so a long or multi-line shell one-liner is finally readable.
+
+### Changed
+- **The exec tool is now named `shell`, not `bash`.** It always ran `/bin/sh`, so the old name contradicted the prompt's own "no bashisms / POSIX sh" guidance and made models loop on whether they could "use bash". The system prompt was aligned to match (it names the real OS shell dynamically instead of saying "use bash"). `bash` (any capitalisation) is still accepted as a legacy alias at the single dispatch chokepoint, so a model that reaches for the ubiquitous name on its first turn just works instead of eating a failed call.
+- **The shared system prompt moved out of `provider::anthropic`.** It was the single source of truth for *every* provider yet lived under one provider's namespace; it now sits at the provider-neutral root with a `prompt_overlay(provider_id)` seam for small per-provider deltas — all still baked into the binary (no runtime file read, no injection surface).
+- Every tool card now renders a Title-Cased label, even for MCP-provided or otherwise-unmapped tool names (no more bare lowercase tokens).
+
+### Fixed
+- **`⌃C` now quits instantly, in every state.** A class of teardown hangs where a background worker was *joined without first being told to stop* made quitting take 4–10 s: the RAG index warm, an in-flight stream on quit, an animating turn, and the startup workspace `@`/`#` prewarm walks each blocked the exit. All now cancel promptly (cooperative stop flags / tokens), and a full audit added a deadline-and-detach guard to the last unbounded join (the MCP stdio reader) so no wedged worker can stall shutdown.
+- **The `edit`/`write` tools stop reporting "old_text not found (even fuzzily)" for edits that are actually right there.** A strict match-ratio gate discarded a correct, uniquely-located block whenever its lines had drifted (a reworded comment, reflowed indentation, a dropped blank line); a unique below-threshold match is now accepted, and the whitespace-only fallback applies the edit at the unique location instead of only diagnosing it.
+- **A single over-large pasted image no longer 400s the whole turn.** Anthropic rejects a many-image request if any image exceeds 2000 px on a side, and a tiny (48 KB) hi-DPI screenshot can easily be 3000 px wide. agentty now reads real pixel dimensions from the image header and keeps an oversized image off the wire (with a paste-time warning) so the rest of the message still sends.
+- **The composer caret no longer flickers during animations on WezTerm and Windows Terminal.** Those terminals animate the cursor's appearance, so the hardware caret's per-frame hide/show during a welcome-screen or streaming animation replayed the fade every frame. agentty now uses its steady painted-block caret while an animation is on screen, and the native hardware caret when idle.
+
+### Fixed (providers)
+- **GPT-5.4 and newer reasoning models work on `api.openai.com` again — and finally show their thinking.** agentty dialled `/v1/chat/completions` for the API-key OpenAI provider, but OpenAI has been narrowing what that endpoint will do for reasoning models: from **GPT-5.4** Chat Completions refuses tool calling at any `reasoning_effort` other than `none`, and **GPT-6-class** models drop chat function calling entirely. agentty always sends tools, so on those models a turn was not merely missing its thinking pane — it was a `400`. Reasoning turns now go out over **`/v1/responses`**, which also means the model's chain-of-thought **survives across tool rounds** (carried as encrypted reasoning state) instead of being re-derived from scratch on every hop, and reasoning summaries stream into the [[Ctrl+R]] pane for the first time on this provider. OpenRouter's Responses endpoint is wired up the same way.
+
+  **Nothing to configure.** There is no new picker row, flag, or config key: pick `gpt-5.4` and it routes to Responses, pick `gpt-4o` and it stays on chat. Models that are chat-only (`claude-*`, `gpt-4.x`) are never dragged onto Responses, where they would `400`. If a host turns out not to serve `/responses` after all, that exact model falls back to chat **by itself** and stays there for the session — so a model line-up that shifts under us degrades quietly instead of stranding you in a failure loop.
+
+### Internal
+- The wire dialect is now a property of the **(provider, model) pair** rather than a static field on the provider row, with `provider::dialect_for()` (`provider/dialect.hpp`) as its single authority. The same question used to be answered in three places that disagreed — the row's `wire` field, Copilot's private `prefers_responses_dialect()`, and the UI's `wire_streams_reasoning_text()` — which is how the `openai` row once shipped labelled `Wire::OpenAIResponses` while dialling chat, teaching the thinking pane to promise output the wire never sent. The transport picking a URL and the UI deciding whether to offer [[Ctrl+R]] now call the *same* function, so that class of drift is unrepresentable. A host advertises its second dialect with one `responses_path` column, checked by `endpoints_consistent()` at compile time exactly like `path`; Copilot's hardcoded table became a thin forward. `api.openai.com` joined the Responses dialect as **one `Site`, zero codec changes**, exercising the claim in `docs/PROVIDER_HETEROGENEITY.md`.
+
 ## [0.7.0] - 2026-09-04
 
 ### Added
