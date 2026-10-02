@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type Heading = { id: string; text: string; level: number };
 
@@ -8,8 +9,15 @@ export function TableOfContents() {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [active, setActive] = useState<string>("");
   const activeRef = useRef<string>("");
+  const pathname = usePathname();
 
   useEffect(() => {
+    // Re-run on every client-side nav: the DocsLayout stays mounted, so without
+    // a pathname dep the TOC would keep the FIRST page's headings forever (or
+    // stay empty if you landed on /docs/). Reset active too so the previous
+    // page's highlight doesn't flash on the new page.
+    setActive("");
+    activeRef.current = "";
     const nodes = Array.from(
       document.querySelectorAll<HTMLElement>(".docs-main h2[id], .docs-main h3[id]")
     );
@@ -88,7 +96,7 @@ export function TableOfContents() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, []);
+  }, [pathname]);
 
   if (headings.length < 2) return <aside className="docs-toc" aria-hidden />;
 
