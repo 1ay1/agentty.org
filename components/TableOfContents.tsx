@@ -9,6 +9,7 @@ export function TableOfContents() {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [active, setActive] = useState<string>("");
   const activeRef = useRef<string>("");
+  const pinUntilRef = useRef<number>(0);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -53,6 +54,12 @@ export function TableOfContents() {
     let ticking = false;
     const compute = () => {
       ticking = false;
+
+      // While a click-driven smooth scroll is in flight, the spy must stay out
+      // of the way — otherwise intermediate frames keep reassigning `active`
+      // and (for headings near the bottom that can't reach the reading line)
+      // the spy would permanently override the user's selection.
+      if (pinUntilRef.current && performance.now() < pinUntilRef.current) return;
 
       const scrollY = window.scrollY;
       const viewportH = window.innerHeight;
@@ -101,9 +108,13 @@ export function TableOfContents() {
   if (headings.length < 2) return <aside className="docs-toc" aria-hidden />;
 
   const onClick = (id: string) => {
-    // Sync immediately on click so the highlight doesn't lag the smooth scroll.
+    // Sync immediately on click so the highlight doesn't lag the smooth scroll,
+    // and freeze the scroll-spy for the duration of the browser's smooth-scroll
+    // animation — otherwise its intermediate frames (or the bottom-edge branch,
+    // on short pages) would reassign `active` back to a different heading.
     setActive(id);
     activeRef.current = id;
+    pinUntilRef.current = performance.now() + 750;
   };
 
   return (
