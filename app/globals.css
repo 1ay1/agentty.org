@@ -113,8 +113,8 @@ code, pre, kbd { font-family: var(--mono); font-feature-settings: "zero", "kern"
 /* subtle animated gradient underline on prose/body links */
 .doc-body a:not(.btn), .section-sub a, .card p a {
   background-image: linear-gradient(90deg, var(--accent), var(--accent-2));
-  background-size: 0% 1.5px; background-repeat: no-repeat; background-position: 0 100%;
-  transition: background-size .3s ease, color .18s ease; padding-bottom: 1px;
+  background-size: 0% 1.5px; background-repeat: no-repeat; background-position: 0 calc(100% - 1px);
+  transition: background-size .3s ease, color .18s ease; padding-bottom: 4px;
 }
 .doc-body a:not(.btn):hover, .section-sub a:hover, .card p a:hover { background-size: 100% 1.5px; }
 
