@@ -31,13 +31,16 @@ export function TableOfContents() {
     );
     if (nodes.length === 0) return;
 
-    // Offset the "reading line" just below the sticky nav so a heading counts
-    // as active once its top crosses that line.
+    // Offset the "reading line" below the sticky nav. We deliberately keep a
+    // comfortable gap above the heading's `scroll-margin-top` (nav-h + 20) so
+    // that right after a click-scroll the clicked heading reliably registers
+    // as "above the line" — a tight threshold loses the race to sub-pixel
+    // rounding and the previous heading wins ("selects one above" symptom).
     const navH =
       parseInt(
         getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
       ) || 64;
-    const readLine = navH + 24;
+    const readLine = navH + 56;
 
     const setActiveId = (id: string) => {
       if (activeRef.current !== id) {
@@ -109,12 +112,22 @@ export function TableOfContents() {
 
   const onClick = (id: string) => {
     // Sync immediately on click so the highlight doesn't lag the smooth scroll,
-    // and freeze the scroll-spy for the duration of the browser's smooth-scroll
-    // animation — otherwise its intermediate frames (or the bottom-edge branch,
-    // on short pages) would reassign `active` back to a different heading.
+    // and freeze the scroll-spy until the browser's smooth-scroll animation
+    // ends. Without this, intermediate frames (or the bottom-edge branch on
+    // short pages) reassign `active` and the clicked heading loses selection
+    // to the one above / below it.
     setActive(id);
     activeRef.current = id;
-    pinUntilRef.current = performance.now() + 750;
+    // Hard cap: 1.5s guarantees we unpin even if `scrollend` never fires
+    // (older Safari, reduced-motion, instant jumps).
+    pinUntilRef.current = performance.now() + 1500;
+    const unpin = () => {
+      pinUntilRef.current = 0;
+      window.removeEventListener("scrollend", unpin);
+    };
+    if ("onscrollend" in window) {
+      window.addEventListener("scrollend", unpin, { once: true });
+    }
   };
 
   return (

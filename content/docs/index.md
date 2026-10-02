@@ -8,13 +8,13 @@ slug: ""
 
 agentty is a native C++26 terminal coding agent — a drop-in alternative to `claude-code` that ships as a single {{sizeMB}} static binary.
 
-It's **bring-your-own-model**: point it at **OpenAI, Groq, OpenRouter, Together, Cerebras**, an `ANTHROPIC_API_KEY`, or a fully local **Ollama** model — or sign in with your existing **Claude Pro/Max OAuth**, the same way Claude Code does. It runs every shell call in a sandbox by default, and can drive an agent on an air-gapped host through a single SSH command. No Node, no Python, no Electron, no `npm install`.
+It's **bring-your-own-model**: point it at **OpenAI, DeepSeek, Google Gemini, xAI Grok, Mistral, Groq, OpenRouter, Together, Cerebras, Fireworks**, an `ANTHROPIC_API_KEY`, or a fully local **Ollama** model — or sign in with a subscription you already have: **Claude Pro/Max, ChatGPT, GitHub Copilot, or Kimi** (no API key), the same way Claude Code does. It runs every shell call in a sandbox by default, and can drive an agent on an air-gapped host through a single SSH command. No Node, no Python, no Electron, no `npm install`.
 
 ## Who it's for
 
 - You want a **single-binary coding agent** with zero runtime dependencies.
 - You care about **cold-start speed** and a TUI that never pauses for GC.
-- You want **your choice of model** — Claude, GPT, or a local Ollama model — behind one client.
+- You want **your choice of model** — Claude, GPT, DeepSeek, Kimi, Gemini, Grok, or a local Ollama model — behind one client.
 - You need to run an agent on an **air-gapped host** through an SSH tunnel.
 - You want shell calls **sandboxed by default**, not as an afterthought.
 
@@ -26,7 +26,7 @@ Already convinced? Jump straight to [Installation](/docs/installation) or the [Q
 
 - **Native speed.** C++26, statically linked, `posix_spawn` everywhere. Spawns in microseconds, no GC pauses mid-stream.
 - **One static binary.** {{sizeMB}}. `curl | chmod +x | run`. No version drift between machines.
-- **Sandbox by default.** Every shell/build runs inside `bwrap` (Linux) / `sandbox-exec` (macOS). `~/.ssh`, `/etc`, other projects stay read-only.
+- **Sandbox by default.** Every shell/build command runs inside a boundary the kernel enforces. Your project is writable, system libraries are read-only, and `~/.ssh`, `~/.aws` and your other projects simply aren't reachable.
 - **One-command SSH air-gap.** Relay bytes over SOCKS5-over-SSH; TLS pins end-to-end on the real upstreams.
 - **Reads like a single function.** The reducer is one `std::visit` over a closed event sum; the permission matrix is a `constexpr` with `static_assert`s — change a policy cell and the build breaks.
 

@@ -20,7 +20,7 @@ The input box at the bottom. Type and press [[Enter]] to send. [[Alt+Enter]] ins
 
 Type while a turn is streaming and your message **queues** — it lands automatically when the current turn finishes. On an empty composer, press [[↑]] to recall every queued message back into the buffer for editing.
 
-The composer is project-aware: type [[@]] to mention a file, [[#]] to jump to a symbol, and [[/]] (on an empty composer) to open the command palette — the same fuzzy list as [[Ctrl+K]], with entries like *Compact context*, *Switch provider*, and *New thread*. Drop an image file's path (or paste with [[Ctrl+V]]) to attach a PNG, JPEG, GIF, or WebP inline.
+The composer is project-aware: type [[@]] to mention a file, [[#]] to jump to a symbol, and [[/]] (on an empty composer) to open the command palette — the same fuzzy list as [[Ctrl+K]], with entries like *Compact context*, *Switch provider*, and *New thread*. Drop an image file's path (or paste with [[Ctrl+V]]) to attach a PNG, JPEG, GIF, or WebP inline — over SSH that needs a one-time terminal setting, see [Clipboard & Images](/docs/clipboard).
 
 ## Run code blocks (Ctrl+G)
 
@@ -40,11 +40,47 @@ A single row at the bottom edge shows the active profile, provider, and model, p
 
 Each tool gets a purpose-built widget — agentty doesn't just print raw JSON:
 
-- **Diffs render as diffs** — additions and deletions, color-coded.
-- **Search results group by file**, with line numbers.
-- **bash shows exit codes** and streamed output.
+- **Diffs render as diffs** — additions and deletions color-coded, with a **real line-number gutter** parsed from the diff's `@@` hunk headers. An `edit`'s rows carry the same source line numbers you'd see in the file, so you can cross-reference a change without opening it. The numbers are shown only where they're provably correct (they blank out across an elided gap and resume at the next hunk).
+- **Search results group by file**, each match on its own row with a right-aligned line number — a `grep` card reads as a table, not a wall of text. The line numbers are the file's true positions, derived from the match blocks.
+- **File reads keep true line numbers** — a `read` with an `offset`, a `start_line`, or a `symbol=` starts its gutter at the real line the slice begins on, not at 1, and the tool's own footer/header decorations are stripped from the numbered body. The card header names the symbol you read (`file.cpp · foo()`).
+- **Terminal output stays terminal-shaped** — `bash`, `test`, `diagnostics`, and the `process_start`/`poll`/`stop` trio share a tail-anchored view that surfaces the newest lines, shows **exit codes**, and lifts a one-line verdict out of test-runner summaries and compiler diagnostics when it can.
 - **todos become checklists** you can watch tick off.
+- **Head-heavy tools show their head** — `repo_map`, `outline`, `list_dir`, and the search tools front-load their answer, so their preview shows the top of the output instead of the pagination footer.
 
 ## Smooth streaming
 
 SSE deltas drip into the screen at ⅛ buffer per tick (clamped 32–256 chars), so server-side batching doesn't translate into chunky on-screen text. Where the terminal supports it, frames are wrapped in DEC 2026 begin/end-sync to avoid tearing.
+
+## Appearance
+
+[[Ctrl+K]] → **Appearance** opens a form with eleven look-and-feel knobs. Changes apply immediately — there is no apply step — and persist to your user config, not the project's, because a light terminal is a property of your eyes rather than of the repo you happen to be in.
+
+| Setting | Options |
+|---|---|
+| Scheme | `native` + 615 built-ins, via a fuzzy browser |
+| Colors | auto / truecolor / 256 / 16 / mono |
+| Background | auto / dark / light |
+| Density | compact / normal / roomy |
+| Prose width | 0–200 columns (0 = no cap) |
+| Compact turns | on / off |
+| Motion | full / reduced / off |
+| Syntax highlighting | on / off |
+| Tool output | collapsed / preview / full |
+| Thinking | shown / collapsed / hidden |
+| Timestamps | off / relative / absolute |
+
+`auto` on Colors and Background shows what was actually detected, so you can see whether the guess was right before overriding it.
+
+The theme browser previews live: arrowing through the list restyles the transcript under you, [[Enter]] keeps it, [[Esc]] puts back the one you opened on. Typing filters by fuzzy subsequence — `gvd` finds Gruvbox Dark.
+
+Colour changes repaint; **layout** changes (density, prose width, compact turns) apply to new output only. Rows already committed to your scrollback are the terminal's, not ours — rewriting them would tear the canvas.
+
+### Why `native` is the default
+
+Every named scheme is a guess about your terminal. `native` is the absence of a guess: it emits only your terminal's own foreground and background plus the 16 ANSI colours **you** configured, and never a hardcoded RGB value.
+
+That makes it the one choice that is correct on a light terminal, a dark terminal, a 16-colour terminal and a monochrome one simultaneously — and it means a carefully-tuned palette (Catppuccin, Gruvbox, your own) shows through instead of being painted over.
+
+The trade is that agentty cannot *read* those 16 colours — the terminal owns them and does not report them — so a few effects that need to know a colour's brightness degrade rather than guess. Filled elements use reverse video, letting the terminal pair its own foreground and background, and blends that cannot be computed become no blend at all rather than a wrong one.
+
+If you would rather agentty pick a complete palette, the browser has 615 of them.

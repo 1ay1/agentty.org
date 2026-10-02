@@ -23,10 +23,122 @@ AppleClang tops out at C++23 — building the tests (`AGENTTY_BUILD_TESTS`) requ
 ```bash
 git clone --recursive git@github.com:1ay1/agentty.git
 cd agentty
-cmake -B build
+cmake --preset release
 cmake --build build -j
 ./build/agentty
 ```
+
+:::tip Use the presets, not a hand-rolled `-B build`
+`cmake -B build` **ignores `CMakePresets.json`** and gives you a Release +
+LTO + Makefiles configuration — and because every preset now uses that same
+`build/` directory, a hand-rolled configure *overwrites* your preset tree with
+a Makefile one (Ninja and Make cannot share a directory; CMake will refuse
+until you delete it). Always go through `--preset`. If you are about to change
+code, jump to [The development loop](#the-development-loop) instead.
+:::
+
+## The development loop
+
+If you are editing agentty, this is the section that matters. The `debug`
+preset — the default — is Ninja + Debug + ccache + lld with no LTO, and it
+turns the edit→build→test cycle from ~36 seconds into under two:
+
+```bash
+cmake --preset debug                           # once
+cmake --build build --target agentty -j 12     # after each edit
+./build/agentty
+```
+
+Pass `--target agentty`. Without it the build also makes every example,
+benchmark and submodule tool — measured at 19.6 s versus 0.65 s for the one
+target you actually care about.
+
+**Measured on a 12-core Linux box**, changing one `.cpp` and rebuilding:
+
+| Configuration | Incremental rebuild |
+|---------------|--------------------:|
+| Release + LTO | **36.2 s** |
+| `cmake --preset debug` (Debug + Ninja + ccache + lld) | **1.7 s** |
+
+That is a **21×** difference, and it is almost entirely the link step: LTO must
+re-optimize the whole binary for a one-line change, while a Debug link is
+nearly free. The first `debug` build is a normal cold compile (~5 min); every
+one after it is sub-second.
+
+Four things make it fast, all already configured:
+
+- **Ninja** — a much tighter dependency graph than Make, and it parallelises
+  the objlib fan-out properly.
+- **No LTO** — the single biggest cost in an incremental Release build.
+- **`-g1`** — line tables, no local-variable DWARF. Backtraces and breakpoints
+  work; `print localvar` does not. Use `--preset debug-full` on the days you
+  need it.
+- **ccache** — auto-detected by `cmake/AgenttyToolchain.cmake`. Switching
+  branches or rebasing mostly hits the cache instead of recompiling.
+
+### Running tests fast
+
+Tests live in one consolidated binary plus a handful of standalone ones. Build
+and run only what your change touches:
+
+```bash
+cmake --build build --target agentty_tests -j 12   # ~1.3 s incremental
+./build/agentty_tests -tc="*framing*"              # ~0.16 s
+```
+
+`-tc` takes a doctest pattern and matches on test-case *names*, so
+`-tc="*conformance*"` or `-tc="*framing*"` narrows to one area. A pattern that
+matches nothing reports `0 passed` and still exits 0 — check the case count.
+
+A few suites are separate executables (they need their own process to set
+environment before anything initialises). Run those through ctest by name:
+
+```bash
+cd build && ctest -R "logx"      # logx_test, logx_redaction_test, logx_format_test
+```
+
+For the pre-commit gate, run everything **except** the three long fuzz/replay
+tests:
+
+```bash
+cd build
+ctest -j 8 -E "reveal_scrollback_test|scrollback_wire_fuzz|frozen_invariant_fuzz"
+```
+
+| Scope | Tests | Time |
+|-------|------:|-----:|
+| One case (`-tc=…`) | 1–2 | **0.16 s** |
+| Everything but the slow three | 432 | **26 s** |
+| Full suite | 435 | **110 s** |
+
+Those three account for nearly all of it — `reveal_scrollback_test` alone is
+120 s of CPU, `scrollback_wire_fuzz` 86 s, `frozen_invariant_fuzz` 50 s. They
+are deep property/fuzz runs worth having in CI and rarely worth waiting for
+locally. Everything else is sub-second.
+
+:::warn A green run proves nothing if nothing ran
+Check the assertion count, not just the status line. doctest happily reports
+`8 passed` for eight cases that asserted zero times — which is exactly what
+happened when a set of log tests guarded on an environment variable the suite
+did not set. `assertions: 0` is the tell.
+:::
+
+### The other presets
+
+```bash
+cmake --preset debug-full  # Debug + full DWARF, for `print localvar` in gdb
+cmake --preset release     # -O3 + thin LTO — the optimized local binary
+cmake --preset ci          # mirrors the Linux CI gate
+cmake --preset sanitizer   # ASan + UBSan over agentty's own-logic set
+cmake --preset standalone  # portable binary, no third-party shared libs
+```
+
+Every preset builds into the **same** `build/` tree. Switching preset
+reconfigures that tree in place rather than leaving a second multi-gigabyte
+copy on disk — `cmake --preset release` after `--preset debug` flips the build
+type, and flipping back is a no-op because ccache still holds the objects.
+If you genuinely need two configurations live at once, override the directory:
+`cmake --preset debug -B build-other`.
 
 ## Standalone (static) build
 

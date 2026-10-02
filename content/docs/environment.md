@@ -27,9 +27,8 @@ channel list and line format.
 | Variable | Effect |
 |----------|--------|
 | `AGENTTY_LOG` | The diagnostic filter. `trace` · `debug` · `info` · `warn` · `error` · `off`, plus `channel=level` overrides (`warn,wire=trace`). **Release builds default to `warn`** (~2 lines per healthy session) so `agentty diagnostics` works with no setup; non-release builds default to everything. |
-| `AGENTTY_LOG_FILE` | Log destination. Default `~/.agentty/logs/agentty.log`. |
-| `AGENTTY_DEBUG_LOG` | Legacy: sets the file *and* implies `AGENTTY_LOG=debug`. Prefer the two above. |
-| `AGENTTY_TRACE_TOOLS` | `=1` emits one `TOOL <name> <ok\|error>` line to **stderr** per tool a headless `agentty run` executes. stdout stays clean, so it's safe to pipe. |
+| `AGENTTY_LOG_BODIES` | Include payloads (wire bodies, tool args) in the log. Off by default — these carry user data. |
+| `AGENTTY_TRACE_TOOLS` | Older spelling of `--events jsonl`; `=1` selects the same stream. Prefer the flag — it shows up in `--help`. |
 | `AGENTTY_RAG_TRACE` | Fold rag-cpp's per-stage trace into the retrieval `mode` string shown on the tool card. On by default; `=0` disables. |
 | `AGENTTY_NO_STDERR_REDIRECT` | Keep subsystem stderr (MCP servers, sandbox) on the terminal instead of capturing it. Debug-only — it will scribble over the TUI. |
 
@@ -61,6 +60,33 @@ Off by default and a byte-for-byte no-op when off — see
 | `AGENTTY_SMART_NO_INTERNAL` | Keep engine-internal calls (compaction summary, thread title) on the main model instead of the Utility slot. |
 | `AGENTTY_SMART_NO_SUBAGENTS` · `AGENTTY_SMART_NO_ORCHESTRATE` | Disable subagent delegation / orchestration independently. For bisecting a routing problem. |
 | `AGENTTY_SMART_COMPLEX_THRESHOLD` · `AGENTTY_SMART_DEEP_MARGIN` · `AGENTTY_SMART_BIAS_CLAMP` | Router tuning: complexity cut-off, deep-work margin, and the clamp on learned bias. Defaults are measured; change them only with a benchmark. |
+| `AGENTTY_SMART_ROUTE_MAIN` | `0` stops the main conversation turn from being routed by complexity — every turn runs on the Strategic model and only its *effort* varies. On by default. Before this existed that was the only behaviour: the flagship served every turn, including ones the classifier had already scored trivial. |
+| `AGENTTY_SMART_MAIN_FLOOR` | The cheapest role the main turn may be routed to: `utility` (default — the full ladder), `implementation` (never cheaper than the mid model), or `strategic` (never route down; equivalent to `AGENTTY_SMART_ROUTE_MAIN=0`). Raise it if simple turns are being answered too thinly. |
+
+## Context window
+
+agentty learns a model's context window from three places, most specific
+first: **your override**, then what the provider **advertised**, then what the
+**model id** implies. Nothing known falls back to a conservative 200k.
+
+That middle layer is why most setups need no configuration — the
+`/v1/models` listing is read for `model_info.max_input_tokens` (LiteLLM),
+`context_length` and `top_provider.context_length` (OpenRouter),
+`max_model_len` (vLLM), and `n_ctx` (llama.cpp). Where a row advertises both
+a catalog window and the serving endpoint's, the **serving** one wins: it is
+the one that will reject an over-long prompt.
+
+But a gateway is not obliged to say anything — OpenAI's own `/v1/models`
+schema is just `{id, object, created, owned_by}` — so when yours is silent or
+wrong, set it yourself:
+
+> In the model picker (**^/**), highlight a model and press **^W** to step
+> its window through `auto → 32k → 64k → 128k → 200k → 272k → 400k → 1M → 2M`
+> and back to `auto`. The choice is saved per **provider + model**, so the same
+> model id behind two gateways can carry two different windows.
+
+An override always wins, including over a gateway that advertises a smaller
+window than it actually serves.
 
 ## Retrieval (RAG)
 
@@ -90,7 +116,9 @@ common ones are `AGENTTY_DOCS_DIR` and `AGENTTY_EMBED_MODEL`.
 | `AGENTTY_MCP_CONFIG` | Path to the MCP server config. Otherwise `~/.agentty` then `./.agentty`. |
 | `AGENTTY_MCP_ALLOW_PROJECT` | Allow a project-local `.agentty/mcp.json` to add servers. Off by default — a repo you clone should not silently gain tool servers. |
 | `AGENTTY_MCP_TIMEOUT_MS` · `AGENTTY_MCP_CONNECT_TIMEOUT_MS` | Per-call and initial-connect timeouts for MCP servers. |
+| `AGENTTY_MCP_TOOL_BUDGET` | Soft cap on total tools on the wire (native + enabled MCP), default 100. Past it, MCP tools are trimmed and the picker warns. `0` disables the cap; unparsable values keep the default. |
 | `AGENTTY_MCP_CLIENT_ID` | OAuth client id for MCP servers that require one. |
+| `AGENTTY_SUBAGENT_MAX_SECONDS` | Wall-clock ceiling for one `task` subagent run, default 900 (15 min). Bounds the case the turn cap cannot: a backend that keeps a stream technically alive without finishing it, where the per-stream budget alone allowed hours. On expiry the subagent stops and reports what it has, flagged incomplete. Values outside 1–86399 keep the default. |
 | `AGENTTY_ACP_AGENTS` | Path to the ACP agent config (same precedence chain as MCP). |
 | `AGENTTY_ACP_ALLOW_PROJECT` | Allow a project-local ACP agent config. Off by default, same reasoning as MCP. |
 | `AGENTTY_NO_HOOKS` | Disable all lifecycle hooks for this run. |
@@ -120,7 +148,11 @@ common ones are `AGENTTY_DOCS_DIR` and `AGENTTY_EMBED_MODEL`.
 | `AGENTTY_HOST` | Declare the cooperating host explicitly rather than autodetecting. |
 | `AGENTTY_CLIPBOARD_CMD` | Command to pipe clipboard writes through (e.g. `pbcopy`, `wl-copy`) when autodetection fails. |
 | `AGENTTY_PAINTED_CARET` | `=1` draws the caret manually — for terminals with broken cursor-visibility handling. |
-| `AGENTTY_NO_REVEAL_GLIDE` | Disable the streaming reveal animation; text appears immediately. |
+| `AGENTTY_REVEAL` | Master switch for the streaming reveal effect. **On by default everywhere, tmux included**; `0`/`false`/`off`/`no` turns it off, anything else forces it on. Set it to `0` if your terminal/multiplexer combination ghosts the live tail. |
+| `AGENTTY_REVEAL_TYPEWRITER` | The typewriter clip alone — text arriving character-by-character. ANDed with `AGENTTY_REVEAL`; same default and same truthiness rule. |
+| `AGENTTY_REVEAL_DECORATE` | The decorative overlay on the revealing tail alone. ANDed with `AGENTTY_REVEAL`; same default and same truthiness rule. |
+| `AGENTTY_NO_REVEAL_GLIDE` | `=1` disables the bounded **end-of-turn glide** (the visible catch-up when a turn finishes) and restores the immediate finish. Not the reveal animation itself — that's `AGENTTY_REVEAL`. The glide is otherwise on only where frames are dense: not over SSH, and only with synchronized-output support. |
+| `AGENTTY_NO_TAPE` | `=1` replaces the animated activity tape with a quiet static row carrying the same elapsed / tok-s detail. |
 | `AGENTTY_FROZEN_COLLAPSE` | `=1` opts **in** to collapsing frozen turns. Off by default. |
 | `AGENTTY_NO_TRANSFORMS` | Disable output transforms. |
 
@@ -130,8 +162,8 @@ Not for normal use. Listed so a reader of the source isn't left guessing.
 
 | Variable | Effect |
 |----------|--------|
-| `AGENTTY_CACHE_PROF` · `AGENTTY_LOAD_PROF` · `AGENTTY_STREAM_PROF` · `AGENTTY_VIEW_PROF` | Profiling counters for the render cache, thread load, streaming, and view paths. |
 | `AGENTTY_STRICT_TEST_ROOT` · `AGENTTY_TEST_FAKE_PASSWD_HOME` | Test-harness isolation: enforce a sandboxed user root and fake the passwd home lookup. |
+| `AGENTTY_UNDER_TEST` | Set by the test mains before anything renders: arms the user-root tripwire so a test can never touch the real `~/.agentty`. |
 
 ## Variables agentty *reads* from your environment
 

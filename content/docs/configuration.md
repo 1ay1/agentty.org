@@ -10,12 +10,16 @@ agentty is configured through flags, environment variables, and two on-disk path
 
 ## Environment variables
 
+The most commonly used ones are below. For the **complete** list — every
+variable agentty reads, grouped by subsystem — see
+**[Environment variables](/docs/environment)**.
+
 | Variable | Effect |
 |---|---|
 | `ANTHROPIC_API_KEY` | Claude API key used when no -k flag is passed. Second-highest priority in credential resolution. |
 | `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token from the env (reuses Claude Code's token) — below API key but above on-disk creds. No refresh token. |
 | `OPENAI_API_KEY` | Key for --provider openai, and the fallback key for every other OpenAI-compatible provider. |
-| `GROQ_API_KEY / OPENROUTER_API_KEY / TOGETHER_API_KEY / CEREBRAS_API_KEY` | Provider-specific keys, checked before OPENAI_API_KEY for that provider. Ollama needs none. |
+| `GROQ_API_KEY / OPENROUTER_API_KEY / TOGETHER_API_KEY / CEREBRAS_API_KEY / DEEPSEEK_API_KEY / GEMINI_API_KEY / XAI_API_KEY / MISTRAL_API_KEY / FIREWORKS_API_KEY` | Provider-specific keys, checked before `OPENAI_API_KEY` for that provider. Gemini also accepts `GOOGLE_API_KEY`. Kimi/ChatGPT/Copilot use `agentty login` (OAuth), not a key. Ollama needs none. |
 | `AGENTTY_SOCKS_PROXY` | Route all TCP through this SOCKS5 proxy host:port (set automatically by airgap mode). |
 | `AGENTTY_API_HOST` | Override the API host (host[:port]) — dial a different upstream, keeping normal TLS chain verification (and any `AGENTTY_TLS_PINS` you set). |
 | `AGENTTY_OAUTH_HOST` | Override the OAuth host (host[:port]). |
@@ -26,7 +30,7 @@ agentty is configured through flags, environment variables, and two on-disk path
 | `AGENTTY_PASSPHRASE` | Supply the at-rest encryption passphrase non-interactively (CI/scripts) instead of the tty prompt. |
 | `AGENTTY_KDF` | Set to `scrypt` to force the portable scrypt KDF instead of the default Argon2id for at-rest encryption. |
 | `AGENTTY_AIRGAP_SSH` | Extra flags injected into the ssh invocation for airgap (laptop side). |
-| `AGENTTY_CLIPBOARD_CMD` | Shell command that writes image bytes to stdout — used for Ctrl+V image paste over SSH. |
+| `AGENTTY_CLIPBOARD_CMD` | Shell command that writes image bytes to stdout — used for Ctrl+V image paste over SSH. See [Clipboard & Images](/docs/clipboard). |
 | `AGENTTY_MCP_CONFIG` | Explicit path to an mcp.json, overriding the project/user lookup. |
 | `AGENTTY_MCP_ALLOW_PROJECT` | Blanket-trust a project-local .agentty/mcp.json so its stdio servers connect (gated off by default). Alternative to per-file [content-hash approval](/docs/plugins#config-scope). |
 | `AGENTTY_DOCS_DIR` | Folder of documents to index for the search_docs [retrieval](/docs/retrieval) tool. Auto-discovers `./docs` then `./.agentty/knowledge` when unset. Even with no docs, `search_docs` still searches your installed **skills** and **learned memory**. |
@@ -51,10 +55,17 @@ agentty is configured through flags, environment variables, and two on-disk path
 | `AGENTTY_RAG_PERSIST` | Cache the built docs index to `.agentty/rag_docs.ragdb` so a later session opens warm without re-walking + re-embedding. **On by default**; `=0` disables. |
 | `AGENTTY_RAG_LEARN` | The **learning loop**: fold each passage's Beta-smoothed win-rate (`.agentty/rag_feedback.tsv`) back into ranking as a bounded (±15%) nudge, so passages that repeatedly prove useful **in this workspace** edge ahead of near-tied ones. A `read` of a path retrieval just surfaced counts as a win; unseen paths are untouched (neutral). **On by default**; `=0` disables (delete the TSV to forget). |
 | `AGENTTY_RAG_TRACE` | Fold rag-cpp's per-stage trace into the retrieval `mode` string for debugging. **Off by default**; truthy enables. |
-| `AGENTTY_RAG_PROACTIVE / AGENTTY_RAG_PROACTIVE_MIN` | Pre-turn auto-retrieval that injects a `<retrieved-context>` block when a query looks knowledge-shaped. On by default; `=0` disables. `_MIN` is the CRAG-calibrated confidence bar to inject (default `0.35`). |
+| `AGENTTY_RAG_PROACTIVE / AGENTTY_RAG_PROACTIVE_MIN` | Pre-turn auto-retrieval that injects a `<retrieved-context>` block when a query looks knowledge-shaped. **Off by default** (explicit opt-in — the `search_docs` tool is usually more economical); `=1` enables for the session, or turn it on persistently via Ctrl+K → RAG. `_MIN` is the CRAG-calibrated confidence bar to inject (default `0.35`). |
 | `AGENTTY_RAG_PROACTIVE_BUDGET_MS` | Fast-path **hedge** for the proactive pre-turn retrieval. The submit thread waits at most this long for the funnel; if it lands, grounding is injected inline with zero added latency. If it overruns the submit thread never blocks — the turn enters its normal streaming state (status shows *retrieving context…*, the UI never feels hung) and the stream launch is HELD behind a background retrieval that injects the block **same-turn** the moment it lands. Grounding is always for the question just asked; it is never dropped or deferred to a later turn. Default `250`; `0` skips the inline hedge. |
 | `BM25_USE_STEMMER / BM25_HEADING_BOOST` | Lexical tuning. Porter stemming ("run/runs/running" match) is **on by default**; set `BM25_USE_STEMMER=0` to disable (e.g. a code-symbol corpus). `BM25_HEADING_BOOST` (default 3) is how many times a chunk's heading breadcrumb is folded into its BM25 tokens — heading matches out-score body matches; 1 disables the boost. |
-| `AGENTTY_DEBUG_API / AGENTTY_DEBUG_FILE` | Set AGENTTY_DEBUG_API=1 to dump streaming provider events to AGENTTY_DEBUG_FILE. |
+| `AGENTTY_LOG` | **The** diagnostic knob — one log, every subsystem. RUST_LOG-style filter: `trace`, `debug`, `wire=trace`, `warn,auth=debug`, `off`. Channels: `wire` (raw request/response bytes, untruncated, tagged by dialect), `auth`, `persist`, `tool`, `ui`, `rag`, `mcp`, `acp`, `smart`, `net`, `general`. **Release builds keep warnings + errors by default** (~2 lines per healthy session), so `agentty diagnostics` produces a useful bug report with no setup; non-release builds capture everything. When a model "ignores tools", sends empty tool arguments, or a turn fails in a way that looks like model quality, `AGENTTY_LOG=wire=trace` shows the actual bytes instead of leaving you to guess. The file holds your conversation (prompts, file contents, tool results); request headers are not logged, so API keys stay out of it. See **[Logging & diagnostics](/docs/logging)**. |
+| `AGENTTY_LOG_BODIES` | Include payloads (wire bodies, tool args) in the log. Off by default; these carry user data. The log destination is the `--log-file` flag, not a variable. |
+| `AGENTTY_SMART_MODE` | Session pin for the Smart Mode master switch: `1` forces on, `0` forces off, for that process only. Never persisted (safe for CI / benchmarks). Unset = your saved setting governs. |
+| `AGENTTY_SMART_NO_INTERNAL` | Escape hatch: keep engine-internal calls (compaction summary, thread title) on the main model instead of the Utility slot. For bisecting a routing bug — Smart Mode's three behaviours are otherwise one switch. |
+| `AGENTTY_SMART_NO_ORCHESTRATE` | Escape hatch: run the main turn on the selected model instead of the Strategic slot, and drop the delegation directive. |
+| `AGENTTY_SMART_NO_SUBAGENTS` | Escape hatch: resolve each `task` worker's model with the tier auto-router instead of by its role. |
+| `AGENTTY_NO_TRANSFORMS` | Set to 1 to drop the transform/aggregate/structured-data tool family (`extract`, `aggregate`, `replace`, `read_filter`, `json_query`) — trims ~5 KB of tool schema off every request for a minimal or latency-sensitive profile, **without** losing `grep`/`read`/`edit`. On (family present) by default. |
+| `AGENTTY_TRACE_TOOLS` | Older spelling of `agentty run --events jsonl`; `=1` selects the same stream. Prefer the flag — it appears in `--help`. Emits one JSON object per executed tool to **stderr** (`tool`, `ms`, `ok`, `err`, `args_sha`), so the stdout answer stays clean and a harness can capture both. |
 | `SSL_CERT_FILE / SSL_CERT_DIR / CURL_CA_BUNDLE` | Override the TLS root store agentty trusts (standard OpenSSL vars). |
 
 ### Smart Mode tuning
@@ -65,7 +76,6 @@ The Smart Mode *feature* toggles (which layers run) live in the `Ctrl+S` overlay
 |----------|---------|
 | `AGENTTY_SMART_COMPLEX_THRESHOLD` | Feature-score at/above which a turn classifies as **Complex** (more reasoning, more cost). Lower ⇒ more turns escalate; higher ⇒ fewer. The Simple/Standard boundary tracks it. Default `3`; range 1–8. |
 | `AGENTTY_SMART_DEEP_MARGIN` | How far *into* a tier (score margin) a turn must sit to earn the extra **continuous effort** step — a genuinely hard Complex turn reaches +2 immediately instead of waiting for the session bias to drift. Lower ⇒ eager; higher ⇒ stays close to the discrete tier. Default `3`; range 1–8. |
-| `AGENTTY_SMART_PRIOR_EVIDENCE` | Evidence pseudo-count before the per-workspace **learned routing prior** is trusted. Lower ⇒ the store reacts faster (fewer turns to move a prior); higher ⇒ more conservative. Default `5`; range 1–100. |
 | `AGENTTY_SMART_BIAS_CLAMP` | Symmetric cap (±N steps) on the **session cascade bias** — how far this session's self-correction can drift effort from baseline. Default `2`; range 1–4. |
 
 ## On-disk paths
@@ -165,3 +175,4 @@ agentty --workspace /          # opt out of the boundary entirely
 ## TLS trust store
 
 agentty picks up the system trust store at startup. Behind a TLS-terminating corporate proxy, install the proxy's CA into the system store (`update-ca-certificates` / `update-ca-trust`). See [Corporate Proxies](/docs/proxies).
+

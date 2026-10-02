@@ -21,14 +21,49 @@ Everything you can do without leaving the home row.
 | [[Alt+←/→]] | Quick-cycle to the adjacent thread (← newer, → older) |
 | [[Ctrl+←/→]] | Quick-cycle threads (empty composer, idle session) |
 | [[Ctrl+T]] | Todo / plan view |
-| [[Ctrl+/]] | Model picker |
-| [[Ctrl+P]] | Provider picker (switch LLM backend live) |
+| [[Ctrl+/]] | Model picker — **one list across every provider you're signed into** (fuzzy-search, `Enter` switches provider+model atomically) |
+| [[Ctrl+Tab]] | Quick-swap to the previous model you used (jumps across providers) |
+| [[Ctrl+P]] | Provider picker (manage/switch LLM backends, hosts, accounts) |
+| [[Ctrl+S]] | Smart Mode overlay (routing + learning) |
 | [[Ctrl+G]] | Run a code block from the newest reply on your real terminal |
 | [[Ctrl+R]] | Review pending diffs |
 | [[Ctrl+O]] | Browse the full text of a frozen retrieved-context card |
 | [[Ctrl+U]] | Expand / collapse the newest retrieved-context card (empty composer) |
 | [[Ctrl+L]] | Redraw the screen |
 | [[Ctrl+C]] | Quit (the only quit key) |
+
+> **Every open key toggles.** Pressing a modal's own open key again while
+> it's up closes it — [[Ctrl+P]] shuts the provider picker, [[Ctrl+K]] the
+> command palette, [[Ctrl+S]] the Smart Mode overlay, and so on. The model
+> and provider pickers also **cross-hop**: [[Ctrl+P]] from the model picker
+> jumps to the provider picker, [[Ctrl+/]] does the reverse.
+
+> **The model picker spans every provider.** [[Ctrl+/]] opens one fuzzy list
+> of every model on every backend you're signed into — type `son` for every
+> Sonnet, `gpt` for every GPT — and [[Enter]] switches provider **and** model
+> in a single step. A **recent** section (the models you toggle between) sits
+> up top, and providers you're *not* signed into appear as dim **sign in to …**
+> rows that drop straight into login. [[Ctrl+Tab]] jumps to your previous
+> model without opening anything. Use [[Ctrl+P]] when you want to *manage*
+> backends (add a custom host, switch accounts) rather than pick a model.
+
+> **If [[Ctrl+/]] or [[Ctrl+Tab]] do nothing, your terminal can't encode them.**
+> `Ctrl`+`/` and `Ctrl`+`Tab` are among the few chords legacy terminals
+> literally cannot send (on most, `Ctrl`+`Tab` is byte-identical to `Tab`).
+> agentty negotiates the **kitty keyboard protocol** on startup, so the keys
+> work on terminals that support it — kitty, Ghostty, WezTerm, foot, Konsole,
+> recent xterm/Alacritty, iTerm2 3.5+, and **Blink Shell** on iOS. On a
+> terminal that can't (notably **mosh** sessions, some minimal iOS SSH apps),
+> use the always-portable routes instead: type **`/model`** (or `/swap`) in
+> the composer, or open the command palette with [[Ctrl+K]] and pick
+> **"Switch model"** / **"Swap to previous model"**. Both work on every
+> terminal. (Set `MAYA_NO_KITTY_KEYBOARD=1` to disable the protocol.)
+
+> **Esc steps back one level.** In a multi-step flow — provider picker →
+> **Custom host…** → host input → API-key prompt — [[Esc]] pops one level
+> at a time (and restores what you typed) rather than collapsing the whole
+> stack. The footer shows `Esc back` when there's a parent, `Esc cancel`
+> when there isn't.
 
 ## Composer
 
@@ -76,6 +111,9 @@ Undo coalesces a run of typing into one step (broken on whitespace and on any
 non-typing edit), so one [[Ctrl+Z]] after a paste reaches the pre-paste state.
 [[Ctrl+V]] is intercepted by some terminals (Windows Terminal binds it to its
 own paste); [[Alt+V]] is the fallback that every terminal passes through.
+Pasting an image **over SSH** needs one setting — kitty must be allowed to
+answer clipboard reads, and tmux must pass the request through. See
+[Clipboard & Images](/docs/clipboard).
 
 > Kill-to-end is [[Alt+K]], not the readline-standard [[Ctrl+K]] — [[Ctrl+K]] is
 > reserved app-wide for the command palette. It pairs with [[Ctrl+U]]
@@ -108,6 +146,26 @@ There are two ways to work with the queue:
 
 The composer placeholder hints `press ↑ to edit queued — type to queue
 another…` when relevant.
+
+## Review pane ([[Ctrl+R]])
+
+When the agent has edited files, [[Ctrl+R]] opens the review pane. Edits are already on disk — the pane is a keep/undo gate.
+
+| Key | Action |
+|-----|--------|
+| [[j]] / [[k]] or [[↑]] / [[↓]] | Move between hunks |
+| [[h]] / [[l]] or [[Tab]] | Previous / next file |
+| [[y]] / [[Enter]] | Accept the current hunk (keep it) |
+| [[n]] | Reject the current hunk (revert it) |
+| [[Ctrl+D]] / [[Ctrl+U]] or [[PgDn]] / [[PgUp]] | Scroll inside a hunk taller than the viewport |
+| [[Ctrl+A]] | Accept all — keep every change |
+| [[Ctrl+X]] | Reject all — revert every file (two-press to confirm) |
+| [[Esc]] / [[q]] | Close — keeps accepted + undecided hunks, reverts rejected ones |
+
+> **[[Esc]] commits, it does not cancel.** Closing keeps every undecided
+> hunk (the edit is already live). The footer says `Esc keep all` /
+> `keep rest` / `apply` so the outcome is never a surprise. To throw away
+> *everything*, use [[Ctrl+X]] (Reject all).
 
 ## Palette-only actions
 

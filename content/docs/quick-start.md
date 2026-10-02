@@ -25,7 +25,7 @@ First launch opens an auth modal. Pick one:
 - **OAuth (Claude Pro/Max)** — opens your browser to sign in with your existing subscription; the callback writes the token to the same file.
 
 :::tip
-No Anthropic account? Run a **local Ollama model** with no key at all — press [[Esc]], then [[Ctrl+P]] and pick `ollama`. See [Authentication](/docs/authentication).
+No Anthropic account? Pick **4) Custom OpenAI-compatible host** on the sign-in modal — it works with llama.cpp, vLLM, LM Studio, or any remote server. For a fully local, no-key setup, type `localhost:11434` to use [Ollama](/docs/providers). The model picker opens automatically so you can pick a model and start coding. See [Authentication](/docs/authentication).
 :::
 
 :::note
@@ -48,6 +48,6 @@ You start in **Write** (autonomous) — every tool runs without a prompt, kept i
 
 - [The Interface](/docs/interface) — what every part of the screen means.
 - [Keybindings](/docs/keybindings) — the full keymap.
-- [Providers & Models](/docs/providers) — Claude, GPT, Groq, or a local model.
+- [Providers & Models](/docs/providers) — Claude, GPT, Kimi, DeepSeek, Gemini, or a local model.
 - [Tools](/docs/tools) — what agentty can actually do.
 - [SSH Air-gap](/docs/airgap) — run on a box with no internet.

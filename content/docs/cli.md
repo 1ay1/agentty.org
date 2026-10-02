@@ -15,6 +15,8 @@ agentty                                # run in the current directory
 agentty -w ~/code/project              # run against another workspace
 agentty -m claude-opus-4-5             # pick a model for the session
 agentty --provider openai -m gpt-4o    # run against a different backend
+agentty --provider kimi                # sign in with Kimi (no API key)
+agentty --provider deepseek -m deepseek-v4-pro   # DeepSeek (DEEPSEEK_API_KEY)
 agentty --provider ollama              # local model, no key, no cloud
 agentty -k sk-ant-…                     # single-session key, never written to disk
 agentty --sandbox on                   # require an OS sandbox for bash/diagnostics
@@ -31,8 +33,15 @@ agentty --sandbox on                   # require an OS sandbox for bash/diagnost
 | `agentty airgap user@host` | Run the agent on a remote host through an SSH SOCKS tunnel. |
 | `agentty acp` | Run headless as an [Agent Client Protocol](/docs/acp) agent for Zed (JSON-RPC over stdio). |
 | `agentty mcp-serve` | Serve agentty's native tools over [MCP](/docs/mcp) (stdio). Point any MCP client at it. |
+| `agentty mcp-login <server>` | Authorize an OAuth-gated MCP server from `mcp.json` (OAuth 2.1 + PKCE via your browser). |
+| `agentty mcp-logout <server>` | Remove a stored MCP server token. |
+| `agentty mcp-status` | List configured MCP servers and their authorization state. |
+| `agentty plugin add\|list\|remove\|approve` | Manage [plugins](/docs/plugins) — a plugin *is* an MCP server (any language). e.g. `agentty plugin add today --python today.py`, `--uvx pkg`, `--npx pkg`, `--http <url>`, or `-- cmd args`; `--project` targets the repo config. Plugins never run until approved. |
+| `agentty hooks [list]` | Show configured lifecycle [hooks](/docs/hooks) + approval state. `agentty hooks approve` inspects and approves the active hooks file (hooks never run unapproved; any change re-gates). |
 | `agentty skills` | List discovered [Agent Skills](/docs/skills) with spec-lint diagnostics (exit 1 on warnings — CI-friendly). |
+| `agentty diagnostics` | Collect a redacted bug-report bundle (build info, provider, log tail) to `~/.agentty/logs/agentty-diagnostics.txt`. See [Logging](/docs/logging#reporting-a-bug). |
 | `agentty rag-bench [dir]` | Benchmark [`search_docs` retrieval](/docs/retrieval#measure-it-agentty-rag-bench) on your own corpus — recall@k / MRR / nDCG per pipeline stage. Defaults to the auto-discovered docs folder; pass a directory to override. |
+| `agentty update` | Update agentty in place to the latest release. `--check` reports whether an update is available without installing it. |
 | `agentty --version` | Print `agentty <version>` and exit. |
 | `agentty --help` | Print usage and exit. |
 
@@ -62,10 +71,12 @@ These mirror `agentty --help` exactly.
 |---|---|
 | `-k`, `--key <key>` | API-key override for this session; never written to disk. |
 | `-m`, `--model <id>` | Model id for the session (e.g. `claude-opus-4-5`). |
-| `--provider <p>` | LLM backend: `anthropic` (default) or an OpenAI-compatible one — `openai` · `groq` · `openrouter` · `together` · `cerebras` · `ollama`, a raw `host:port`, or a full URL `https://host/path` for servers with a custom path prefix. Persisted like `-m`; switch live with `^P`. See [Providers & Models](/docs/providers). |
+| `--provider <p>` | LLM backend: `anthropic` (default) or an OpenAI-compatible one — `openai` · `chatgpt` · `copilot` · `kimi` · `deepseek` · `gemini` · `xai` · `mistral` · `groq` · `openrouter` · `together` · `cerebras` · `fireworks` · `ollama`, a raw `host:port`, or a full URL `https://host/path` for servers with a custom path prefix. Persisted like `-m`; switch live with `^P`. See [Providers & Models](/docs/providers). |
 | `-p`, `--profile <mode>` | ACP permission tier (Zed shows the prompts): `ask` (default) · `minimal` (also prompt reads) · `write` (never prompts — fully autonomous). |
 | `-w`, `--workspace <dir>` | Sandbox filesystem tools to this directory (default: cwd). Tools refuse paths outside it. Pass `--workspace /` to disable the gate. |
 | `--sandbox <mode>` | Wrap `bash`/`diagnostics` in an OS-native sandbox. `auto` (default) · `on` (require a backend) · `off` (disable). |
+| `--log-file <path>` | Write the diagnostic log here instead of `~/.agentty/logs/agentty.log`. *What* gets captured is `AGENTTY_LOG` (default: warnings and errors). See [Logging](/docs/logging). |
+| `--events jsonl` | Headless `run` only: emit one JSON object per line to **stderr** for each tool executed — `{"ev":"tool","seq":3,"tool":"read","ms":12,"ok":true,"args_sha":"a3f1c09d"}`. stdout keeps the answer, so a script can capture both. `args_sha` is a hash, not the arguments: it answers "were these two calls identical" without putting paths or command lines in your logs. |
 | `-V`, `--version` | Print the agentty version and exit. |
 | `-h`, `--help` | Show usage and exit. |
 

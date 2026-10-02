@@ -1,12 +1,12 @@
 ---
-title: Zed / ACP
-description: Run agentty as an Agent Client Protocol agent inside Zed — streaming responses, inline diffs, native permission prompts, session reload, and a one-command air-gapped setup. Same engine as the TUI, driven over JSON-RPC on stdio.
+title: Zed / JetBrains / ACP
+description: Run agentty as an Agent Client Protocol agent inside Zed or a JetBrains IDE — streaming responses, inline diffs, native permission prompts, session reload, and a one-command air-gapped setup. Same engine as the TUI, driven over JSON-RPC on stdio.
 nav_section: Advanced
 nav_order: 20
 slug: acp
 ---
 
-agentty speaks the [Agent Client Protocol](https://agentclientprotocol.com) — the same protocol Zed uses to drive Claude Code and Gemini. Point Zed at the `agentty acp` subcommand and your terminal agent becomes a first-class agent panel inside the editor: streaming responses, inline diffs for every edit, and native permission prompts before any file write or shell command.
+agentty speaks the [Agent Client Protocol](https://agentclientprotocol.com) — the same protocol Zed and JetBrains use to drive Claude Code, Codex and Gemini. Point your editor at the `agentty acp` subcommand and your terminal agent becomes a first-class agent panel inside it: streaming responses, inline diffs for every edit, and native permission prompts before any file write or shell command.
 
 ## Set up in Zed
 
@@ -24,6 +24,64 @@ Add this to Zed's `settings.json` (`zed: open settings`):
 ```
 
 Then open the agent panel (`cmd-?` / `ctrl-?`), pick **agentty** from the agent list, and prompt. Auth is whatever `agentty login` already set up — the ACP process reads the same `~/.config/agentty/credentials.json`, so there's nothing extra to configure.
+
+## Set up in a JetBrains IDE
+
+IntelliJ IDEA, PyCharm, GoLand, WebStorm and the rest support ACP through AI Assistant's **AI Chat**. agentty isn't in the curated registry, so add it as a custom agent.
+
+In AI Chat, click the **⋮** menu → **Add Custom Agent**. That creates `~/.jetbrains/acp.json` and opens it. Add agentty under `agent_servers`:
+
+```json
+{
+  "agent_servers": {
+    "agentty": {
+      "command": "/usr/local/bin/agentty",
+      "args": ["acp"]
+    }
+  }
+}
+```
+
+Then pick **agentty** from the chat mode selector and prompt.
+
+:::note Use an absolute path
+Unlike Zed, JetBrains launches the command without a login shell, so `"agentty"` alone usually won't resolve. Run `which agentty` and paste the full path. This is the single most common reason a custom agent fails to start.
+:::
+
+A JetBrains subscription is **not** required to use ACP agents. If agentty doesn't appear in the list, check that `acp.json` parses and restart the IDE.
+
+### MCP servers
+
+JetBrains can expose its own MCP servers to the agent via `default_mcp_settings`:
+
+```json
+{
+  "default_mcp_settings": {
+    "use_custom_mcp": true,
+    "use_idea_mcp": false
+  },
+  "agent_servers": {
+    "agentty": {
+      "command": "/usr/local/bin/agentty",
+      "args": ["acp"]
+    }
+  }
+}
+```
+
+`use_custom_mcp` (default `true`) passes through the MCP servers you configured in the IDE; `use_idea_mcp` (default `false`) exposes the built-in IntelliJ MCP server, which gives the agent IDE-native tools like refactorings and inspections.
+
+agentty has [its own MCP configuration](mcp.html) in `~/.agentty/mcp.json`, and the two are additive — servers you configure here are on top of whatever the IDE passes in.
+
+:::warning WSL is not supported
+JetBrains does not currently support ACP agents under the Windows Subsystem for Linux. On Windows, run the IDE and agentty natively, or use the TUI.
+:::
+
+### Collecting logs
+
+If something misbehaves, AI Chat's **⋮** menu → **Get ACP Logs** downloads an archive of the agent's logs. For the full JSON-RPC traffic, enable `llm.agent.extended.logging` in the Registry (**Help → Find Action → Registry**) and restart.
+
+agentty's own log is independent and often more useful: `AGENTTY_LOG=debug` on the `env` block, then read `~/.agentty/logs/agentty.log`. See [logging](logging.html).
 
 ## Model & permission profile
 
@@ -49,6 +107,7 @@ Set the model per-subprocess in the `args`. In ACP mode `-m` is an *ephemeral* o
 ## What works over ACP
 
 - **Streaming text** — the model's reply renders token-by-token in Zed's panel.
+- **Images in prompts** — paste or attach a screenshot and it reaches the model as an image, not a dropped block. Whether the *selected model* can see it is a separate question agentty already answers: a text-only model has the image withheld rather than the turn failed. Audio is deliberately not advertised — no provider agentty ships accepts it.
 - **Tool calls** — every `read` / `edit` / `bash` / `grep` / … shows up as a Zed tool card with the right icon, the raw arguments, and live status (pending → running → done/failed). Result bodies are shaped to match Zed's native agent: a `read` renders as a gutter-numbered file excerpt, and all other output is markdown-escaped so file contents render verbatim instead of being reparsed as formatting.
 - **Slash-command menu** — agentty populates Zed's composer `/` menu (`available_commands_update`) with `/compact`, `/new`, and every installed skill as `/<skill-name>`, the same way the native agent exposes its commands.
 - **Model picker** — agentty advertises a `model` config option (`config_option_update`) listing the provider's model catalog, so you can switch models from Zed's per-session dropdown instead of relaunching with `-m`.
@@ -61,7 +120,7 @@ Set the model per-subprocess in the `args`. In ACP mode `-m` is an *ephemeral* o
 - **Cancellation** — stop a turn from Zed and the in-flight stream tears down.
 - **Full session lifecycle** — agentty advertises and implements the complete ACP v1 session surface: `session/new`, `session/load`, `session/resume`, `session/list`, `session/close`, `session/delete`, plus `logout`. Zed can enumerate past sessions, reopen any of them, and prune them — all backed by the on-disk thread store.
 - **Session persistence + reload** — every session is written to agentty's on-disk thread store after each turn (the *same* format the TUI uses), so it survives a subprocess restart. Zed can `session/load` to resume a past conversation: agentty replays the full transcript (user + assistant messages and tool cards) as `session/update` notifications, then hands back control. Sessions started in Zed also show up in the standalone TUI's thread picker, and vice versa.
-- **Workspace sandbox** — file tools stay inside the session's `cwd` (the folder you opened in Zed); `bash` is wrapped in bwrap/sandbox-exec exactly like the standalone TUI.
+- **Workspace sandbox** — file tools stay inside the session's `cwd` (the folder you opened in Zed); `bash` runs in the same OS-enforced sandbox as the standalone TUI.
 
 :::tip
 The ACP agent is the *same* engine as the TUI — same provider, same tools, same wire-message shaping, same permission policy — just driven over JSON-RPC on stdio instead of a terminal. Any other ACP client (not just Zed) works the same way.

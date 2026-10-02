@@ -50,6 +50,27 @@ Reasoning effort has to be decided *before* the request is sent, so Smart Mode c
 | **Standard** | the everyday working turn | your baseline (unchanged) |
 | **Complex** | "why does this deadlock?", "refactor the auth module", a long or multi-part ask | one step **up** (or **two** when the turn is *deeply* complex) |
 
+### Your baseline, and why it defaults to `auto`
+
+Everything in that table is **relative to a baseline** — the effort setting on your model, which you cycle with [[←]] / [[→]] in the model picker. The tiers move *from* it, so the baseline wants room in both directions.
+
+That's what **`auto`** (the default) gives you. It isn't a fixed level — it's a *position*: the middle rung of whatever reasoning ladder your current model actually exposes. So it's sensible on a model with six levels and on one with a single on/off switch, without you configuring anything:
+
+| Your model's ladder | `auto` means | trivial | simple | standard | complex |
+|---|---|---|---|---|---|
+| `minimal · low · medium · high` | `low` | off | minimal | low | **medium** |
+| `low · medium · high · max` | `medium` | off | low | medium | **high** |
+| on/off only | `high` | off | off | high | **high** |
+| no reasoning control | — | off | off | off | off |
+
+**Trivial turns are always free**, at every baseline — "commit it" never buys a reasoning budget. That's what makes a centred baseline safe: you pay on the turns that earned it, not as a floor tax.
+
+If you'd rather fix the level yourself, cycle to any rung and it stays there. **`off` is a real choice**, distinct from "haven't decided": pick it and agentty sends no reasoning parameter at all, on every turn, including complex ones.
+
+:::note
+Before this was a distinct setting, "never configured" and "off" were the same value — so on default settings the classifier could score a turn Complex and the effort dial had nowhere to climb from. If you had deliberately set effort **off**, set it again once; an untouched setting is now read as `auto`.
+:::
+
 ### How the classifier works
 
 It's not a keyword lookup — it's a small **additive feature score**. Three orthogonal signal families each contribute weight, and the sum is thresholded into a tier:
@@ -74,7 +95,7 @@ You don't set the tier — it's inferred from your prompt. Ask a design or "why"
 
 The upfront classifier is a good first guess, not an oracle. Smart Mode layers a **cascade** on top: as a turn plays out, agentty watches what the orchestrator actually did and adjusts a running effort bias for the rest of the session. If a turn the heuristic called "Simple" ends up spawning several parallel workers, it was really complex — so the bias nudges up and the next turns think harder. If a "Complex"-rated turn delegated nothing and answered directly, the bias relaxes. The bias decays toward neutral each turn, so one anomaly never sticks.
 
-This is the routing research's actual recommendation — *cascade beats one-shot routing* — and it's free here because the agent loop already sees the outcome. Persisting that correction across sessions is [Learned Routing](/docs/smart-mode-learning).
+This is the routing research's actual recommendation — *cascade beats one-shot routing* — and it's free here because the agent loop already sees the outcome. The correction is **session-scoped**: it decays each turn, is clamped, and resets when you exit. agentty deliberately does not persist it across sessions — a routing prior that ratchets cost from one week's work into the next is a correctness surface that was never worth its complexity.
 
 ## Where each role is used
 
