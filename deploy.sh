@@ -38,6 +38,11 @@ echo "==> Syncing CHANGELOG.md from the agentty repo"
 # never-fails contract as the other syncs.
 node scripts/sync-changelog.mjs || echo "   (changelog sync skipped; using committed content/changelog.md)"
 
+echo "==> Syncing static pages from the agentty repo (agentty.org/paste)"
+# Pulls docs/website/static/* (pages agentty itself generates, like the
+# images-as-text page) into public/. Same never-fails contract.
+node scripts/sync-static.mjs || echo "   (static sync skipped; using committed public/)"
+
 echo "==> Measuring the real agentty binary (size + cold-start)"
 # Regenerates lib/stats.generated.ts so the site's numbers always match the
 # binary that's actually installed. Never fails the deploy if the binary is
