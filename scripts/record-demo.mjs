@@ -109,15 +109,7 @@ async function streamText(res, text, pace = 28) {
 }
 
 let callSeq = 0;
-let warmup = false;   // true during the unrecorded first session (see below)
 async function respond(res, messages) {
-  if (warmup) {        // a one-line answer, no tools — just enough to save a thread
-    send(res, chunk({ role: "assistant", content: "Ready when you are." }));
-    send(res, chunk({}, "stop"));
-    send(res, { ...chunk({}), choices: [], usage: { prompt_tokens: 3900, completion_tokens: 5 } });
-    res.write("data: [DONE]\n\n");
-    return res.end();
-  }
   const toolResults = messages.filter((m) => m.role === "tool").length;
   const step = STEPS[Math.min(toolResults, STEPS.length - 1)];
   await sleep(450); // time-to-first-token
@@ -159,7 +151,7 @@ const srv = http.createServer((req, res) => {
       const b = JSON.parse(body);
       res.writeHead(200, { "content-type": "text/event-stream" });
       if (!b.tools || !b.tools.length) {          // side request: thread title
-        send(res, chunk({ role: "assistant", content: warmup ? "Getting started" : "Cache-first token resolve" }));
+        send(res, chunk({ role: "assistant", content: "Cache-first token resolve" }));
         send(res, chunk({}, "stop"));
         res.write("data: [DONE]\n\n");
         return res.end();
@@ -174,10 +166,12 @@ const srv = http.createServer((req, res) => {
 await new Promise((r) => srv.listen(11434, "::", r)); // dual-stack: localhost → ::1 or 127.0.0.1
 
 // ── run the real binary in a PTY and record ─────────────────────────────────
+const frames = [];
+let last = Date.now();
 const env = { ...process.env, HOME: "/home/dev", USER: "dev", TERM: "xterm-256color", COLORTERM: "truecolor", AGENTTY_PROFILE: "write" };
 for (const k of ["NO_COLOR", "PAGER", "GIT_TERMINAL_PROMPT", "CI"]) delete env[k];
 // present the project at a neutral /home/dev/app so no host paths leak into the recording
-const spawnAgentty = () => ptySpawn("bwrap", [
+const pty = ptySpawn("bwrap", [
   "--dev-bind", "/", "/",
   "--tmpfs", "/home",
   "--bind", HOME, "/home/dev",
@@ -187,23 +181,6 @@ const spawnAgentty = () => ptySpawn("bwrap", [
 ], {
   name: "xterm-256color", cols: COLS, rows: ROWS, cwd: work, env,
 });
-
-// Warm-up (NOT recorded): agentty shows its "New here? Try one of these"
-// starters card only on a genuine first run (no saved threads). One short
-// exchange saves a thread, so the recorded session opens like a returning user's.
-warmup = true;
-const warm = spawnAgentty();
-warm.onData(() => {});
-await sleep(1800);
-warm.write("hi\r");
-await sleep(4000);
-warm.kill();
-await sleep(800);
-warmup = false;
-
-const frames = [];
-let last = Date.now();
-const pty = spawnAgentty();
 pty.onData((d) => { const now = Date.now(); frames.push([now - last, d]); last = now; });
 
 await sleep(1800);
