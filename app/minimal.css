@@ -187,9 +187,13 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
   overflow: hidden;
-  contain: size layout style;
+  contain: strict;
+  will-change: transform;        /* own compositor layer: page never repaints */
 }
-.replay-grid > div { position: relative; height: calc(var(--lh) * 1em); contain: size layout style; }
+/* rows: fixed-size and fully contained (layout + paint), so a changed row
+   re-lays-out and repaints only itself. Glyph ink stays within the 1.2em
+   row (JetBrains Mono descends 0.3em; the baseline leaves 0.24em). */
+.replay-grid > div { position: relative; height: calc(var(--lh) * 1em); contain: strict; }
 .replay-grid span { position: absolute; top: 0; height: 100%; overflow: visible; }
 .home-demo figcaption { margin-top: 10px; color: var(--text-faint); font-size: 12px; }
 .home h3 { font-size: 14px; margin: 26px 0 10px; color: var(--text); }

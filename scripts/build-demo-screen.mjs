@@ -103,6 +103,49 @@ function snapshotRow(y) {
   return out;
 }
 
+// ── rows → positioned segments (the browser only places these) ──────────
+// [startCol, cells, text, classIndex]. ASCII tiles exactly in the mono font,
+// so it stays one text segment. Every other symbol gets its own 1-cell
+// segment (fallback fonts can't drift the grid); CSS-drawn glyphs of one
+// kind merge into a single span. Blank, unstyled space is omitted entirely.
+const GLYPHS = JSON.parse(fs.readFileSync(path.join(ROOT, "lib/demo-glyphs.json"), "utf8"));
+const DRAWN = new Set([...Object.keys(GLYPHS.arms), ...Object.keys(GLYPHS.round), ...Object.keys(GLYPHS.blocks),
+  ...Object.keys(GLYPHS.shade), ...Object.keys(GLYPHS.dash)]);
+const TILE = new Set(GLYPHS.tile);
+const classes = [], classIdx = new Map();
+const cls = (s, g) => {
+  const k = s + ":" + g;
+  if (!classIdx.has(k)) { classIdx.set(k, classes.length); classes.push([s, g]); }
+  return classIdx.get(k);
+};
+function segRow(runs) {
+  const out = [];
+  let col = 0;
+  for (const r of runs) {
+    const st = styles[r[0]], blankOk = !st[1] && !(st[2] & 12);
+    if (r.length === 3) {
+      const hex = r[1].codePointAt(0).toString(16);
+      out.push([col, r[2], r[1], cls(r[0], DRAWN.has(hex) ? hex : "")]);
+      col += r[2];
+      continue;
+    }
+    let txt = "", at = col;
+    const flush = () => { if (txt && !(blankOk && !txt.trim())) out.push([at, txt.length, txt, cls(r[0], "")]); txt = ""; };
+    for (const ch of r[1]) {
+      const cp = ch.codePointAt(0);
+      if (cp >= 0x20 && cp <= 0x7e) { if (!txt) at = col; txt += ch; col++; continue; }
+      flush();
+      const hex = cp.toString(16), drawn = DRAWN.has(hex), c = cls(r[0], drawn ? hex : "");
+      const last = out[out.length - 1];
+      if (drawn && TILE.has(hex) && last && last[3] === c && last[0] + last[1] === col) { last[1]++; last[2] += ch; }
+      else out.push([col, 1, ch, c]);
+      col++;
+    }
+    flush();
+  }
+  return out;
+}
+
 // Resample onto a fixed 30fps clock: at every tick, feed the parser all bytes
 // written up to that instant and take a full-screen snapshot. Output before
 // `startMs` (agentty booting) folds into the first snapshot, so the replay
@@ -118,7 +161,7 @@ for (let tick = tick0; tick * FRAME_MS <= end + FRAME_MS; tick++) {
   while (e < events.length && events[e][0] <= tick * FRAME_MS) buf += events[e++][1];
   if (!buf && snaps.length) continue;
   if (buf) await write(buf);
-  const runs = Array.from({ length: rec.rows }, (_, y) => snapshotRow(y));
+  const runs = Array.from({ length: rec.rows }, (_, y) => segRow(snapshotRow(y)));
   const keys = runs.map((r) => JSON.stringify(r));
   const last = snaps[snaps.length - 1];
   if (last && keys.every((k, y) => k === last[1][y])) continue;
@@ -152,6 +195,6 @@ for (let k = 0; k < snaps.length; k++) {
 }
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify({ fps: FPS, cols: rec.cols, rows: rec.rows, fg: FG, bg: BG, styles, frames }));
+fs.writeFileSync(OUT, JSON.stringify({ fps: FPS, cols: rec.cols, rows: rec.rows, fg: FG, bg: BG, styles, classes, frames }));
 const total = Math.round(frames.reduce((a, f) => a + f[0], 0) * FRAME_MS);
 console.log(`frames ${rec.frames.length} -> ${frames.length} @${FPS}fps (${dropped} layout spikes dropped), styles ${styles.length}, ${total} ms, ${fs.statSync(OUT).size} bytes -> ${path.relative(ROOT, OUT)}`);

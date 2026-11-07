@@ -1,30 +1,31 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
-import { segClass, segments, styleRule, type Frame, type Run, type Screen } from "@/lib/replay";
+import { className, styleRule, type Frame, type Screen, type Seg } from "@/lib/replay";
 
 /**
  * ReplayTerminal — plays a REAL recorded agentty session as plain DOM.
  *
- * The PTY bytes agentty wrote were parsed by xterm.js at build time and
- * resampled to 30fps row diffs (scripts/build-demo-screen.mjs). Here:
- *   - the opening frame arrives as server-rendered HTML (ReplayDemo), so the
- *     box is painted with zero JS and never shifts
- *   - the grid is a fixed cols × rows box sized purely in CSS (container query
- *     units), every row `contain`ed so a change re-lays out one row only
- *   - updates reconcile in place: each row keeps a pool of spans + text nodes
- *     and only the class / text / width that actually changed is written
- *   - one requestAnimationFrame clock picks frames by elapsed time (a slow
- *     frame drops, the timeline never stalls); several due frames coalesce
- *     into one write per row
- *   - styles are classes in a single constructed stylesheet, not inline css
- *   - paused off-screen / in background tabs; reduced-motion gets the last frame
- *   - it's real text: selectable and copyable
+ * Everything expensive happened at build time (scripts/build-demo-screen.mjs):
+ * the PTY bytes were parsed by xterm.js, resampled to 30fps, cleaned of
+ * one-frame layout spikes, and cut into positioned segments. The browser:
+ *   - paints the opening frame from server HTML (zero JS, zero layout shift)
+ *     and ADOPTS those nodes — nothing is rebuilt on hydration
+ *   - runs one requestAnimationFrame clock; frames are picked by elapsed
+ *     time (a slow frame drops, the timeline never stalls) and every due
+ *     frame coalesces into one write per row
+ *   - writes only what changed: each segment is a span pinned at its column
+ *     (absolute, never moves), keyed by column; only text / class / width
+ *     are touched. Every row is `contain: strict`, the grid is its own
+ *     compositor layer, so a change re-lays-out and repaints one row only
+ *   - does no allocation in the steady state, no string splitting, no
+ *     measuring, no reads from layout — writes only, so no forced reflows
+ *   - pauses off-screen / in background tabs; reduced-motion: last frame
  */
 
 const HOLD_MS = 4500;          // linger on the finished session before looping
 
-type Cell = { el: HTMLSpanElement; text: Text; c: string; t: string; w: number };
+type Cell = { el: HTMLSpanElement; text: Text; c: number; t: string; w: number; gen: number };
 
 export function ReplayTerminal({
   cols, rows, fg, bg, children,
@@ -37,24 +38,23 @@ export function ReplayTerminal({
     if (!box || !grid) return;
 
     let data: Screen | null = null;
-    let rowEls: HTMLDivElement[] = [];
+    let classNames: string[] = [];
+    let rowEls: HTMLElement[] = [];
     let cells: Map<number, Cell>[] = [];
-    const dirty = new Map<number, Run[]>();
+    let pending: (Seg[] | null)[] = [];      // latest segs per row this tick (no Map churn)
+    let pendingRows: number[] = [];
+    let gen = 0;
     let disposed = false, loading = false, onScreen = false, started = false;
     let raf = 0, i = 0, t0 = 0, pausedAt = 0, holdUntil = 0;
-    let due: number[] = [];
+    let due: Float64Array = new Float64Array(0);
     let sheet: CSSStyleSheet | null = null, styleEl: HTMLStyleElement | null = null;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // ── in-place row reconciliation ───────────────────────────────────────
-    // Every span is absolutely placed at its start column and keyed by it, so
-    // an element NEVER moves: a run that starts elsewhere is a new element.
-    // Only text/class/width change in place — zero layout shift, and no
-    // inline-flow layout at all.
-    const paint = (y: number, runs: Run[]) => {
-      const row = rowEls[y], pool = cells[y], live = new Set<number>();
-      for (const g of segments(runs, data!.styles)) {
-        const [col, w, txt] = g;
+    // ── write one row: reconcile segments into its pooled spans ────────────
+    const paint = (y: number, segs: Seg[]) => {
+      const row = rowEls[y], pool = cells[y], g = ++gen;
+      for (let k = 0; k < segs.length; k++) {
+        const [col, w, txt, ci] = segs[k];
         let c = pool.get(col);
         if (!c) {
           const el = document.createElement("span");
@@ -62,22 +62,26 @@ export function ReplayTerminal({
           el.append(text);
           el.style.left = col + "ch";
           row.append(el);
-          c = { el, text, c: "", t: "", w: -1 };
+          c = { el, text, c: -1, t: "", w: -1, gen: 0 };
           pool.set(col, c);
         }
-        const cls = segClass(g);
-        if (c.c !== cls) { c.el.className = cls; c.c = cls; }
+        if (c.c !== ci) { c.el.className = classNames[ci]; c.c = ci; }
         if (c.t !== txt) { c.text.data = txt; c.t = txt; }
         if (c.w !== w) { c.el.style.width = w + "ch"; c.w = w; }
-        live.add(col);
+        c.gen = g;
       }
-      for (const [k, c] of pool) if (!live.has(k)) { c.el.remove(); pool.delete(k); }
+      if (pool.size > segs.length) pool.forEach((c, k) => { if (c.gen !== g) { c.el.remove(); pool.delete(k); } });
     };
-    const flush = () => { dirty.forEach((runs, y) => paint(y, runs)); dirty.clear(); };
-    const apply = (f: Frame) => { for (const [y, runs] of f[1]) dirty.set(y, runs); };
-    const openingScreen = () => {
-      for (let y = 0; y < data!.rows; y++) dirty.set(y, []);
-      apply(data!.frames[0]);
+    const queue = (f: Frame) => {
+      for (const [y, segs] of f[1]) { if (!pending[y]) pendingRows.push(y); pending[y] = segs; }
+    };
+    const flush = () => {
+      for (const y of pendingRows) { paint(y, pending[y]!); pending[y] = null; }
+      pendingRows.length = 0;
+    };
+    const restart = () => {
+      for (let y = 0; y < rows; y++) { if (!pending[y]) pendingRows.push(y); pending[y] = []; }
+      queue(data!.frames[0]);
     };
 
     // ── clock ──────────────────────────────────────────────────────────────
@@ -87,11 +91,11 @@ export function ReplayTerminal({
       if (holdUntil) {
         if (now < holdUntil) { raf = requestAnimationFrame(loop); return; }
         holdUntil = 0; t0 = now; i = 1;
-        openingScreen();
+        restart();
       }
       const tick = ((now - t0) * data.fps) / 1000;
-      while (i < data.frames.length && due[i] <= tick) apply(data.frames[i++]);
-      if (dirty.size) flush();
+      while (i < data.frames.length && due[i] <= tick) queue(data.frames[i++]);
+      if (pendingRows.length) flush();
       if (i >= data.frames.length) holdUntil = now + HOLD_MS;
       raf = requestAnimationFrame(loop);
     };
@@ -113,16 +117,12 @@ export function ReplayTerminal({
 
     const load = async () => {
       loading = true;
-      const family = getComputedStyle(grid).fontFamily;
-      const fonts = Promise.race([
-        Promise.all(["400", "700"].map((w) => document.fonts.load(`${w} 13px ${family}`))),
-        new Promise((r) => setTimeout(r, 1500)),
-      ]).catch(() => {});
-      const [mod] = await Promise.all([import("@/lib/demo-screen.json"), fonts]);
+      const mod = await import("@/lib/demo-screen.json");
       if (disposed) return;
       data = (mod.default ?? mod) as unknown as Screen;
-      let acc = 0;
-      due = data.frames.map((f, n) => (n === 0 ? 0 : (acc += f[0])));
+      due = new Float64Array(data.frames.length);
+      for (let n = 1, acc = 0; n < data.frames.length; n++) due[n] = acc += data.frames[n][0];
+      classNames = data.classes.map(className);
 
       // every recorded style as a class, in one stylesheet
       const css = data.styles.map((s, n) => styleRule(n, s)).join("");
@@ -136,21 +136,30 @@ export function ReplayTerminal({
         document.head.append(styleEl);
       }
 
-      // take over the server-rendered first frame with live, pooled rows:
-      // built off-document, swapped in one go — identical pixels, no flash
-      const frag = document.createDocumentFragment();
-      rowEls = Array.from({ length: data.rows }, () => frag.appendChild(document.createElement("div")));
-      cells = rowEls.map(() => new Map());
-      if (reduce) { for (const f of data.frames) apply(f); }
-      else { openingScreen(); i = 1; }
-      flush();
-      grid.replaceChildren(frag);
-      if (reduce) return;
+      // adopt the server-rendered rows and spans as the live pool
+      rowEls = Array.from(grid.children) as HTMLElement[];
+      pending = new Array(rows).fill(null);
+      cells = rowEls.map((row, y) => {
+        const pool = new Map<number, Cell>();
+        const first = data!.frames[0][1].find((r) => r[0] === y)?.[1] ?? [];
+        const byCol = new Map(first.map((s) => [s[0], s]));
+        for (const el of Array.from(row.children) as HTMLSpanElement[]) {
+          const col = Number(el.dataset.c), s = byCol.get(col);
+          const text = el.firstChild as Text | null;
+          if (!s || !text) { el.remove(); continue; }
+          pool.set(col, { el, text, c: s[3], t: s[2], w: s[1], gen: 0 });
+        }
+        return pool;
+      });
 
-      // the opening frame is already on screen (server HTML), so start the
-      // clock right away — waiting for idle only added dead air
+      if (reduce) {                        // final screen, painted once
+        for (const f of data.frames) queue(f);
+        flush();
+        return;
+      }
+      i = 1;
       started = true;
-      t0 = performance.now();
+      t0 = performance.now();              // opening frame is already on screen
       resume();
     };
 
@@ -173,7 +182,7 @@ export function ReplayTerminal({
       if (sheet) document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== sheet);
       styleEl?.remove();
     };
-  }, []);
+  }, [rows]);
 
   const vars = { "--cols": cols, "--rows": rows, color: fg, background: bg } as CSSProperties;
 
