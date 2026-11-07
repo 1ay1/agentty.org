@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
-import { runCells, styleRule, type Frame, type Run, type Screen } from "@/lib/replay";
+import { segClass, segments, styleRule, type Frame, type Run, type Screen } from "@/lib/replay";
 
 /**
  * ReplayTerminal — plays a REAL recorded agentty session as plain DOM.
@@ -24,7 +24,7 @@ import { runCells, styleRule, type Frame, type Run, type Screen } from "@/lib/re
 
 const HOLD_MS = 4500;          // linger on the finished session before looping
 
-type Cell = { el: HTMLSpanElement; text: Text; s: number; t: string; w: number };
+type Cell = { el: HTMLSpanElement; text: Text; c: string; t: string; w: number };
 
 export function ReplayTerminal({
   cols, rows, fg, bg, children,
@@ -53,9 +53,8 @@ export function ReplayTerminal({
     // inline-flow layout at all.
     const paint = (y: number, runs: Run[]) => {
       const row = rowEls[y], pool = cells[y], live = new Set<number>();
-      let col = 0;
-      for (const r of runs) {
-        const w = runCells(r);
+      for (const g of segments(runs, data!.styles)) {
+        const [col, w, txt] = g;
         let c = pool.get(col);
         if (!c) {
           const el = document.createElement("span");
@@ -63,14 +62,14 @@ export function ReplayTerminal({
           el.append(text);
           el.style.left = col + "ch";
           row.append(el);
-          c = { el, text, s: -1, t: "", w: -1 };
+          c = { el, text, c: "", t: "", w: -1 };
           pool.set(col, c);
         }
-        if (c.s !== r[0]) { c.el.className = "s" + r[0]; c.s = r[0]; }
-        if (c.t !== r[1]) { c.text.data = r[1]; c.t = r[1]; }
+        const cls = segClass(g);
+        if (c.c !== cls) { c.el.className = cls; c.c = cls; }
+        if (c.t !== txt) { c.text.data = txt; c.t = txt; }
         if (c.w !== w) { c.el.style.width = w + "ch"; c.w = w; }
         live.add(col);
-        col += w;
       }
       for (const [k, c] of pool) if (!live.has(k)) { c.el.remove(); pool.delete(k); }
     };

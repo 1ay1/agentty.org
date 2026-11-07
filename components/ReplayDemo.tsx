@@ -1,6 +1,6 @@
 import screenData from "@/lib/demo-screen.json";
 import { ReplayTerminal } from "@/components/ReplayTerminal";
-import { runCells, styleRule, type Screen } from "@/lib/replay";
+import { GLYPH_CSS, segClass, segments, styleRule, type Screen } from "@/lib/replay";
 
 /**
  * Server component (runs at build time): renders the recording's opening
@@ -13,28 +13,21 @@ export function ReplayDemo() {
   const first = new Map(s.frames[0]?.[1] ?? []);
   const used = new Set<number>();
   first.forEach((runs) => runs.forEach((r) => used.add(r[0])));
-  const css = [...used].map((i) => styleRule(i, s.styles[i])).join("");
+  const css = GLYPH_CSS + [...used].map((i) => styleRule(i, s.styles[i])).join("");
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: css }} />
       <ReplayTerminal cols={s.cols} rows={s.rows} fg={s.fg} bg={s.bg}>
-        {Array.from({ length: s.rows }, (_, y) => {
-          let col = 0;
-          return (
-            <div key={y}>
-              {(first.get(y) ?? []).map((r) => {
-                const at = col, w = runCells(r);
-                col += w;
-                return (
-                  <span key={at} className={`s${r[0]}`} style={{ left: `${at}ch`, width: `${w}ch` }}>
-                    {r[1]}
-                  </span>
-                );
-              })}
-            </div>
-          );
-        })}
+        {Array.from({ length: s.rows }, (_, y) => (
+          <div key={y}>
+            {segments(first.get(y) ?? [], s.styles).map((g) => (
+              <span key={g[0]} className={segClass(g)} style={{ left: `${g[0]}ch`, width: `${g[1]}ch` }}>
+                {g[2]}
+              </span>
+            ))}
+          </div>
+        ))}
       </ReplayTerminal>
     </>
   );

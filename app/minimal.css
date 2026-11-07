@@ -176,6 +176,7 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
    front; each row is contained, so one row changing re-lays out one row. */
 .replay-grid {
   --lh: 1.2;
+  --t: max(1px, .075em);
   font-family: var(--mono);
   font-size: min(13px, calc(100cqi / (var(--cols) * 0.6)));
   line-height: var(--lh);
