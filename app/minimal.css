@@ -161,8 +161,12 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
 .feats b { color: var(--text); font-weight: 600; }
 
 /* ---- home demo: real recorded session, pre-rendered row diffs ---- */
+/* Sections the reader hasn't scrolled to skip style/layout/paint entirely,
+   so a demo frame never walks the whole 5000px page. `auto` remembers each
+   section's real size once rendered, so scrollbar and anchors stay stable. */
+.home > section { content-visibility: auto; contain-intrinsic-size: auto 480px; }
 .home-demo { margin: 36px 0 0; }
-.replay { border: 1px solid var(--border); background: #100f0f; }
+.replay { border: 1px solid var(--border); background: #100f0f; contain: layout paint style; isolation: isolate; }
 .replay-bar {
   padding: 6px 12px; border-bottom: 1px solid #222;
   color: #6a6a6a; font-size: 12px; background: #100f0f;
