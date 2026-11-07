@@ -358,11 +358,6 @@ export function AgenttyTui() {
                   </span>
                   <span className="ttui-edge dim">│</span>
                 </div>
-                <div className="ttui-panel-line">
-                  <span className="ttui-edge dim">│</span>
-                  <span className="ttui-pad" />
-                  <span className="ttui-edge dim">│</span>
-                </div>
 
                 {/* events */}
                 {EVENTS.slice(0, visibleCount).map((ev, i) => {
