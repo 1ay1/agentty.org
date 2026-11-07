@@ -18,7 +18,24 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { spawn: ptySpawn } = createRequire(path.join(ROOT, "deploy/live/package.json"))("node-pty");
 
 const OUT = process.argv[2] || path.join(ROOT, "demo/session.json");
-const AGENTTY_BIN = process.env.AGENTTY_BIN || path.join(os.homedir(), ".local/bin/agentty");
+// The binary: AGENTTY_BIN, else the LATEST GitHub release (so the demo always
+// shows the current UI), downloaded once into the temp dir.
+async function latestRelease() {
+  const api = await fetch("https://api.github.com/repos/agentty-org/agentty/releases/latest");
+  if (!api.ok) throw new Error(`GitHub API ${api.status}`);
+  const rel = await api.json();
+  const asset = rel.assets.find((a) => a.name === "agentty-linux-x86_64");
+  if (!asset) throw new Error(`no linux-x86_64 asset in ${rel.tag_name}`);
+  const dest = path.join(os.tmpdir(), `agentty-${rel.tag_name}`);
+  if (!fs.existsSync(dest)) {
+    const bin = await fetch(asset.browser_download_url);
+    if (!bin.ok) throw new Error(`download ${bin.status}`);
+    fs.writeFileSync(dest, Buffer.from(await bin.arrayBuffer()), { mode: 0o755 });
+  }
+  console.log(`using agentty ${rel.tag_name} from GitHub releases`);
+  return dest;
+}
+const AGENTTY_BIN = process.env.AGENTTY_BIN || await latestRelease();
 const MODEL = "qwen3-coder:30b";
 const COLS = 96, ROWS = 32;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -61,6 +78,7 @@ def fetch_remote(user_id):
     return f"tok-{user_id}"
 `);
 W("tests/__init__.py", "");
+W(".gitignore", "__pycache__/\n");
 W("tests/test_handler.py", `import unittest
 
 from auth.handler import resolve
@@ -78,23 +96,72 @@ class ResolveTest(unittest.TestCase):
         self.assertEqual(remote.CALLS - before, 1)
 `);
 
-// ── the scripted model ──────────────────────────────────────────────────────
-// Each step: optional prose, then either a tool call or the final answer.
-// Steps advance by the number of tool results already in the conversation.
+// a real git repo, so git_diff / git_commit have history to work against
+const { execFileSync: git0 } = await import("node:child_process");
+const git = (...a) => git0("git", ["-C", work, ...a], { stdio: "ignore" });
+git("init", "-q", "-b", "main");
+git("config", "user.name", "dev");
+git("config", "user.email", "dev@example.com");
+git("add", "-A");
+git("commit", "-q", "-m", "initial import");
+
+// ── the scripted model ──────────────────────────────────────────────────────────────────────
+// One step per model turn (counted by assistant messages since the prompt):
+// optional prose, then a batch of tool calls (several = a parallel batch,
+// which agentty runs concurrently) or the final answer.
+const TODOS = (done) => ({ display_description: "Plan", todos: [
+  "Reproduce the failing test", "Find the token cache", "Make resolve() cache-first",
+  "Add a regression test", "Commit the fix",
+].map((content, i) => ({ content, status: i < done ? "completed" : i === done ? "in_progress" : "pending" })) });
+
+const TEST_CACHE = `import unittest
+
+from auth.token_cache import TokenCache
+
+
+class TokenCacheTest(unittest.TestCase):
+    def test_store_then_lookup(self):
+        cache = TokenCache()
+        cache.store(1, "tok-1")
+        self.assertEqual(cache.lookup(1), "tok-1")
+
+    def test_miss_returns_none(self):
+        self.assertIsNone(TokenCache().lookup(99))
+`;
+
 const STEPS = [
-  { say: "First, the failing test.",
-    tool: ["shell", { command: "python3 -m unittest -q", display_description: "Run the tests" }] },
-  { say: "Repeat lookups each make a network call. Let me find the cache.",
-    tool: ["grep", { pattern: "TokenCache" }] },
-  { tool: ["read", { path: "auth/handler.py" }] },
+  { say: "I'll plan this, then reproduce the failure.",
+    tools: [["todo", TODOS(0)]] },
+  { tools: [["test", { command: "python3 -m unittest" }]] },
+  { say: "Three lookups, three network calls. Mapping the project:",
+    tools: [
+      ["list_dir", { recursive: true, display_description: "Project layout" }],
+      ["grep", { pattern: "TokenCache" }],
+      ["find_definition", { symbol: "resolve" }],
+    ] },
+  { tools: [
+      ["read", { path: "auth/handler.py" }],
+      ["outline", { path: "auth/token_cache.py" }],
+    ] },
   { say: "`resolve` never consults the cache. I'll check it first and only fall back to `fetch_remote` on a miss.",
-    tool: ["edit", { path: "auth/handler.py", display_description: "Resolve through TokenCache", edits: [
+    tools: [["edit", { path: "auth/handler.py", display_description: "Resolve through TokenCache", edits: [
       { old_text: `from net.remote import fetch_remote\n`, new_text: `from auth.token_cache import TokenCache\nfrom net.remote import fetch_remote\n\n_cache = TokenCache()\n` },
       { old_text: `    return fetch_remote(user_id)\n`,
         new_text: `    token = _cache.lookup(user_id)\n    if token is None:\n        token = fetch_remote(user_id)\n        _cache.store(user_id, token)\n    return token\n` },
-    ] }] },
-  { tool: ["shell", { command: "python3 -m unittest -q", display_description: "Re-run the tests" }] },
-  { final: "Fixed. `resolve()` now checks `TokenCache` first and only calls `fetch_remote` on a miss, storing the result.\n\n- **auth/handler.py** — module-level cache, cache-first lookup\n- Both tests pass: three lookups of the same user now make **one** network call." },
+    ] }]] },
+  { say: "And a regression test for the cache itself.",
+    tools: [["write", { file_path: "tests/test_cache.py", content: TEST_CACHE, display_description: "Add TokenCache tests" }]] },
+  { tools: [
+      ["test", { command: "python3 -m unittest" }],
+      ["git_diff", { display_description: "Review the change" }],
+    ] },
+  { say: "All green. Committing, and noting the invariant for next time.",
+    tools: [
+      ["git_commit", { stage_all: true, message: "auth: resolve tokens through TokenCache" }],
+      ["todo", TODOS(5)],
+      ["remember", { text: "auth: resolve() must stay cache-first via auth/token_cache.TokenCache", tags: ["auth"] }],
+    ] },
+  { final: "Fixed and committed.\n\n- **auth/handler.py** — `resolve()` checks `TokenCache` first, calls `fetch_remote` only on a miss\n- **tests/test_cache.py** — new regression tests for the cache\n- 4/4 tests pass; three lookups of one user now make **one** network call" },
 ];
 
 function chunk(delta, finish = null) {
@@ -110,24 +177,31 @@ async function streamText(res, text, pace = 28) {
 }
 
 let callSeq = 0;
+let finished;                                   // resolves once the final answer has streamed
+const done = new Promise((r) => (finished = r));
 async function respond(res, messages) {
+  const lastUser = messages.map((m) => m.role).lastIndexOf("user");
+  const turn = messages.slice(lastUser + 1).filter((m) => m.role === "assistant").length;
+  const step = STEPS[Math.min(turn, STEPS.length - 1)];
   const toolResults = messages.filter((m) => m.role === "tool").length;
-  const step = STEPS[Math.min(toolResults, STEPS.length - 1)];
   await sleep(450); // time-to-first-token
   send(res, chunk({ role: "assistant", content: "" }));
   if (step.say) await streamText(res, step.say + "\n");
   if (step.final) {
     await streamText(res, step.final, 22);
     send(res, chunk({}, "stop"));
+    setTimeout(finished, 1500);
   } else {
-    const [name, args] = step.tool;
-    const id = `call_${++callSeq}`;
-    const json = JSON.stringify(args);
-    send(res, chunk({ tool_calls: [{ index: 0, id, type: "function", function: { name, arguments: "" } }] }));
-    // stream arguments so the card fills in live
-    for (let i = 0; i < json.length; i += 12) {
-      send(res, chunk({ tool_calls: [{ index: 0, function: { arguments: json.slice(i, i + 12) } }] }));
-      await sleep(14);
+    // a batch of calls, each with its own index; arguments stream in so the
+    // cards fill live
+    for (const [k, [name, args]] of step.tools.entries()) {
+      const id = `call_${++callSeq}`;
+      const json = JSON.stringify(args);
+      send(res, chunk({ tool_calls: [{ index: k, id, type: "function", function: { name, arguments: "" } }] }));
+      for (let i = 0; i < json.length; i += 24) {
+        send(res, chunk({ tool_calls: [{ index: k, function: { arguments: json.slice(i, i + 24) } }] }));
+        await sleep(10);
+      }
     }
     send(res, chunk({}, "tool_calls"));
   }
@@ -187,13 +261,13 @@ pty.onData((d) => { const now = Date.now(); frames.push([now - last, d]); last =
 
 await sleep(900);
 const startMs = Math.max(0, Date.now() - t0 - 250);  // replay opens on the settled screen
-const prompt = "test_handler is failing — resolve() should use the token cache";
+const prompt = "test_handler is failing — make resolve() use the token cache, add a test, and commit";
 // one keystroke per 30fps tick: agentty redraws on every key, so a steady
 // cadence gives the replay an even frame rate while typing
 for (const ch of prompt) { pty.write(ch); await sleep(1000 / 30); }
 await sleep(400);
 pty.write("\r");
-await sleep(Number(process.env.RUN_MS || 22000));
+await Promise.race([done, sleep(Number(process.env.RUN_MS || 60000))]);
 
 pty.kill();
 srv.close();
