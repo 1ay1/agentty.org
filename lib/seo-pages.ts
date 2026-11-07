@@ -15,6 +15,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { markdownToHtml } from "./markdown";
+import { applyTokens } from "./docs-tokens";
 
 export type SeoKind = "compare" | "alternative" | "guide";
 
@@ -57,7 +58,7 @@ function loadDir(kind: SeoKind): SeoPage[] {
     .filter((f) => f.endsWith(".md"))
     .map((file) => {
       const slug = file.replace(/\.md$/, "");
-      const raw = readFileSync(join(dir, file), "utf8");
+      const raw = applyTokens(readFileSync(join(dir, file), "utf8"));
       const { data, body } = parseFrontmatter(raw);
       const bodyNoTitle = body.replace(/^\s*#\s+.*(?:\n|$)/, "");
       return {

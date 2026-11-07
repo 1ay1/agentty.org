@@ -7,6 +7,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { markdownToHtml } from "./markdown";
+import { applyTokens } from "./docs-tokens";
 
 export type ContentPage = {
   slug: string;
@@ -41,7 +42,7 @@ export function getContentPages(): ContentPage[] {
   cache = readdirSync(DIR)
     .filter((f) => f.endsWith(".md"))
     .map((file) => {
-      const raw = readFileSync(join(DIR, file), "utf8");
+      const raw = applyTokens(readFileSync(join(DIR, file), "utf8"));
       const { data, body } = parseFrontmatter(raw);
       const slug = data.slug || file.replace(/\.md$/, "");
       // strip a leading H1 if present; the route renders <h1> from the title

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { markdownToHtml } from "@/lib/markdown";
+import { applyTokens } from "@/lib/docs-tokens";
 import { site } from "@/lib/site";
 
 // The changelog is rendered straight from the agentty repo's CHANGELOG.md,
@@ -38,7 +39,7 @@ function loadChangelog(): string {
 }
 
 export default function ChangelogPage() {
-  const html = markdownToHtml(loadChangelog());
+  const html = markdownToHtml(applyTokens(loadChangelog()));
   return (
     <div className="page changelog-page">
       <h1>Changelog</h1>

@@ -16,3 +16,11 @@ export const docsTokens: Record<string, string> = {
   github: site.github,
   releasesLatest: site.releasesLatest,
 };
+
+// Substitute {{token}} placeholders with live release/stats values. Unknown
+// tokens are left as-is.
+export function applyTokens(text: string): string {
+  return text.replace(/\{\{(\w+)\}\}/g, (whole, key: string) =>
+    key in docsTokens ? docsTokens[key] : whole,
+  );
+}

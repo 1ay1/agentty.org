@@ -6,6 +6,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { markdownToHtml } from "./markdown";
+import { applyTokens } from "./docs-tokens";
 
 const BLOG_DIR = join(process.cwd(), "content", "blog");
 
@@ -79,7 +80,7 @@ function parseFaq(body: string): FaqItem[] {
 
 function loadPost(filename: string): Post {
   const slug = filename.replace(/\.md$/, "");
-  const raw = readFileSync(join(BLOG_DIR, filename), "utf8");
+  const raw = applyTokens(readFileSync(join(BLOG_DIR, filename), "utf8"));
   const { data, body } = parseFrontmatter(raw);
   // The page header renders the title from frontmatter, so drop a leading H1 in
   // the body to avoid showing the headline twice.

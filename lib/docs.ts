@@ -6,7 +6,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { markdownToHtml } from "./markdown";
-import { docsTokens } from "./docs-tokens";
+import { applyTokens } from "./docs-tokens";
 
 const DOCS_DIR = join(process.cwd(), "content", "docs");
 
@@ -50,12 +50,6 @@ function parseFrontmatter(raw: string): { data: Record<string, string>; body: st
   return { data, body: m[2] };
 }
 
-// Substitute {{token}} placeholders with live release/stats values.
-function applyTokens(md: string): string {
-  return md.replace(/\{\{(\w+)\}\}/g, (whole, key: string) =>
-    key in docsTokens ? docsTokens[key as keyof typeof docsTokens] : whole,
-  );
-}
 
 // Extract H2 headings (with their slugified ids) for the on-page TOC, matching
 // the id scheme markdownToHtml uses.
@@ -77,11 +71,11 @@ function extractHeadings(md: string): { id: string; text: string }[] {
 }
 
 function loadDoc(filename: string): Doc {
-  const raw = readFileSync(join(DOCS_DIR, filename), "utf8");
+  const raw = applyTokens(readFileSync(join(DOCS_DIR, filename), "utf8"));
   const { data, body } = parseFrontmatter(raw);
   const slug = data.slug ?? filename.replace(/\.md$/, "");
   const isIndex = filename === "index.md" || slug === "";
-  const withTokens = applyTokens(body);
+  const withTokens = body;
   return {
     slug: isIndex ? "" : slug,
     href: isIndex ? "/docs" : `/docs/${slug}`,
