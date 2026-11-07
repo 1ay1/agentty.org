@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // NEXT_DIST_DIR lets a dev server live beside the autodeploy's build
+  // (which wipes .next) without either clobbering the other.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
