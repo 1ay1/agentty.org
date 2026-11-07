@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
-import { stats } from "@/lib/stats";
 import { repo, starLabel } from "@/lib/repo";
 import { CopyRow } from "@/components/CopyRow";
 import { ReplayDemo } from "@/components/ReplayDemo";
@@ -12,12 +11,7 @@ export default function Home() {
       <header className="home-head">
         <div className="home-logo"><AgenttyLogo /></div>
         <h1>Blazing-fast coding agent in your terminal.</h1>
-        <p>
-          A drop-in <code>claude-code</code> alternative in C++26: one {stats.sizeMB} static
-          binary, {stats.coldStart} cold start, sandboxed by default. Use your Claude Pro/Max,
-          ChatGPT, Copilot or Kimi sign-in &mdash; or DeepSeek, Gemini, Grok, OpenAI, Groq,
-          or a local Ollama model.
-        </p>
+        <p>One small binary, any model.</p>
       </header>
 
       <figure className="home-demo">
