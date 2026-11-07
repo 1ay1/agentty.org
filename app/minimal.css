@@ -172,10 +172,5 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
 .home-demo .ttui-bar { background: #0a0a0a; border-bottom: 1px solid #222; padding: 7px 12px; }
 .home-demo .ttui-title { margin: 0; color: #6a6a6a; font-size: 12px; }
 .home-demo .ttui-title::before { content: "$ "; color: #444; }
-/* terminal row grid: a real TUI has no leading between rows — tighten the
-   line-height so box-drawing borders connect and rows don't double-space */
-.home-demo .ttui-body { height: 400px; line-height: 1.3; padding: 14px 16px 12px; }
-.home-demo .ttui-panel, .home-demo .ttui-composer, .home-demo .ttui-status { line-height: 1.3; }
-.home-demo .ttui-blank { height: 0.5em; }
-.home-demo .ttui-chrome { padding-top: 8px; }
+.home-demo .ttui-body { height: 460px; }
 .home-demo figcaption { margin-top: 8px; color: var(--text-faint); font-size: 12px; }
