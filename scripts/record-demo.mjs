@@ -111,7 +111,7 @@ git("commit", "-q", "-m", "initial import");
 // which agentty runs concurrently) or the final answer.
 const TODOS = (done) => ({ display_description: "Plan", todos: [
   "Reproduce the failing test", "Find the token cache", "Make resolve() cache-first",
-  "Add a regression test", "Commit the fix",
+  "Add a regression test", "Review the change",
 ].map((content, i) => ({ content, status: i < done ? "completed" : i === done ? "in_progress" : "pending" })) });
 
 const TEST_CACHE = `import unittest
@@ -155,13 +155,13 @@ const STEPS = [
       ["test", { command: "python3 -m unittest" }],
       ["git_diff", { display_description: "Review the change" }],
     ] },
-  { say: "All green. Committing, and noting the invariant for next time.",
+  { say: "All green. Checking what changed, and noting the invariant for next time.",
     tools: [
-      ["git_commit", { stage_all: true, message: "auth: resolve tokens through TokenCache" }],
+      ["git_status", { display_description: "Working tree" }],
       ["todo", TODOS(5)],
       ["remember", { text: "auth: resolve() must stay cache-first via auth/token_cache.TokenCache", tags: ["auth"] }],
     ] },
-  { final: "Fixed and committed.\n\n- **auth/handler.py** — `resolve()` checks `TokenCache` first, calls `fetch_remote` only on a miss\n- **tests/test_cache.py** — new regression tests for the cache\n- 4/4 tests pass; three lookups of one user now make **one** network call" },
+  { final: "Fixed — ready to commit.\n\n- **auth/handler.py** — `resolve()` checks `TokenCache` first, calls `fetch_remote` only on a miss\n- **tests/test_cache.py** — new regression tests for the cache\n- 4/4 tests pass; three lookups of one user now make **one** network call" },
 ];
 
 function chunk(delta, finish = null) {
@@ -261,7 +261,7 @@ pty.onData((d) => { const now = Date.now(); frames.push([now - last, d]); last =
 
 await sleep(900);
 const startMs = Math.max(0, Date.now() - t0 - 250);  // replay opens on the settled screen
-const prompt = "test_handler is failing — make resolve() use the token cache, add a test, and commit";
+const prompt = "test_handler is failing — make resolve() use the token cache and add a test";
 // one keystroke per 30fps tick: agentty redraws on every key, so a steady
 // cadence gives the replay an even frame rate while typing
 for (const ch of prompt) { pty.write(ch); await sleep(1000 / 30); }
