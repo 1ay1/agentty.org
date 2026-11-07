@@ -168,7 +168,8 @@ await new Promise((r) => srv.listen(11434, "::", r)); // dual-stack: localhost �
 
 // ── run the real binary in a PTY and record ─────────────────────────────────
 const frames = [];
-let last = Date.now();
+const t0 = Date.now();
+let last = t0;
 const env = { ...process.env, HOME: "/home/dev", USER: "dev", TERM: "xterm-256color", COLORTERM: "truecolor", AGENTTY_PROFILE: "write" };
 for (const k of ["NO_COLOR", "PAGER", "GIT_TERMINAL_PROMPT", "CI"]) delete env[k];
 // present the project at a neutral /home/dev/app so no host paths leak into the recording
@@ -184,10 +185,13 @@ const pty = ptySpawn("bwrap", [
 });
 pty.onData((d) => { const now = Date.now(); frames.push([now - last, d]); last = now; });
 
-await sleep(1800);
+await sleep(900);
+const startMs = Math.max(0, Date.now() - t0 - 250);  // replay opens on the settled screen
 const prompt = "test_handler is failing — resolve() should use the token cache";
-for (const ch of prompt) { pty.write(ch); await sleep(38 + Math.random() * 45); }
-await sleep(500);
+// one keystroke per 30fps tick: agentty redraws on every key, so a steady
+// cadence gives the replay an even frame rate while typing
+for (const ch of prompt) { pty.write(ch); await sleep(1000 / 30); }
+await sleep(400);
 pty.write("\r");
 await sleep(Number(process.env.RUN_MS || 22000));
 
@@ -205,7 +209,7 @@ const all = frames.map((f) => f[1]).join("");
 const leaks = all.includes(os.homedir()) || all.includes(SCRATCH);
 if (!leaks) {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify({ cols: COLS, rows: ROWS, frames: compact }));
+  fs.writeFileSync(OUT, JSON.stringify({ cols: COLS, rows: ROWS, startMs, frames: compact }));
 }
 console.log(`frames=${compact.length} bytes=${Buffer.byteLength(all)} host-path-leak=${leaks}${leaks ? " (NOT written)" : ""}`);
 console.log("handler.py after:\n" + fs.readFileSync(path.join(work, "auth/handler.py"), "utf8"));
