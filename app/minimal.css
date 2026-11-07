@@ -168,8 +168,8 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
    1.23 line-height makes rails touch; the hard row height stops fallback
    glyphs (✔, braille spinner) from inflating their rows. Stock CSS otherwise. */
 .home-demo .ttui-body, .home-demo .ttui-panel,
-.home-demo .ttui-composer, .home-demo .ttui-status { line-height: 1.23; }
+.home-demo .ttui-composer, .home-demo .ttui-status { line-height: 1.2; }
 .home-demo .ttui-panel-line, .home-demo .ttui-panel-top, .home-demo .ttui-panel-bot,
 .home-demo .ttui-comp-top, .home-demo .ttui-comp-mid, .home-demo .ttui-comp-bot,
-.home-demo .ttui-head { height: 1.23em; }
+.home-demo .ttui-head { height: 1.2em; }
 .home-demo figcaption { margin-top: 10px; color: var(--text-faint); font-size: 12px; }
