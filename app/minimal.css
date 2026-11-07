@@ -160,19 +160,21 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
 .feats li::before { content: "-"; position: absolute; left: 0; color: var(--text-faint); }
 .feats b { color: var(--text); font-weight: 600; }
 
-/* ---- home demo: stock old-site TUI (agentty-tui.css untouched) — only
-   neutralise the hero-layout margin it inherits from .hero-tui ---- */
+/* ---- home demo: real recorded session replayed in xterm.js ---- */
 .home-demo { margin: 36px 0 0; }
-.home-demo .ttui { margin: 0; }
-/* near-zero gap between rows — but ONLY where box-drawing glyphs must tile
-   (panel, composer box, turn headers, status). Prose keeps the stock 1.65. */
-.home-demo .ttui-panel, .home-demo .ttui-head,
-.home-demo .ttui-composer, .home-demo .ttui-status { line-height: 1.2; }
-/* rail rows overlap harder (ink 1.23em vs 1.1em rows) so baseline jitter from
-   fallback ✓/spinner glyphs can never reopen a seam */
-.home-demo .ttui-panel-line, .home-demo .ttui-panel-top, .home-demo .ttui-panel-bot,
-.home-demo .ttui-comp-top, .home-demo .ttui-comp-mid, .home-demo .ttui-comp-bot {
-  line-height: 1.1; height: 1.1em;
+.replay { border: 1px solid var(--border); background: #0a0a0a; }
+.replay-bar {
+  padding: 6px 12px; border-bottom: 1px solid #222;
+  color: #6a6a6a; font-size: 12px; background: #0a0a0a;
 }
-.home-demo .ttui-head { height: 1.2em; }
+.replay-screen { position: relative; padding: 12px; min-height: 420px; overflow-x: auto; }
+.replay-screen.is-ready { min-height: 0; }
+@media (max-width: 720px) { .replay-screen { padding: 8px; min-height: 260px; } }
+.replay-screen .xterm { padding: 0; }
+.replay-screen .xterm-viewport { background: #0a0a0a !important; overflow: hidden !important; }
+.replay-screen .xterm-helper-textarea { display: none; }
+.replay-placeholder {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: #555; font-size: 12px;
+}
 .home-demo figcaption { margin-top: 10px; color: var(--text-faint); font-size: 12px; }

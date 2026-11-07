@@ -3,7 +3,7 @@ import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
 import { repo, starLabel } from "@/lib/repo";
 import { CopyRow } from "@/components/CopyRow";
-import { AgenttyTui } from "@/components/AgenttyTui";
+import { ReplayTerminal } from "@/components/ReplayTerminal";
 
 export default function Home() {
   return (
@@ -20,9 +20,9 @@ export default function Home() {
         </p>
       </header>
 
-      <figure className="home-demo hero-tui">
-        <AgenttyTui />
-        <figcaption>a session, replayed in the browser &mdash; same glyphs and palette as the real TUI</figcaption>
+      <figure className="home-demo">
+        <ReplayTerminal />
+        <figcaption>a real agentty session, replayed byte-for-byte from the terminal &mdash; fixing a failing test</figcaption>
       </figure>
 
       <section>
