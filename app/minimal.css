@@ -159,3 +159,18 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
 .feats li { padding-left: 18px; position: relative; margin-bottom: 9px; color: var(--text-dim); }
 .feats li::before { content: "-"; position: absolute; left: 0; color: var(--text-faint); }
 .feats b { color: var(--text); font-weight: 600; }
+
+/* ---- home demo: the animated TUI, as a plain terminal window ---- */
+.home-demo { margin: 36px 0 0; }
+.home-demo .ttui-stage { perspective: none; }
+.home-demo .ttui {
+  margin: 0 !important; max-width: 100%; width: 100%;
+  z-index: auto; transform: none !important; will-change: auto;
+  background: #0a0a0a; border: 1px solid var(--border);
+}
+.home-demo .ttui::before, .home-demo .ttui-glare, .home-demo .ttui-dot { display: none !important; }
+.home-demo .ttui-bar { background: #0a0a0a; border-bottom: 1px solid #222; padding: 7px 12px; }
+.home-demo .ttui-title { margin: 0; color: #6a6a6a; font-size: 12px; }
+.home-demo .ttui-title::before { content: "$ "; color: #444; }
+.home-demo .ttui-body { height: 460px; }
+.home-demo figcaption { margin-top: 8px; color: var(--text-faint); font-size: 12px; }

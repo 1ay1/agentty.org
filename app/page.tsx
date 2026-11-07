@@ -3,6 +3,7 @@ import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
 import { repo, starLabel } from "@/lib/repo";
 import { CopyRow } from "@/components/CopyRow";
+import { AgenttyTui } from "@/components/AgenttyTui";
 
 export default function Home() {
   return (
@@ -18,6 +19,11 @@ export default function Home() {
           no <code>npm install</code>.
         </p>
       </header>
+
+      <figure className="home-demo hero-tui">
+        <AgenttyTui />
+        <figcaption>a session, replayed in the browser &mdash; same glyphs and palette as the real TUI</figcaption>
+      </figure>
 
       <section>
         <h2>Install</h2>
