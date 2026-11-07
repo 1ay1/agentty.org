@@ -181,10 +181,14 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
 .replay-grid {
   --lh: 1.2;
   --t: max(1px, .075em);
+  /* the cell: width --cw, height --rh = 2 × --cw (= 1.2em, since JetBrains
+     Mono's advance is exactly 0.6em). Fallback: fluid, fractional px. */
+  --cw: min(7.8px, calc(100cqi / var(--cols)));
+  --rh: calc(var(--cw) * 2);
   font-family: var(--mono);
-  font-size: min(13px, calc(100cqi / (var(--cols) * 0.6)));
-  line-height: var(--lh);
-  height: calc(var(--rows) * var(--lh) * 1em);
+  font-size: calc(var(--cw) / .6);
+  line-height: var(--rh);
+  height: calc(var(--rows) * var(--rh));
   white-space: pre;
   letter-spacing: 0;
   font-kerning: none;
@@ -197,7 +201,17 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
 /* rows: fixed-size and fully contained (layout + paint), so a changed row
    re-lays-out and repaints only itself. Glyph ink stays within the 1.2em
    row (JetBrains Mono descends 0.3em; the baseline leaves 0.24em). */
-.replay-grid > div { position: relative; height: calc(var(--lh) * 1em); contain: strict; }
+.replay-grid > div { position: relative; height: var(--rh); contain: strict; }
+/* snap the cell to whole device pixels, so every row and column edge is
+   pixel-aligned: no anti-aliased seams between rows or backgrounds */
+@supports (width: round(down, 1px, 1px)) {
+  .replay-grid {
+    --step: 1px;
+    --cw: min(8px, round(down, calc(100cqi / var(--cols)), var(--step)));
+    --t: max(var(--step), round(calc(var(--cw) * .125), var(--step)));
+  }
+  @media (resolution >= 2dppx) { .replay-grid { --step: .5px; } }
+}
 .replay-grid span { position: absolute; top: 0; height: 100%; overflow: visible; }
 .home-demo figcaption { margin-top: 10px; color: var(--text-faint); font-size: 12px; }
 .home h3 { font-size: 14px; margin: 26px 0 10px; color: var(--text); }

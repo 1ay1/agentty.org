@@ -64,7 +64,7 @@ function glyphRules(): string {
     css += box(hex, "before", `inset:0;opacity:${a}`);
   for (const [hex, n] of Object.entries(glyphs.dash))
     css += `.replay-grid .g${hex}::before{content:'';left:0;right:0;top:${mid(T)};height:${T};` +
-      `background:repeating-linear-gradient(90deg,currentColor 0 ${60 / n}%,transparent 0 ${100 / n}%) 0 0/1ch 100%}`;
+      `background:repeating-linear-gradient(90deg,currentColor 0 ${60 / n}%,transparent 0 ${100 / n}%) 0 0/var(--cw) 100%}`;
   return css;
 }
 export const GLYPH_CSS = glyphRules();
