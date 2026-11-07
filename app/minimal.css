@@ -151,7 +151,8 @@ body:has(.home) .nav-links a:first-child { padding-left: 0; }
 .home-facts li { margin: 0 0 4px; }
 .home-facts li::before { content: "- "; color: var(--text-faint); }
 .home-links { margin-top: 28px; color: var(--text-faint); }
-.home h1 { font-size: 26px; margin: 0 0 4px; }
+/* one line at any width: 43 chars × 0.6em advance ≈ 26em of content box */
+.home h1 { white-space: nowrap; font-size: min(24px, calc((min(760px, 100vw) - var(--gutter) - 24px) / 26.5)); margin: 0 0 6px; }
 
 .home h2 { font-size: 16px; margin: 0 0 14px; }
 
