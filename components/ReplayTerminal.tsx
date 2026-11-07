@@ -80,7 +80,22 @@ export function ReplayTerminal() {
     const fontFor = (flags: number) =>
       `${flags & 2 ? "italic " : ""}${flags & 1 ? 700 : 400} ${fontPx}px ${family}`;
     let curFont = "";
-    const setFont = (f: string) => { if (f !== curFont) { ctx.font = f; curFont = f; } };
+    const advCache = new Map<string, number>();
+    const canSpace = "letterSpacing" in ctx;
+    // set the font AND make its advance exactly one cell, so a whole run drawn
+    // in one fillText lands every glyph on the grid (no drift between runs)
+    const setFont = (f: string) => {
+      if (f === curFont) return;
+      ctx.font = f; curFont = f;
+      let adv = advCache.get(f);
+      if (adv === undefined) {
+        if (canSpace) (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "0px";
+        adv = ctx.measureText("0000000000").width / 10;
+        advCache.set(f, adv);
+      }
+      if (canSpace) (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${cw - adv}px`;
+    };
+    const perGlyph = () => !canSpace;    // fallback: place each glyph itself
     const snap = (v: number) => Math.round(v * dpr) / dpr;
 
     const measure = () => {
@@ -95,6 +110,7 @@ export function ReplayTerminal() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.textBaseline = "alphabetic";
       curFont = "";
+      advCache.clear();
       setFont(fontFor(0));
       const m = ctx.measureText("M");
       const asc = m.fontBoundingBoxAscent || fontPx * 0.8;
@@ -195,7 +211,11 @@ export function ReplayTerminal() {
         setFont(fontFor(flags));
         let ascii = "", asciiCol = col;
         const flush = () => {
-          if (ascii.trim()) { ctx.fillStyle = fg; ctx.fillText(ascii, X(asciiCol), y0 + base); }
+          if (ascii.trim()) {
+            ctx.fillStyle = fg;
+            if (perGlyph()) for (let q = 0; q < ascii.length; q++) ctx.fillText(ascii[q], X(asciiCol + q), y0 + base);
+            else ctx.fillText(ascii, X(asciiCol), y0 + base);
+          }
           ascii = "";
         };
         for (let k = 0; k < cps.length; k++) {
@@ -217,6 +237,7 @@ export function ReplayTerminal() {
         col += span;
       }
       ctx.restore();
+      curFont = "";                       // restore() reset font + letterSpacing
     };
 
     const flushDirty = () => { for (const y of dirty) paintRow(y); dirty.clear(); };
