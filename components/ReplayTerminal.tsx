@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import "@xterm/xterm/css/xterm.css";
 
 /**
  * ReplayTerminal — plays back a REAL agentty session: the exact PTY bytes the
@@ -8,39 +9,15 @@ import { useEffect, useRef, useState } from "react";
  * fed into xterm.js with their original timing, on a loop.
  *
  * Nothing here re-draws agentty — every glyph, colour and layout comes from the
- * binary's own output. xterm is loaded from the CDN only once the player
- * scrolls into view, and playback pauses while it's off-screen.
+ * binary's own output. xterm is bundled (the site CSP allows only 'self'
+ * scripts) and lazy-imported once the player scrolls into view; playback
+ * pauses while it's off-screen.
  */
 
-declare global {
-  interface Window { Terminal?: any }
-}
-
-const XTERM_JS = "https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js";
-const XTERM_CSS = "https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css";
 const SESSION = "/demo/session.json";
 const HOLD_MS = 4500; // linger on the finished session before looping
 
 type Recording = { cols: number; rows: number; frames: [number, string][] };
-
-function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      if (window.Terminal) return resolve();
-    }
-    const s = document.createElement("script");
-    s.src = src; s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("load failed: " + src));
-    document.head.appendChild(s);
-  });
-}
-function loadCss(href: string) {
-  if (document.querySelector(`link[href="${href}"]`)) return;
-  const l = document.createElement("link");
-  l.rel = "stylesheet"; l.href = href;
-  document.head.appendChild(l);
-}
 
 // JetBrains Mono's advance width is 0.6em; size the font so `cols` cells fit.
 function fontSizeFor(width: number, cols: number) {
@@ -78,16 +55,15 @@ export function ReplayTerminal() {
     const start = async () => {
       started = true;
       try {
-        loadCss(XTERM_CSS);
-        const [r] = await Promise.all([
+        const [r, xterm] = await Promise.all([
           fetch(SESSION).then((x) => { if (!x.ok) throw new Error("session " + x.status); return x.json(); }),
-          loadScript(XTERM_JS),
+          import("@xterm/xterm"),
           document.fonts?.ready,
         ]);
-        if (disposed || !window.Terminal) return;
+        if (disposed) return;
         rec = r as Recording;
         const mono = getComputedStyle(document.body).getPropertyValue("--font-mono").trim();
-        term = new window.Terminal({
+        term = new xterm.Terminal({
           cols: rec.cols, rows: rec.rows,
           fontFamily: `${mono ? mono + ", " : ""}"JetBrains Mono", ui-monospace, monospace`,
           fontSize: fontSizeFor(box.clientWidth - 24, rec.cols),
