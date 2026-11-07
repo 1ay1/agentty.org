@@ -108,6 +108,9 @@ git("commit", "-q", "-m", "initial import");
 // agentty's own settings (what the Appearance → Scheme picker writes): the
 // demo renders in the Flexoki Dark theme.
 const THEME = process.env.DEMO_THEME || "Flexoki Dark";
+// the terminal's own default colours for that scheme: agentty asks for them
+// (OSC 10/11) and the replay paints its background/foreground with them
+const TERM_COLORS = { fg: "#cecdc3", bg: "#100f0f" };
 fs.mkdirSync(path.join(HOME, ".agentty"), { recursive: true });
 fs.writeFileSync(path.join(HOME, ".agentty/settings.json"), JSON.stringify({ ui: { theme: THEME } }, null, 2));
 
@@ -263,7 +266,13 @@ const pty = ptySpawn("bwrap", [
 ], {
   name: "xterm-256color", cols: COLS, rows: ROWS, cwd: work, env,
 });
-pty.onData((d) => { const now = Date.now(); frames.push([now - last, d]); last = now; });
+const osc = (hex) => `rgb:${hex.slice(1, 3).repeat(2)}/${hex.slice(3, 5).repeat(2)}/${hex.slice(5, 7).repeat(2)}`;
+const answerQueries = (p, d) => {
+  // like a real terminal configured with the scheme: report default fg/bg
+  if (d.includes("\x1b]10;?")) p.write(`\x1b]10;${osc(TERM_COLORS.fg)}\x1b\\`);
+  if (d.includes("\x1b]11;?")) p.write(`\x1b]11;${osc(TERM_COLORS.bg)}\x1b\\`);
+};
+pty.onData((d) => { answerQueries(pty, d); const now = Date.now(); frames.push([now - last, d]); last = now; });
 
 await sleep(900);
 const startMs = Math.max(0, Date.now() - t0 - 250);  // replay opens on the settled screen
@@ -289,7 +298,7 @@ const all = frames.map((f) => f[1]).join("");
 const leaks = all.includes(os.homedir()) || all.includes(SCRATCH);
 if (!leaks) {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify({ cols: COLS, rows: ROWS, startMs, frames: compact }));
+  fs.writeFileSync(OUT, JSON.stringify({ cols: COLS, rows: ROWS, startMs, theme: { name: THEME, ...TERM_COLORS }, frames: compact }));
 }
 console.log(`frames=${compact.length} bytes=${Buffer.byteLength(all)} host-path-leak=${leaks}${leaks ? " (NOT written)" : ""}`);
 console.log("handler.py after:\n" + fs.readFileSync(path.join(work, "auth/handler.py"), "utf8"));

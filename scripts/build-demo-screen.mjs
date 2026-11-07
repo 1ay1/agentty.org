@@ -26,7 +26,7 @@ const IN = process.argv[2] || path.join(ROOT, "demo/session.json");
 const OUT = process.argv[3] || path.join(ROOT, "lib/demo-screen.json");
 const FPS = 30;
 const FRAME_MS = 1000 / FPS;   // resample to an exact 30fps grid
-const FG = "#d8d8d8", BG = "#0a0a0a";
+let FG = "#d8d8d8", BG = "#0a0a0a";   // overridden by the recording's terminal theme
 
 // xterm.js's default 16-colour theme + the standard 256-colour cube/ramp, so
 // the result matches what xterm itself would paint.
@@ -68,6 +68,7 @@ function cellStyle(c) {
 }
 
 const rec = JSON.parse(fs.readFileSync(IN, "utf8"));
+if (rec.theme) { FG = rec.theme.fg; BG = rec.theme.bg; }
 const term = new Terminal({ cols: rec.cols, rows: rec.rows, allowProposedApi: true, scrollback: 0 });
 const write = (s) => new Promise((r) => term.write(s, r));
 
@@ -132,6 +133,6 @@ for (let tick = tick0; tick * FRAME_MS <= end + FRAME_MS; tick++) {
 }
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify({ fps: FPS, cols: rec.cols, rows: rec.rows, styles, frames }));
+fs.writeFileSync(OUT, JSON.stringify({ fps: FPS, cols: rec.cols, rows: rec.rows, fg: FG, bg: BG, styles, frames }));
 const total = Math.round(frames.reduce((a, f) => a + f[0], 0) * FRAME_MS);
 console.log(`frames ${rec.frames.length} -> ${frames.length} @${FPS}fps, styles ${styles.length}, ${total} ms, ${fs.statSync(OUT).size} bytes -> ${path.relative(ROOT, OUT)}`);

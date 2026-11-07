@@ -22,10 +22,10 @@ import { useEffect, useRef } from "react";
 type Run = [number, string] | [number, string, number];
 type Style = [string | null, string | null, number];
 type Frame = [number, [number, Run[]][]];
-type Screen = { fps: number; cols: number; rows: number; styles: Style[]; frames: Frame[] };
+type Screen = { fps: number; cols: number; rows: number; fg?: string; bg?: string; styles: Style[]; frames: Frame[] };
 
-const FG = "#d8d8d8";
-const BG = "#0a0a0a";
+let FG = "#cecdc3";           // terminal defaults; replaced by the recording's
+let BG = "#100f0f";
 const HOLD_MS = 4500;          // linger on the finished session before looping
 
 // ── box drawing: [up, right, down, left] weight (1 light, 2 heavy) ──────────
@@ -281,6 +281,8 @@ export function ReplayTerminal() {
       const mod = await import("@/lib/demo-screen.json");
       if (disposed) return;
       data = (mod.default ?? mod) as unknown as Screen;
+      if (data.fg) FG = data.fg;
+      if (data.bg) BG = data.bg;
       let acc = 0;
       due = data.frames.map((f, n) => (n === 0 ? 0 : (acc += f[0])));
 
