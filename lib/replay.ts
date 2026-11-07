@@ -26,7 +26,3 @@ export function styleRule(i: number, [fg, bg, f]: Style): string {
 // terminal cells a run occupies
 export const runCells = (r: Run) => (r.length === 3 ? r[2] : Array.from(r[1]).length);
 
-// ASCII tiles exactly in the mono font; anything else (box drawing, ✓, braille,
-// wide glyphs — often from fallback fonts) is pinned to its cell width so the
-// grid can never drift.
-export const pinned = (r: Run) => r.length === 3 || /[^\x20-\x7e]/.test(r[1]);

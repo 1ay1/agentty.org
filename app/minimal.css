@@ -188,8 +188,8 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
   overflow: hidden;
   contain: size layout style;
 }
-.replay-grid > div { height: calc(var(--lh) * 1em); contain: size layout style; }
-.replay-grid span { display: inline-block; height: 100%; vertical-align: top; }
+.replay-grid > div { position: relative; height: calc(var(--lh) * 1em); contain: size layout style; }
+.replay-grid span { position: absolute; top: 0; height: 100%; overflow: visible; }
 .home-demo figcaption { margin-top: 10px; color: var(--text-faint); font-size: 12px; }
 .home h3 { font-size: 14px; margin: 26px 0 10px; color: var(--text); }
 .home h3::before { content: "### "; color: var(--text-faint); }

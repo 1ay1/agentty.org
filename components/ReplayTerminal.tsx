@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
-import { pinned, runCells, styleRule, type Frame, type Run, type Screen } from "@/lib/replay";
+import { runCells, styleRule, type Frame, type Run, type Screen } from "@/lib/replay";
 
 /**
  * ReplayTerminal — plays a REAL recorded agentty session as plain DOM.
@@ -24,7 +24,7 @@ import { pinned, runCells, styleRule, type Frame, type Run, type Screen } from "
 
 const HOLD_MS = 4500;          // linger on the finished session before looping
 
-type Cell = { el: HTMLSpanElement; text: Text; s: number; t: string; w: string };
+type Cell = { el: HTMLSpanElement; text: Text; s: number; t: string; w: number };
 
 export function ReplayTerminal({
   cols, rows, fg, bg, children,
@@ -38,7 +38,7 @@ export function ReplayTerminal({
 
     let data: Screen | null = null;
     let rowEls: HTMLDivElement[] = [];
-    let cells: Cell[][] = [];
+    let cells: Map<number, Cell>[] = [];
     const dirty = new Map<number, Run[]>();
     let disposed = false, loading = false, onScreen = false, started = false;
     let raf = 0, i = 0, t0 = 0, pausedAt = 0, holdUntil = 0;
@@ -46,25 +46,33 @@ export function ReplayTerminal({
     let sheet: CSSStyleSheet | null = null, styleEl: HTMLStyleElement | null = null;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // ── in-place row reconciliation ──────────────────────────────────────
+    // ── in-place row reconciliation ───────────────────────────────────────
+    // Every span is absolutely placed at its start column and keyed by it, so
+    // an element NEVER moves: a run that starts elsewhere is a new element.
+    // Only text/class/width change in place — zero layout shift, and no
+    // inline-flow layout at all.
     const paint = (y: number, runs: Run[]) => {
-      const row = rowEls[y], pool = cells[y];
-      for (let k = 0; k < runs.length; k++) {
-        const r = runs[k];
-        let c = pool[k];
+      const row = rowEls[y], pool = cells[y], live = new Set<number>();
+      let col = 0;
+      for (const r of runs) {
+        const w = runCells(r);
+        let c = pool.get(col);
         if (!c) {
           const el = document.createElement("span");
           const text = document.createTextNode("");
           el.append(text);
+          el.style.left = col + "ch";
           row.append(el);
-          c = pool[k] = { el, text, s: -1, t: "", w: "" };
+          c = { el, text, s: -1, t: "", w: -1 };
+          pool.set(col, c);
         }
         if (c.s !== r[0]) { c.el.className = "s" + r[0]; c.s = r[0]; }
         if (c.t !== r[1]) { c.text.data = r[1]; c.t = r[1]; }
-        const w = pinned(r) ? runCells(r) + "ch" : "";
-        if (c.w !== w) { c.el.style.width = w; c.w = w; }
+        if (c.w !== w) { c.el.style.width = w + "ch"; c.w = w; }
+        live.add(col);
+        col += w;
       }
-      while (pool.length > runs.length) pool.pop()!.el.remove();
+      for (const [k, c] of pool) if (!live.has(k)) { c.el.remove(); pool.delete(k); }
     };
     const flush = () => { dirty.forEach((runs, y) => paint(y, runs)); dirty.clear(); };
     const apply = (f: Frame) => { for (const [y, runs] of f[1]) dirty.set(y, runs); };
@@ -133,7 +141,7 @@ export function ReplayTerminal({
       // built off-document, swapped in one go — identical pixels, no flash
       const frag = document.createDocumentFragment();
       rowEls = Array.from({ length: data.rows }, () => frag.appendChild(document.createElement("div")));
-      cells = rowEls.map(() => []);
+      cells = rowEls.map(() => new Map());
       if (reduce) { for (const f of data.frames) apply(f); }
       else { openingScreen(); i = 1; }
       flush();

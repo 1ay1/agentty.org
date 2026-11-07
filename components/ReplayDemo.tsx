@@ -1,6 +1,6 @@
 import screenData from "@/lib/demo-screen.json";
 import { ReplayTerminal } from "@/components/ReplayTerminal";
-import { pinned, runCells, styleRule, type Screen } from "@/lib/replay";
+import { runCells, styleRule, type Screen } from "@/lib/replay";
 
 /**
  * Server component (runs at build time): renders the recording's opening
@@ -19,19 +19,22 @@ export function ReplayDemo() {
     <>
       <style dangerouslySetInnerHTML={{ __html: css }} />
       <ReplayTerminal cols={s.cols} rows={s.rows} fg={s.fg} bg={s.bg}>
-        {Array.from({ length: s.rows }, (_, y) => (
-          <div key={y}>
-            {(first.get(y) ?? []).map((r, k) => (
-              <span
-                key={k}
-                className={`s${r[0]}`}
-                style={pinned(r) ? { width: `${runCells(r)}ch` } : undefined}
-              >
-                {r[1]}
-              </span>
-            ))}
-          </div>
-        ))}
+        {Array.from({ length: s.rows }, (_, y) => {
+          let col = 0;
+          return (
+            <div key={y}>
+              {(first.get(y) ?? []).map((r) => {
+                const at = col, w = runCells(r);
+                col += w;
+                return (
+                  <span key={at} className={`s${r[0]}`} style={{ left: `${at}ch`, width: `${w}ch` }}>
+                    {r[1]}
+                  </span>
+                );
+              })}
+            </div>
+          );
+        })}
       </ReplayTerminal>
     </>
   );
