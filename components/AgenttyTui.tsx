@@ -358,6 +358,11 @@ export function AgenttyTui() {
                   </span>
                   <span className="ttui-edge dim">│</span>
                 </div>
+                <div className="ttui-panel-line">
+                  <span className="ttui-edge dim">│</span>
+                  <span className="ttui-pad" />
+                  <span className="ttui-edge dim">│</span>
+                </div>
 
                 {/* events */}
                 {EVENTS.slice(0, visibleCount).map((ev, i) => {
@@ -366,6 +371,8 @@ export function AgenttyTui() {
                   const glyph = total === 1 ? "──" : i === 0 ? "╭─" : isLast ? "╰─" : "├─";
                   const c = catColor[ev.cat];
                   const showBody = isDone && ev.body;
+                  // connector after this event uses NEXT event status
+                  const nextDone = i + 1 <= done;
                   return (
                     <div key={i} className="ttui-evgroup ttui-fade">
                       <PanelRow>
@@ -393,18 +400,28 @@ export function AgenttyTui() {
                             <span className={b.cls}>{b.text}</span>
                           </PanelRow>
                         ))}
+                      {!isLast && (
+                        <PanelRow>
+                          <span className={nextDone ? "dim" : "blue"}>{"   │"}</span>
+                        </PanelRow>
+                      )}
                     </div>
                   );
                 })}
 
                 {/* footer — appears once all events done */}
                 {allDone && (
-                  <PanelRow>
-                    <span>{"   "}</span>
-                    <span className="bgreen b">{"✓ "}</span>
-                    <span className="bgreen b">D O N E</span>
-                    <span className="white">{"   4 actions   4.2s"}</span>
-                  </PanelRow>
+                  <>
+                    <PanelRow>
+                      <span className="ttui-pad" />
+                    </PanelRow>
+                    <PanelRow>
+                      <span>{"   "}</span>
+                      <span className="bgreen b">{"✓ "}</span>
+                      <span className="bgreen b">D O N E</span>
+                      <span className="white">{"   4 actions   4.2s"}</span>
+                    </PanelRow>
+                  </>
                 )}
 
                 <div className="ttui-panel-bot">
