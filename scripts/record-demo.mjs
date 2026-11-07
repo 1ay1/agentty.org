@@ -105,6 +105,12 @@ git("config", "user.email", "dev@example.com");
 git("add", "-A");
 git("commit", "-q", "-m", "initial import");
 
+// agentty's own settings (what the Appearance → Scheme picker writes): the
+// demo renders in the Flexoki Dark theme.
+const THEME = process.env.DEMO_THEME || "Flexoki Dark";
+fs.mkdirSync(path.join(HOME, ".agentty"), { recursive: true });
+fs.writeFileSync(path.join(HOME, ".agentty/settings.json"), JSON.stringify({ ui: { theme: THEME } }, null, 2));
+
 // ── the scripted model ──────────────────────────────────────────────────────────────────────
 // One step per model turn (counted by assistant messages since the prompt):
 // optional prose, then a batch of tool calls (several = a parallel batch,
