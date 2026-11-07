@@ -147,12 +147,11 @@ export function ReplayTerminal({
       grid.replaceChildren(frag);
       if (reduce) return;
 
-      // start the clock once the main thread is idle (after hydration)
-      const go = () => { if (disposed) return; started = true; t0 = performance.now(); resume(); };
-      const ric = (window as Window & {
-        requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
-      }).requestIdleCallback;
-      if (ric) ric(go, { timeout: 600 }); else setTimeout(go, 200);
+      // the opening frame is already on screen (server HTML), so start the
+      // clock right away — waiting for idle only added dead air
+      started = true;
+      t0 = performance.now();
+      resume();
     };
 
     const io = new IntersectionObserver(([e]) => {
