@@ -4,7 +4,6 @@ import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "./minimal.css";
 import { SiteNav } from "@/components/SiteNav";
-import { SiteFooter } from "@/components/SiteFooter";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
@@ -200,7 +199,6 @@ export default function RootLayout({
         <a className="skip" href="#main">Skip to content</a>
         <SiteNav />
         <main id="main">{children}</main>
-        <SiteFooter />
         <CommandPaletteLazy />
       </body>
     </html>
