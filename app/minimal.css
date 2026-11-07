@@ -194,7 +194,7 @@ body:has(.home) .nav-links a:first-child { padding-left: 0; }
   --t: max(1px, .075em);
   /* the cell: width --cw, height --rh = 2 × --cw (= 1.2em, since JetBrains
      Mono's advance is exactly 0.6em). Fallback: fluid, fractional px. */
-  --cw: min(7.8px, calc(100cqi / var(--cols)));
+  --cw: calc(100cqi / var(--cols));   /* exactly fills the box width */
   --rh: calc(var(--cw) * 2);
   font-family: var(--mono);
   font-size: calc(var(--cw) / .6);
@@ -218,7 +218,9 @@ body:has(.home) .nav-links a:first-child { padding-left: 0; }
 @supports (width: round(down, 1px, 1px)) {
   .replay-grid {
     --step: 1px;
-    --cw: min(8px, round(down, calc(100cqi / var(--cols)), var(--step)));
+    /* columns stay exact (grid fills the width); only ROW height snaps to
+       device pixels, which is what keeps row edges seam-free */
+    --rh: round(calc(var(--cw) * 2), var(--step));
     --t: max(var(--step), round(calc(var(--cw) * .125), var(--step)));
   }
   @media (resolution >= 2dppx) { .replay-grid { --step: .5px; } }
