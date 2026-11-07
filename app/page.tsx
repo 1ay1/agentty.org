@@ -3,7 +3,7 @@ import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
 import { repo, starLabel } from "@/lib/repo";
 import { CopyRow } from "@/components/CopyRow";
-import { ReplayTerminal } from "@/components/ReplayTerminal";
+import { ReplayDemo } from "@/components/ReplayDemo";
 
 // Copy and heading structure are the original home page's (pre-redesign),
 // kept verbatim for search ranking; only the presentation is minimal.
@@ -28,7 +28,7 @@ export default function Home() {
       </header>
 
       <figure className="home-demo">
-        <ReplayTerminal />
+        <ReplayDemo />
         <figcaption>a real agentty session, replayed byte-for-byte from the terminal &mdash; fixing a failing test</figcaption>
       </figure>
 
