@@ -73,7 +73,7 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 
 /* no decorative layers anywhere */
 .hero-bg, .hero-grid, .cta-mesh, .blog-featured-glow, .scroll-progress,
-canvas, [class*="matrix"], [class*="glow"] { display: none !important; }
+canvas:not(.replay-canvas), [class*="matrix"], [class*="glow"] { display: none !important; }
 html.fx-ready [data-reveal], [data-reveal] { opacity: 1 !important; transform: none !important; }
 [style*="gradient"] { background-image: none !important; }
 .grad, [class*="grad"] {
