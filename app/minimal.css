@@ -160,21 +160,28 @@ footer, .foot { background: none !important; border-top: 1px solid var(--border)
 .feats li::before { content: "-"; position: absolute; left: 0; color: var(--text-faint); }
 .feats b { color: var(--text); font-weight: 600; }
 
-/* ---- home demo: real recorded session replayed in xterm.js ---- */
+/* ---- home demo: real recorded session, pre-rendered row diffs ---- */
 .home-demo { margin: 36px 0 0; }
 .replay { border: 1px solid var(--border); background: #0a0a0a; }
 .replay-bar {
   padding: 6px 12px; border-bottom: 1px solid #222;
   color: #6a6a6a; font-size: 12px; background: #0a0a0a;
 }
-.replay-screen { position: relative; padding: 12px; min-height: 420px; overflow-x: auto; }
-.replay-screen.is-ready { min-height: 0; }
-@media (max-width: 720px) { .replay-screen { padding: 8px; min-height: 260px; } }
-.replay-screen .xterm { padding: 0; }
-.replay-screen .xterm-viewport { background: #0a0a0a !important; overflow: hidden !important; }
-.replay-screen .xterm-helper-textarea { display: none; }
-.replay-placeholder {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  color: #555; font-size: 12px;
+.replay-screen { padding: 12px; container-type: inline-size; overflow: hidden; }
+@media (max-width: 720px) { .replay-screen { padding: 8px; } }
+/* The grid: cols × rows cells. Font scales to fit the width (JetBrains Mono
+   advance = 0.6em) with no JS; height is fixed up front, so zero layout shift.
+   Rows are 1.15em — just under the box-drawing glyph ink, so rails tile. */
+.replay-grid {
+  --cols: 96; --rows: 32; --lh: 1.15;
+  margin: 0;
+  font-family: var(--mono); color: #d8d8d8;
+  font-size: min(13px, 100cqw / (var(--cols) * 0.6));
+  line-height: var(--lh);
+  height: calc(var(--rows) * var(--lh) * 1em);
+  white-space: pre; overflow: hidden;
+  contain: strict;
 }
+.replay-grid > div { height: calc(var(--lh) * 1em); contain: size layout style; }
+.replay-grid .w { display: inline-block; }
 .home-demo figcaption { margin-top: 10px; color: var(--text-faint); font-size: 12px; }

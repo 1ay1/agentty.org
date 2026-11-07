@@ -1,7 +1,8 @@
 // record-demo.mjs — drive the REAL agentty binary through a genuine coding task
 // against a scripted OpenAI-compatible mock model (posing as local Ollama on
-// :11434), and capture the PTY byte stream with timing. The home page's
-// ReplayTerminal plays the result back in xterm.js.
+// :11434), and capture the PTY byte stream with timing (demo/session.json),
+// then pre-render it to lib/demo-screen.json (scripts/build-demo-screen.mjs),
+// which the home page's ReplayTerminal plays.
 //
 //   node scripts/record-demo.mjs [out.json]      (needs bwrap + python3)
 //   AGENTTY_BIN=/path/to/agentty overrides the binary.
@@ -16,7 +17,7 @@ import { createRequire } from "node:module";
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { spawn: ptySpawn } = createRequire(path.join(ROOT, "deploy/live/package.json"))("node-pty");
 
-const OUT = process.argv[2] || path.join(ROOT, "public/demo/session.json");
+const OUT = process.argv[2] || path.join(ROOT, "demo/session.json");
 const AGENTTY_BIN = process.env.AGENTTY_BIN || path.join(os.homedir(), ".local/bin/agentty");
 const MODEL = "qwen3-coder:30b";
 const COLS = 96, ROWS = 32;
@@ -210,3 +211,7 @@ console.log(`frames=${compact.length} bytes=${Buffer.byteLength(all)} host-path-
 console.log("handler.py after:\n" + fs.readFileSync(path.join(work, "auth/handler.py"), "utf8"));
 fs.rmSync(SCRATCH, { recursive: true, force: true });
 if (leaks) process.exit(1);
+
+// pre-render the bytes into the row diffs the site actually ships
+const { execFileSync } = await import("node:child_process");
+execFileSync(process.execPath, [path.join(ROOT, "scripts/build-demo-screen.mjs"), OUT], { stdio: "inherit" });

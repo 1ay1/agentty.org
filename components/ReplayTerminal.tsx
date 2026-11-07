@@ -1,121 +1,128 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import "@xterm/xterm/css/xterm.css";
+import { useEffect, useRef } from "react";
 
 /**
- * ReplayTerminal — plays back a REAL agentty session: the exact PTY bytes the
- * binary wrote while fixing a failing test (recorded by scripts/record-demo.mjs),
- * fed into xterm.js with their original timing, on a loop.
+ * ReplayTerminal — plays a REAL recorded agentty session with no terminal
+ * emulator in the browser.
  *
- * Nothing here re-draws agentty — every glyph, colour and layout comes from the
- * binary's own output. xterm is bundled (the site CSP allows only 'self'
- * scripts) and lazy-imported once the player scrolls into view; playback
- * pauses while it's off-screen.
+ * The PTY bytes agentty wrote (demo/session.json, scripts/record-demo.mjs) were
+ * run through xterm.js's parser at BUILD time (scripts/build-demo-screen.mjs)
+ * and reduced to per-frame row diffs. Here we only swap the changed rows' text,
+ * on a single timer chain. Cost model:
+ *   - zero JS/data until the box nears the viewport; the data is a hashed,
+ *     immutable-cached chunk (~7 KB gz)
+ *   - no layout shift: the box height is fixed in CSS from cols × rows
+ *   - no font/resize JS: font-size is a CSS container-query expression
+ *   - paused when off-screen or the tab is hidden; reduced-motion users get
+ *     the finished screen, painted once
  */
 
-const SESSION = "/demo/session.json";
+type Run = [number, string] | [number, string, number];
+type Frame = [number, [number, Run[]][]];
+type Screen = { cols: number; rows: number; styles: string[]; frames: Frame[] };
+
 const HOLD_MS = 4500; // linger on the finished session before looping
-
-type Recording = { cols: number; rows: number; frames: [number, string][] };
-
-// JetBrains Mono's advance width is 0.6em; size the font so `cols` cells fit.
-function fontSizeFor(width: number, cols: number) {
-  return Math.max(4.5, Math.min(13, Math.floor((width / (cols * 0.6)) * 4) / 4));
-}
 
 export function ReplayTerminal() {
   const boxRef = useRef<HTMLDivElement>(null);
-  const hostRef = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState<"idle" | "ready" | "failed">("idle");
+  const screenRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const box = boxRef.current, host = hostRef.current;
-    if (!box || !host) return;
+    const box = boxRef.current, pre = screenRef.current;
+    if (!box || !pre) return;
 
-    let disposed = false, started = false, visible = false;
-    let term: any = null, rec: Recording | null = null;
-    let i = 0, timer: number | undefined;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let data: Screen | null = null, rowEls: HTMLElement[] = [];
+    let i = 0, timer = 0, loading = false, disposed = false;
+    let onScreen = false;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const schedule = () => {
-      if (disposed || !visible || !rec || !term) return;
-      if (i >= rec.frames.length) {
-        timer = window.setTimeout(() => { term.reset(); i = 0; schedule(); }, HOLD_MS);
-        return;
+    const paintRow = (el: HTMLElement, runs: Run[]) => {
+      const frag = document.createDocumentFragment();
+      for (const [s, text, w] of runs) {
+        // ASCII tiles exactly in the mono font. Only runs with other glyphs
+        // (box drawing, ✓, braille spinner — often fallback fonts) are pinned
+        // to their cell count, so the grid can never drift.
+        const pin = w !== undefined || /[^\x20-\x7e]/.test(text);
+        if (s === 0 && !pin) { frag.append(text); continue; }
+        const span = document.createElement("span");
+        span.className = pin ? "s" + s + " w" : "s" + s;
+        if (pin) span.style.width = (w ?? text.length) + "ch";
+        span.textContent = text;
+        frag.append(span);
       }
-      timer = window.setTimeout(() => {
-        // write every frame that is due together, then wait for the next gap
-        let buf = rec!.frames[i++][1];
-        while (i < rec!.frames.length && rec!.frames[i][0] < 16) buf += rec!.frames[i++][1];
-        term.write(buf, schedule);
-      }, rec.frames[i][0]);
+      el.replaceChildren(frag);
     };
 
-    const start = async () => {
-      started = true;
-      try {
-        const [r, xterm] = await Promise.all([
-          fetch(SESSION).then((x) => { if (!x.ok) throw new Error("session " + x.status); return x.json(); }),
-          import("@xterm/xterm"),
-          document.fonts?.ready,
-        ]);
-        if (disposed) return;
-        rec = r as Recording;
-        const mono = getComputedStyle(document.body).getPropertyValue("--font-mono").trim();
-        term = new xterm.Terminal({
-          cols: rec.cols, rows: rec.rows,
-          fontFamily: `${mono ? mono + ", " : ""}"JetBrains Mono", ui-monospace, monospace`,
-          fontSize: fontSizeFor(box.clientWidth - 24, rec.cols),
-          lineHeight: 1,
-          cursorBlink: false,
-          disableStdin: true,
-          scrollback: 0,
-          theme: { background: "#0a0a0a", foreground: "#d8d8d8", cursor: "#0a0a0a" },
-        });
-        term.open(host);
-        setState("ready");
-        if (reduce) {                      // no motion: show the finished session
-          term.write(rec.frames.map((f) => f[1]).join(""));
-          return;
-        }
-        schedule();
-      } catch {
-        if (!disposed) setState("failed");
+    const apply = (f: Frame) => { for (const [y, runs] of f[1]) paintRow(rowEls[y], runs); };
+
+    const tick = () => {
+      if (disposed || !data || !onScreen || document.hidden) return;
+      if (i >= data.frames.length) {
+        timer = window.setTimeout(() => {
+          for (const el of rowEls) el.replaceChildren();
+          i = 0;
+          tick();
+        }, HOLD_MS);
+        return;
       }
+      timer = window.setTimeout(() => { apply(data!.frames[i++]); tick(); }, data.frames[i][0]);
+    };
+    const pause = () => window.clearTimeout(timer);
+    const resume = () => { pause(); tick(); };
+
+    const load = async () => {
+      loading = true;
+      const mod = await import("@/lib/demo-screen.json");
+      if (disposed) return;
+      data = (mod.default ?? mod) as unknown as Screen;
+
+      // one stylesheet for the recording's styles (classes, not per-span css)
+      const sheet = document.createElement("style");
+      sheet.textContent = data.styles.map((css, n) => `.replay-screen .s${n}{${css}}`).join("");
+      document.head.append(sheet);
+
+      pre.style.setProperty("--cols", String(data.cols));
+      pre.style.setProperty("--rows", String(data.rows));
+      rowEls = Array.from({ length: data.rows }, () => {
+        const d = document.createElement("div");
+        pre.append(d);
+        return d;
+      });
+
+      if (reduce) {                       // finished screen, painted once
+        const last = new Map<number, Run[]>();
+        for (const f of data.frames) for (const [y, runs] of f[1]) last.set(y, runs);
+        last.forEach((runs, y) => paintRow(rowEls[y], runs));
+        return;
+      }
+      resume();
     };
 
     const io = new IntersectionObserver(([e]) => {
-      visible = e.isIntersecting;
-      if (visible && !started) start();
-      else if (visible) schedule();
-      else window.clearTimeout(timer);
-    }, { rootMargin: "200px" });
+      onScreen = e.isIntersecting;
+      if (onScreen && !loading) load().catch(() => {});
+      else if (onScreen) resume();
+      else pause();
+    }, { rootMargin: "300px" });
     io.observe(box);
 
-    const ro = new ResizeObserver(() => {
-      if (term && rec) term.options.fontSize = fontSizeFor(box.clientWidth - 24, rec.cols);
-    });
-    ro.observe(box);
+    const onVis = () => (document.hidden ? pause() : resume());
+    document.addEventListener("visibilitychange", onVis);
 
     return () => {
       disposed = true;
-      window.clearTimeout(timer);
-      io.disconnect(); ro.disconnect();
-      try { term?.dispose(); } catch {}
+      pause();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
 
   return (
     <div className="replay" ref={boxRef}>
       <div className="replay-bar">$ agentty — ~/app</div>
-      <div className={`replay-screen${state === "ready" ? " is-ready" : ""}`}>
-        <div ref={hostRef} aria-hidden="true" />
-        {state !== "ready" && (
-          <div className="replay-placeholder">
-            {state === "failed" ? "demo unavailable — try the live terminal at dev.agentty.org" : "loading session…"}
-          </div>
-        )}
+      <div className="replay-screen">
+        <div className="replay-grid" ref={screenRef} aria-hidden="true" />
       </div>
       <p className="sr-only">
         Recorded agentty session: it runs a failing Python test, searches for TokenCache,
