@@ -275,7 +275,9 @@ const answerQueries = (p, d) => {
 pty.onData((d) => { answerQueries(pty, d); const now = Date.now(); frames.push([now - last, d]); last = now; });
 
 await sleep(900);
-const startMs = Math.max(0, Date.now() - t0 - 250);  // replay opens on the settled screen
+// replay opens on the settled welcome screen and goes straight into typing:
+// no dead air before the first keystroke
+const startMs = Math.max(0, Date.now() - t0 - 1000 / 30);
 const prompt = "test_handler is failing — make resolve() use the token cache and add a test";
 // one keystroke per 30fps tick: agentty redraws on every key, so a steady
 // cadence gives the replay an even frame rate while typing
