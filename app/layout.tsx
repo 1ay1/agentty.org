@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import "./minimal.css";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
-import { DeferredFX } from "@/components/DeferredFX";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
@@ -201,7 +201,6 @@ export default function RootLayout({
         <SiteNav />
         <main id="main">{children}</main>
         <SiteFooter />
-        <DeferredFX />
         <CommandPaletteLazy />
       </body>
     </html>
