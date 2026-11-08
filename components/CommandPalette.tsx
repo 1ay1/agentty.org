@@ -7,8 +7,8 @@ import { site } from "@/lib/site";
 // Search over every docs page and its sections, blog posts, guides and the
 // site's pages. The index (/search.json, built statically) is fetched once,
 // the first time the palette opens.
-type Item = { title: string; href: string; group: string; parent?: string; external?: boolean };
-type Row = [string, string, string, string?];
+type Item = { title: string; href: string; group: string; parent?: string; desc?: string; external?: boolean };
+type Row = [string, string, string, (string | null)?, string?];
 
 const STATIC: Item[] = [
   { title: "Home", href: "/", group: "Pages" },
@@ -29,28 +29,42 @@ let indexPromise: Promise<Item[]> | null = null;
 const loadIndex = () =>
   (indexPromise ??= fetch("/search.json")
     .then((r) => (r.ok ? r.json() : []))
-    .then((rows: Row[]) => [...rows.map(([title, href, group, parent]) => ({ title, href, group, parent })), ...STATIC])
+    .then((rows: Row[]) => [...rows.map(([title, href, group, parent, desc]) => ({ title, href, group, parent: parent ?? undefined, desc })), ...STATIC])
     .catch(() => STATIC));
 
 // Rank a title against the query: every query word must appear; whole-word and
 // word-prefix hits score highest, then substring, then in-order subsequence.
 function score(words: string[], item: Item): number {
   const t = item.title.toLowerCase();
-  const hay = item.parent ? `${t} ${item.parent.toLowerCase()}` : t;
-  let total = 0;
+  const flat = t.replace(/[-_]/g, "");                     // "air-gap" ~ "airgap"
+  const hay = `${t} ${item.parent?.toLowerCase() ?? ""}`;
+  const desc = item.desc?.toLowerCase() ?? "";
+  let total = 0, misses = 0;
+  const allowed = words.length >= 3 ? 1 : 0;         // long queries may miss one word
   for (const w of words) {
     let s = 0;
-    if (new RegExp(`(^|[^a-z0-9])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(t)) s = t.startsWith(w) ? 120 : 90;
-    else if (t.includes(w)) s = 50;
+    const wordStart = new RegExp(`(^|[^a-z0-9])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`);
+    if (wordStart.test(t) || wordStart.test(flat)) s = t.startsWith(w) || flat.startsWith(w) ? 100 : 90;
+    else if (t.includes(w) || flat.includes(w)) s = 50;
     else if (hay.includes(w)) s = 25;
+    else if (desc.includes(w)) s = 18;
     else {
-      let i = 0;
-      for (const ch of t) if (ch === w[i]) i++;
-      if (i < w.length || w.length < 3) return 0;
+      // typo tolerance, but only inside one word ("sandbx" → "sandbox"), never
+      // letters scattered across a whole title
+      if (w.length < 4) { if (++misses > allowed) return 0; continue; }
+      const hit = t.split(/[^a-z0-9]+/).some((full) => {
+        const tok = full.slice(0, w.length + 1);             // also matches the start of longer words
+        if (tok.length < w.length - 1 || tok[0] !== w[0]) return false;
+        let i = 0;
+        for (const ch of tok) if (ch === w[i]) i++;
+        return i >= w.length - 1;
+      });
+      if (!hit) { if (++misses > allowed) return 0; continue; }
       s = 8;
     }
     total += s;
   }
+  if (!total) return 0;
   if (!item.parent) total += 15;                  // pages before their sections
   return total - t.length / 40;                   // shorter titles break ties
 }
