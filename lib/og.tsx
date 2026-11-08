@@ -17,7 +17,7 @@ export function ogCard({ section, title, meta }: { section: string; title: strin
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "18px", fontSize: "30px", fontWeight: 700 }}>
-          <span style={{ color: "#ce5d97" }}>▌</span>
+          <span style={{ width: "12px", height: "34px", backgroundColor: "#ce5d97" }} />
           <span style={{ color: "#cecdc3" }}>agentty</span>
           <span style={{ color: "#878580", fontWeight: 400 }}>/ {section}</span>
         </div>
