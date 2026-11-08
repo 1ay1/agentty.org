@@ -420,6 +420,8 @@ td .win { color: var(--text); }
 /* one line at any width: 45 chars × 0.6em ≈ 27em */
 .home h1 { white-space: nowrap; font-size: min(var(--fs-lg), calc((min(760px, 100vw) - var(--gutter) - 24px) / 27.5)); margin: 0 0 6px; }
 .home-head p { color: var(--text-dim); margin: 0; }
+.home h1 a { color: inherit; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.home h1 a:hover { color: var(--accent); }
 .home-demo { margin: 12px 0 0; }
 .home-demo, .home-info, .home-links { width: min(780px, calc(100vw - var(--gutter) - 16px)); }
 .home-demo figcaption { margin-top: 8px; color: var(--text-faint); font-size: var(--fs-sm); }

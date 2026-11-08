@@ -8,6 +8,7 @@ export const dynamic = "force-static";
 export function GET() {
   const docs = new Map(getAllDocs().map((d) => [d.href, d]));
   let out = `# ${site.name}\n\n> A fast agent harness for your terminal (a coding agent around any model), written in C++26: one small static binary, any model.\n\n`;
+  out += `## About\n\n- [What is an agent harness?](${site.url}/agent-harness/): the definition of the category agentty belongs to\n\n`;
   for (const sec of docsNav) {
     out += `## ${sec.title}\n\n`;
     for (const it of sec.items) {
