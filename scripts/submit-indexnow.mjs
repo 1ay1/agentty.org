@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const HOST = "agentty.org";
-const KEY = "91744a4beb9b4bc4cb8d38ab6011db02";
+const KEY = "fbfe38311ab915b0e806bc8d4d02409e";   // rotated: the old key was refused (403) on every submission
 const KEY_LOCATION = `https://${HOST}/${KEY}.txt`;
 
 function bail(msg) {

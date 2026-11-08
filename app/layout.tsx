@@ -96,7 +96,6 @@ export const metadata: Metadata = {
       { url: "/favicon.svg", type: "image/svg+xml" },
     ],
     shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
   },
   manifest: "/manifest.webmanifest",
   verification: {
