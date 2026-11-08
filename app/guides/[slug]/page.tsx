@@ -63,30 +63,28 @@ export default async function GuidePage({
   };
 
   return (
-    <main className="docs-main seo-page">
+    <div className="page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="wrap" style={{ maxWidth: 820, paddingTop: 40, paddingBottom: 72 }}>
-        <p className="eyebrow">Guide</p>
-        <h1>{page.title}</h1>
-        {page.verdict && (
-          <div className="note" style={{ marginTop: 8 }}>
-            <strong>TL;DR:</strong> {page.verdict}
-          </div>
-        )}
-        <article className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
+      <p className="kicker">Guide</p>
+      <h1>{page.title}</h1>
+      {page.verdict && (
+        <p className="lead">
+          <strong>TL;DR:</strong> {page.verdict}
+        </p>
+      )}
+      <article className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
 
-        <div className="seo-cta">
-          <p>Install agentty in one line — a single static binary.</p>
-          <code>{site.installOneLiner}</code>
-          <div className="seo-cta-actions">
-            <Link className="btn btn-primary" href="/docs/installation">Get started</Link>
-            <Link className="btn btn-ghost" href="/guides">All guides →</Link>
-          </div>
+      <div className="cta">
+        <p>Install agentty in one line — a single static binary.</p>
+        <code>{site.installOneLiner}</code>
+        <div className="cta-links">
+          <Link href="/docs/installation">Get started</Link>
+          <Link href="/guides">All guides</Link>
         </div>
-
-        <RelatedGuides slug={slug} />
       </div>
-    </main>
+
+      <RelatedGuides slug={slug} />
+    </div>
   );
 }
 
@@ -94,8 +92,8 @@ function RelatedGuides({ slug }: { slug: string }) {
   const others = getGuidePages().filter((p) => p.slug !== slug).slice(0, 6);
   if (others.length === 0) return null;
   return (
-    <nav className="seo-related" aria-label="More guides">
-      <p className="t">More guides</p>
+    <nav className="related" aria-label="More guides">
+      <p className="kicker">More guides</p>
       <ul>
         {others.map((p) => (
           <li key={p.slug}>

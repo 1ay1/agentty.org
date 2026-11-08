@@ -64,27 +64,25 @@ export default async function AlternativePage({
   };
 
   return (
-    <main className="docs-main seo-page">
+    <div className="page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="wrap" style={{ maxWidth: 820, paddingTop: 40, paddingBottom: 72 }}>
-        <p className="eyebrow">{page.competitor} alternative</p>
-        <h1>{page.title}</h1>
-        {page.verdict && (
-          <div className="note" style={{ marginTop: 8 }}>
-            <strong>In short:</strong> {page.verdict}
-          </div>
-        )}
-        <article className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
+      <p className="kicker">{page.competitor} alternative</p>
+      <h1>{page.title}</h1>
+      {page.verdict && (
+        <p className="lead">
+          <strong>In short:</strong> {page.verdict}
+        </p>
+      )}
+      <article className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
 
-        <div className="seo-cta">
-          <p>Install in one line — a single static binary, no Node or Python.</p>
-          <code>{site.installOneLiner}</code>
-          <div className="seo-cta-actions">
-            <Link className="btn btn-primary" href="/docs/installation">Get started</Link>
-            <a className="btn btn-ghost" href={site.github}>Star on GitHub →</a>
-          </div>
+      <div className="cta">
+        <p>Install in one line — a single static binary, no Node or Python.</p>
+        <code>{site.installOneLiner}</code>
+        <div className="cta-links">
+          <Link href="/docs/installation">Get started</Link>
+          <a href={site.github}>GitHub</a>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

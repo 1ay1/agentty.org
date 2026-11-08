@@ -10,7 +10,7 @@ export function ReleaseTable() {
   const platforms = release.platforms as ReadonlyArray<(typeof release.platforms)[number]>;
   if (platforms.length === 0) return null;
   return (
-    <div className="tablewrap" style={{ marginBottom: 24 }}>
+    <div className="tablewrap">
       <table>
         <thead>
           <tr>
@@ -32,7 +32,7 @@ export function ReleaseTable() {
               <td className="mono">
                 <span className="win">{p.sizeMB}</span>
               </td>
-              <td className="mono" style={{ fontSize: 11 }}>
+              <td className="mono hash">
                 {p.sha256 ? <code>{p.sha256.slice(0, 16)}…</code> : "—"}
               </td>
             </tr>

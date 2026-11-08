@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllPosts, getPost, getAdjacent, formatDate } from "@/lib/blog";
 import { site } from "@/lib/site";
-import { BlogSidebar } from "@/components/BlogSidebar";
 
 export function generateStaticParams() {
   return getAllPosts().map((p) => ({ slug: p.slug }));
@@ -109,56 +108,33 @@ export default async function BlogPost({
   };
 
   return (
-    <div className="blog-post-shell">
+    <article className="page post">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-
-      <article className="blog-post">
-        <Link href="/blog" className="blog-back">
-          ← All posts
-        </Link>
-
-        <header className="blog-post-head">
-          <div className="blog-card-meta">
-            <time dateTime={post.date}>{formatDate(post.date)}</time>
-            <span className="dot">·</span>
-            <span>{post.readingMinutes} min read</span>
-            <span className="dot">·</span>
-            <span>{post.author}</span>
-          </div>
-          <h1 className="blog-post-title">{post.title}</h1>
-          <p className="blog-post-lede">{post.excerpt}</p>
-          {post.tags.length > 0 && (
-            <div className="blog-tags">
-              {post.tags.map((t) => (
-                <span key={t} className="blog-tag">
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
-        </header>
-
-        <div className="blog-body" dangerouslySetInnerHTML={{ __html: post.html }} />
-
-        <footer className="blog-post-foot">
-          {next ? (
-            <Link href={`/blog/${next.slug}`} className="blog-next">
-              <span className="blog-next-dir">Next post →</span>
-              <span className="blog-next-title">{next.title}</span>
-            </Link>
-          ) : (
-            <Link href="/blog" className="blog-next">
-              <span className="blog-next-dir">← Back</span>
-              <span className="blog-next-title">All posts</span>
-            </Link>
-          )}
-          <a className="btn btn-primary" href={site.installOneLiner ? "/docs/installation" : site.github}>
-            Install agentty →
-          </a>
-        </footer>
-      </article>
-
-      <BlogSidebar title={post.title} url={postUrl} />
-    </div>
+      <nav className="breadcrumb" aria-label="Breadcrumb">
+        <Link href="/">Home</Link>
+        <span className="sep">/</span>
+        <Link href="/blog">Blog</Link>
+      </nav>
+      <h1>{post.title}</h1>
+      <p className="post-meta">
+        <time dateTime={post.date}>{formatDate(post.date)}</time> · {post.readingMinutes} min read · {post.author}
+        {post.tags.length > 0 && <> · {post.tags.join(", ")}</>}
+      </p>
+      <p className="lead">{post.excerpt}</p>
+      <div className="doc-body" dangerouslySetInnerHTML={{ __html: post.html }} />
+      <nav className="docnav" aria-label="More">
+        {next ? (
+          <Link href={`/blog/${next.slug}`} className="next">
+            <span className="dir">Next post →</span>
+            {next.title}
+          </Link>
+        ) : (
+          <Link href="/blog" className="next">
+            <span className="dir">Blog</span>
+            All posts
+          </Link>
+        )}
+      </nav>
+    </article>
   );
 }

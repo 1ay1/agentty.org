@@ -28,7 +28,6 @@ export const metadata: Metadata = {
 
 export default function BlogIndex() {
   const posts = getAllPosts();
-  const [featured, ...rest] = posts;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -55,83 +54,28 @@ export default function BlogIndex() {
   };
 
   return (
-    <section className="block blog-index">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <div className="wrap" style={{ maxWidth: 980 }}>
-        <p className="eyebrow">Blog</p>
-        <h1 className="section-title" style={{ marginBottom: 10 }}>
-          Notes from building {site.name}.
-        </h1>
-        <p className="section-sub" style={{ marginBottom: 40 }}>
-          Release notes, performance deep dives, and design notes — written the same way the
-          code is: measured, specific, no fluff.
-        </p>
-
-        {posts.length === 0 ? (
-          <p className="blog-empty">No posts yet. Check back soon.</p>
-        ) : (
-          <>
-            {featured && (
-              <Link href={`/blog/${featured.slug}`} className="blog-featured" data-reveal>
-                <div className="blog-featured-glow" aria-hidden />
-                <div className="blog-featured-body">
-                  <span className="blog-featured-badge">Latest</span>
-                  <div className="blog-card-meta">
-                    <time dateTime={featured.date}>{formatDate(featured.date)}</time>
-                    <span className="dot">·</span>
-                    <span>{featured.readingMinutes} min read</span>
-                  </div>
-                  <h2 className="blog-featured-title">{featured.title}</h2>
-                  <p className="blog-featured-excerpt">{featured.excerpt}</p>
-                  <div className="blog-featured-foot">
-                    {featured.tags.length > 0 && (
-                      <div className="blog-tags">
-                        {featured.tags.map((t) => (
-                          <span key={t} className="blog-tag">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <span className="blog-card-more">Read post →</span>
-                  </div>
-                </div>
+    <div className="page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <p className="kicker">Blog</p>
+      <h1>Notes from building {site.name}.</h1>
+      <p className="lead">Release notes, performance deep dives, and design notes.</p>
+      {posts.length === 0 ? (
+        <p>No posts yet.</p>
+      ) : (
+        <ul className="index-list">
+          {posts.map((p) => (
+            <li key={p.slug}>
+              <Link href={`/blog/${p.slug}`}>
+                <span className="il-meta">
+                  <time dateTime={p.date}>{formatDate(p.date)}</time> · {p.readingMinutes} min
+                </span>
+                <span className="il-title">{p.title}</span>
+                <span className="il-sub">{p.excerpt}</span>
               </Link>
-            )}
-
-            {rest.length > 0 && (
-              <div className="blog-grid">
-                {rest.map((p) => (
-                  <Link key={p.slug} href={`/blog/${p.slug}`} className="blog-card" data-reveal>
-                    <div className="blog-card-meta">
-                      <time dateTime={p.date}>{formatDate(p.date)}</time>
-                      <span className="dot">·</span>
-                      <span>{p.readingMinutes} min</span>
-                    </div>
-                    <h2 className="blog-card-title">{p.title}</h2>
-                    <p className="blog-card-excerpt">{p.excerpt}</p>
-                    <div className="blog-card-bottom">
-                      {p.tags.length > 0 && (
-                        <div className="blog-tags">
-                          {p.tags.slice(0, 2).map((t) => (
-                            <span key={t} className="blog-tag">
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <span className="blog-card-more">→</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </section>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

@@ -10,14 +10,14 @@ export function DocNav({
   next?: { title: string; href: string } | null;
 }) {
   return (
-    <div className="docnav">
+    <nav className="docnav" aria-label="Pager">
       {prev ? (
         <Link href={prev.href}>
           <span className="dir">← Previous</span>
           {prev.title}
         </Link>
       ) : (
-        <span style={{ flex: 1 }} />
+        <span />
       )}
       {next ? (
         <Link href={next.href} className="next">
@@ -25,8 +25,8 @@ export function DocNav({
           {next.title}
         </Link>
       ) : (
-        <span style={{ flex: 1 }} />
+        <span />
       )}
-    </div>
+    </nav>
   );
 }

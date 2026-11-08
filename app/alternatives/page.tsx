@@ -12,24 +12,22 @@ export const metadata: Metadata = {
 export default function AlternativesIndex() {
   const pages = getAlternativePages();
   return (
-    <main className="docs-main seo-page">
-      <div className="wrap" style={{ maxWidth: 820, paddingTop: 40, paddingBottom: 72 }}>
-        <p className="eyebrow">Alternatives</p>
-        <h1>Open-source coding agent alternatives</h1>
-        <p className="section-sub" style={{ marginBottom: 28 }}>
-          Looking to switch? Here's how agentty compares as an alternative to the popular coding agents.
-        </p>
-        <ul className="seo-index">
-          {pages.map((p) => (
-            <li key={p.slug}>
-              <Link href={p.href}>
-                <span className="si-title">{p.title}</span>
-                {p.verdict && <span className="si-sub">{p.verdict}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </main>
+    <div className="page">
+      <p className="kicker">Alternatives</p>
+      <h1>Open-source coding agent alternatives</h1>
+      <p className="lead">
+        Looking to switch? Here's how agentty compares as an alternative to the popular coding agents.
+      </p>
+      <ul className="index-list">
+        {pages.map((p) => (
+          <li key={p.slug}>
+            <Link href={p.href}>
+              <span className="il-title">{p.title}</span>
+              {p.verdict && <span className="il-sub">{p.verdict}</span>}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

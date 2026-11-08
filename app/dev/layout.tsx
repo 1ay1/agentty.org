@@ -12,9 +12,7 @@ export default function DevLayout({ children }: { children: ReactNode }) {
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
           __html: `
-            body:has(.devt-root) .nav,
-            body:has(.devt-root) .foot,
-            body:has(.devt-root) .site-fx { display: none !important; }
+            body:has(.devt-root) .nav { display: none !important; }
             body:has(.devt-root) { overflow: hidden; }
             body:has(.devt-root) main { margin: 0 !important; padding: 0 !important; }
           `,

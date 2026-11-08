@@ -23,7 +23,6 @@
   align-items: flex-start;
   color: var(--logo-mag);
   user-select: none;
-  text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
   /* heartbeat — a brief hard white flash of the whole mark. Period 5.76 s,
      the white spike is ~150 ms; magenta is held the rest of the cycle. */
   animation: logo-pulse 5.76s linear 2.16s infinite;
@@ -105,11 +104,9 @@
      heartbeat, scaled. Held magenta the rest so the mark never sits washed. */
   0%, 94%, 100% {
     color: var(--logo-mag);
-    text-shadow: 0 0 22px rgba(226, 155, 224, 0.35);
   }
   96%, 97% {
     color: #ffffff;
-    text-shadow: 0 0 26px rgba(255, 255, 255, 0.5);
   }
 }
 

@@ -26,11 +26,11 @@ export function DocBody({ html }: { html: string }) {
       const btn = document.createElement("button");
       btn.className = "codeblock-copy floating";
       btn.setAttribute("aria-label", "Copy code");
-      btn.textContent = "⧉";
+      btn.textContent = "copy";
       const onClick = () => {
         navigator.clipboard?.writeText(code?.textContent ?? "");
-        btn.textContent = "✓";
-        setTimeout(() => (btn.textContent = "⧉"), 1400);
+        btn.textContent = "copied";
+        setTimeout(() => (btn.textContent = "copy"), 1400);
       };
       btn.addEventListener("click", onClick);
       pre.appendChild(btn);
@@ -52,5 +52,5 @@ export function DocBody({ html }: { html: string }) {
     return () => cleanups.forEach((c) => c());
   }, [html]);
 
-  return <div ref={ref} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div ref={ref} className="doc-body" dangerouslySetInnerHTML={{ __html: html }} />;
 }

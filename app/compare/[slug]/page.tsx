@@ -68,30 +68,28 @@ export default async function ComparePage({
   };
 
   return (
-    <main className="docs-main seo-page">
+    <div className="page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="wrap" style={{ maxWidth: 820, paddingTop: 40, paddingBottom: 72 }}>
-        <p className="eyebrow">agentty vs {page.competitor}</p>
-        <h1>{page.title}</h1>
-        {page.verdict && (
-          <div className="note" style={{ marginTop: 8 }}>
-            <strong>Short answer:</strong> {page.verdict}
-          </div>
-        )}
-        <article className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
+      <p className="kicker">agentty vs {page.competitor}</p>
+      <h1>{page.title}</h1>
+      {page.verdict && (
+        <p className="lead">
+          <strong>Short answer:</strong> {page.verdict}
+        </p>
+      )}
+      <article className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
 
-        <div className="seo-cta">
-          <p>Ready to try it? One line, no Node or Python.</p>
-          <code>{site.installOneLiner}</code>
-          <div className="seo-cta-actions">
-            <Link className="btn btn-primary" href="/docs/installation">Get started</Link>
-            <a className="btn btn-ghost" href={site.github}>Star on GitHub →</a>
-          </div>
+      <div className="cta">
+        <p>Ready to try it? One line, no Node or Python.</p>
+        <code>{site.installOneLiner}</code>
+        <div className="cta-links">
+          <Link href="/docs/installation">Get started</Link>
+          <a href={site.github}>GitHub</a>
         </div>
-
-        <RelatedCompares slug={slug} />
       </div>
-    </main>
+
+      <RelatedCompares slug={slug} />
+    </div>
   );
 }
 
@@ -99,8 +97,8 @@ function RelatedCompares({ slug }: { slug: string }) {
   const others = getComparePages().filter((p) => p.slug !== slug).slice(0, 6);
   if (others.length === 0) return null;
   return (
-    <nav className="seo-related" aria-label="More comparisons">
-      <p className="t">More comparisons</p>
+    <nav className="related" aria-label="More comparisons">
+      <p className="kicker">More comparisons</p>
       <ul>
         {others.map((p) => (
           <li key={p.slug}>

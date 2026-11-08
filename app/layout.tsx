@@ -1,23 +1,12 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
-import "./minimal.css";
+import { JetBrains_Mono } from "next/font/google";
+import "./site.css";
 import { SiteNav } from "@/components/SiteNav";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { site } from "@/lib/site";
 import { stats } from "@/lib/stats";
 import { release } from "@/lib/release";
-
-const inter = Space_Grotesk({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-sans",
-  // Space Grotesk: a geometric grotesk with a monospace-adjacent, technical
-  // character — deliberately NOT Inter, to escape the default AI-SaaS look.
-  fallback: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
-  adjustFontFallback: true,
-});
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -32,8 +21,8 @@ export const viewport = {
   initialScale: 1,
   // Match the mobile browser chrome to the active theme.
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b0810" },
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0d0d" },
+    { media: "(prefers-color-scheme: light)", color: "#fcfcfa" },
   ],
 };
 
@@ -171,7 +160,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={jetbrainsMono.variable} suppressHydrationWarning>
       <head>
         {/* Set the theme before first paint to avoid a flash. Priority:
             explicit user choice (localStorage) → OS prefers-color-scheme →
