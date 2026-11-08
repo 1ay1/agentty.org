@@ -141,6 +141,7 @@ td .win { color: var(--text); font-weight: 400; }
 /* ---- home (README layout) ---- */
 /* homepage: one left edge for nav, content and footer — nothing centred */
 :root { --gutter: clamp(20px, 6vw, 80px); }
+body:has(.home) { --gutter: 24px; }   /* homepage: tight left margin (nav follows) */
 .wrap { margin: 0; max-width: 1040px; padding-left: var(--gutter); padding-right: 24px; }
 .nav-links { margin-left: 4px; }
 .nav-links a:first-child { padding-left: 0; }
