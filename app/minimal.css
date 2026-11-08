@@ -181,7 +181,9 @@ body:has(.home) .nav-links a:first-child { padding-left: 0; }
    so a demo frame never walks the whole 5000px page. `auto` remembers each
    section's real size once rendered, so scrollbar and anchors stay stable. */
 .home > section { content-visibility: auto; contain-intrinsic-size: auto 480px; }
-.home-demo { margin: 36px 0 0; }
+/* the demo may run wider than the text column (same left edge): its font
+   scales with width, 96 columns across, so this is what sets its size */
+.home-demo { margin: 36px 0 0; width: min(780px, calc(100vw - var(--gutter) - 16px)); }
 .replay { border: 1px solid var(--border); background: #100f0f; contain: layout paint style; isolation: isolate; }
 .replay-bar {
   padding: 6px 12px; border-bottom: 1px solid #222;
