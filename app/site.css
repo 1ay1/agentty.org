@@ -378,15 +378,16 @@ td .win { color: var(--text); }
 /* ── homepage ─────────────────────────────────────────────────────────── */
 body:has(.home) { --gutter: 24px; }
 .home { max-width: 760px; padding: 14px 24px 56px var(--gutter); }
-.home-logo { margin: 0 0 18px; }
+/* homepage rhythm: 20px inside the hero, 28px between sections */
+.home-logo { margin: 0 0 12px; }
 .home-logo .agentty-logo { margin: 0; font-size: clamp(6px, 1.6vw, 10px) !important; }
 /* one line at any width: 43 chars × 0.6em ≈ 26em */
 .home h1 { white-space: nowrap; font-size: min(var(--fs-lg), calc((min(760px, 100vw) - var(--gutter) - 24px) / 26.5)); margin: 0 0 6px; }
-.home-head p { color: var(--text-dim); }
-.home-demo { margin: 36px 0 0; }
+.home-head p { color: var(--text-dim); margin: 0; }
+.home-demo { margin: 20px 0 0; }
 .home-demo, .home-info, .home-links { width: min(780px, calc(100vw - var(--gutter) - 16px)); }
-.home-demo figcaption { margin-top: 10px; color: var(--text-faint); font-size: var(--fs-sm); }
-.home-info { margin-top: 36px; }
+.home-demo figcaption { margin-top: 8px; color: var(--text-faint); font-size: var(--fs-sm); }
+.home-info { margin-top: 28px; }
 .home-facts { display: grid; grid-template-columns: 9ch minmax(0, 1fr); gap: 12px 24px; margin: 0; align-items: baseline; }
 .home-facts dt { color: var(--text-faint); }
 .home-facts dd { margin: 0; min-width: 0; color: var(--text-dim); overflow-wrap: anywhere; }
@@ -395,7 +396,7 @@ body:has(.home) { --gutter: 24px; }
 .home-install > span { color: var(--text-faint); font-size: var(--fs-sm); }
 .home-links {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px;
-  margin-top: 36px; font-size: var(--fs-base);
+  margin-top: 28px; font-size: var(--fs-base);
 }
 .home-links a { color: var(--text); text-decoration: none; }
 .home-links a:hover { color: var(--accent); text-decoration: underline; }
