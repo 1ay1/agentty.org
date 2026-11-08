@@ -272,7 +272,11 @@ td .win { color: var(--text); font-weight: 400; }
   gap: 56px; max-width: none; margin: 0; padding: 40px 24px 96px var(--gutter);
 }
 @media (max-width: 1150px) { .docs-shell { grid-template-columns: 200px minmax(0, 1fr); gap: 40px; } }
-@media (max-width: 900px)  { .docs-shell { padding-left: var(--gutter); } }
+@media (max-width: 1000px) {
+  .docs-shell { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 24px 20px 72px var(--gutter); }
+  .docs-side-toggle { border-radius: 0; background: none; border: 1px solid var(--border-soft); font-size: 13px; font-weight: 500; padding: 9px 12px; }
+  .docs-side.open { padding: 4px 0 8px; border-bottom: 1px solid var(--border-soft); }
+}
 
 /* sidebar */
 .docs-side { font-size: 13px; scrollbar-width: none; }
