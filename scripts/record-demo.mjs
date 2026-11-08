@@ -180,11 +180,15 @@ function chunk(delta, finish = null) {
 const send = (res, o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
 
 // stream text in small word-ish pieces at a natural pace
-// No artificial pacing: the mock answers instantly, so every delay in the
-// recording is agentty's own (rendering, its typewriter reveal, real tools).
+// The mock model behaves like a real fast model: a short think before the
+// first token, then a steady stream (~80 tok/s, ~4 chars per token). That is
+// the only pacing; agentty itself and every tool run at real speed.
+const MODEL_TTFT_MS = Number(process.env.DEMO_TTFT_MS ?? 700);
+const MODEL_CHARS_PER_S = Number(process.env.DEMO_CHARS_PER_S ?? 320);
+const charDelay = (n) => sleep((n * 1000) / MODEL_CHARS_PER_S);
 async function streamText(res, text) {
   const parts = text.match(/\S+\s*|\s+/g) || [];
-  for (const p of parts) send(res, chunk({ content: p }));
+  for (const p of parts) { send(res, chunk({ content: p })); await charDelay(p.length); }
 }
 
 let callSeq = 0;
@@ -195,12 +199,13 @@ async function respond(res, messages) {
   const turn = messages.slice(lastUser + 1).filter((m) => m.role === "assistant").length;
   const step = STEPS[Math.min(turn, STEPS.length - 1)];
   const toolResults = messages.filter((m) => m.role === "tool").length;
+  await sleep(MODEL_TTFT_MS);
   send(res, chunk({ role: "assistant", content: "" }));
   if (step.say) await streamText(res, step.say + "\n");
   if (step.final) {
     await streamText(res, step.final);
     send(res, chunk({}, "stop"));
-    setTimeout(finished, 1500);
+    setTimeout(finished, 2500);
   } else {
     // a batch of calls, each with its own index; arguments stream in so the
     // cards fill live
@@ -210,6 +215,7 @@ async function respond(res, messages) {
       send(res, chunk({ tool_calls: [{ index: k, id, type: "function", function: { name, arguments: "" } }] }));
       for (let i = 0; i < json.length; i += 24) {
         send(res, chunk({ tool_calls: [{ index: k, function: { arguments: json.slice(i, i + 24) } }] }));
+        await charDelay(24);
       }
     }
     send(res, chunk({}, "tool_calls"));
