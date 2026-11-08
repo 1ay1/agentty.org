@@ -12,9 +12,9 @@
   --bg-elev: #1a1a1a;
   --border: #2a2a2a;
   --border-soft: #1f1f1f;
-  --text: #d8d8d8;
-  --text-dim: #9a9a9a;
-  --text-faint: #6a6a6a;
+  --text: #e4e4e4;        /* 15.3:1 */
+  --text-dim: #b8b8b8;    /* 9.8:1 — prose */
+  --text-faint: #8a8a8a;  /* 5.6:1 — labels, meta */
   --accent: #7fd962;
   --accent-hover: #a6ee8e;
   --warn: #e0b84a;
@@ -22,7 +22,7 @@
   --mono: var(--font-mono), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --gutter: clamp(20px, 6vw, 80px);
   --nav-h: 52px;
-  --measure: 72ch;
+  --measure: 600px;   /* ≈64 chars of 15px mono: a comfortable line */
   --hl-foreground: #cecdc3; --hl-token-comment: #6f6e69; --hl-token-keyword: #ce5d97;
   --hl-token-string: #3aa99f; --hl-token-string-expression: #879a39; --hl-token-function: #4385be;
   --hl-token-constant: #da702c; --hl-token-parameter: #cecdc3; --hl-token-punctuation: #878580;
@@ -35,9 +35,9 @@ html[data-theme="light"] {
   --bg-elev: #ececE8;
   --border: #d4d4cf;
   --border-soft: #e6e6e1;
-  --text: #1c1c1c;
-  --text-dim: #555;
-  --text-faint: #808080;
+  --text: #1c1c1c;        /* 16.6:1 */
+  --text-dim: #3d3d3d;    /* 10.6:1 — prose */
+  --text-faint: #6b6b6b;  /* 5.2:1 — labels, meta */
   --accent: #2f7d1c;
   --accent-hover: #1f5a10;
   --warn: #a8740a;
@@ -133,7 +133,7 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
   font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--text-faint);
 }
 .kicker { margin: 0 0 10px; }
-.lead { color: var(--text-faint); font-size: 14.5px; margin: 8px 0 32px; }
+.lead { color: var(--text-dim); font-size: 15.5px; line-height: 1.65; margin: 10px 0 32px; text-wrap: pretty; }
 .lead strong { color: var(--text-dim); }
 .breadcrumb { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font-size: 12px; color: var(--text-faint); margin-bottom: 20px; }
 .breadcrumb a { color: var(--text-dim); text-decoration: none; }
@@ -142,12 +142,14 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
 .breadcrumb .cur { color: var(--text); }
 
 /* prose rendered from markdown (docs, blog, guides, compare, pages) */
-.doc-body { color: var(--text-dim); line-height: 1.75; }
+.doc-body { color: var(--text-dim); font-size: 15px; line-height: 1.8; hyphens: manual; }
+.doc-body p, .doc-body li { text-wrap: pretty; }
+.doc-body :is(h2, h3, h4) { text-wrap: balance; }
 .doc-chunk { display: contents; }
-.doc-body p, .doc-body ul, .doc-body ol { margin: 0 0 16px; }
-.doc-body h2 { font-size: 16px; margin: 56px 0 14px; }
-.doc-body h3 { font-size: 14px; margin: 32px 0 10px; }
-.doc-body h4 { font-size: 13px; margin: 24px 0 8px; color: var(--text-dim); }
+.doc-body p, .doc-body ul, .doc-body ol { margin: 0 0 1.15em; }
+.doc-body h2 { font-size: 18px; line-height: 1.4; margin: 2.8em 0 .8em; }
+.doc-body h3 { font-size: 15.5px; line-height: 1.45; margin: 2em 0 .6em; }
+.doc-body h4 { font-size: 15px; margin: 1.6em 0 .5em; color: var(--text-dim); }
 .doc-body :is(h2, h3, h4) { position: relative; scroll-margin-top: calc(var(--nav-h) + 24px); }
 .doc-body > :first-child, .doc-chunk:first-child > :first-child { margin-top: 0; }
 /* heading self-link: a quiet # after the heading, shown on hover / focus */
@@ -160,8 +162,8 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
 .doc-body h2:target, .doc-body h3:target { color: var(--accent); }
 
 .doc-body ul, .doc-body ol { padding-left: 18px; }
-.doc-body li { margin: 6px 0; padding-left: 2px; }
-.doc-body li > p { margin: 0 0 6px; }
+.doc-body li { margin: .45em 0; padding-left: 2px; }
+.doc-body li > p { margin: 0 0 .4em; }
 .doc-body li::marker { color: var(--text-faint); }
 .doc-body ul > li::marker { content: "- "; }
 .doc-body strong { color: var(--text); font-weight: 600; }
@@ -188,7 +190,7 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
 }
 pre.code {
   margin: 0; padding: 12px 14px; overflow-x: auto; tab-size: 4;
-  background: none; font-size: 12.5px; line-height: 1.65; color: var(--hl-foreground);
+  background: none; font-size: 13.5px; line-height: 1.7; color: var(--hl-foreground);
 }
 pre.code code { background: none; border: 0; padding: 0; font-size: inherit; color: inherit; overflow-wrap: normal; }
 pre.code .line:empty::before { content: " "; }
