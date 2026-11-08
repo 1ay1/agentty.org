@@ -13,6 +13,13 @@ const Palette = dynamic(
 
 export function CommandPaletteLazy() {
   const [armed, setArmed] = useState(false);
+  const [query, setQuery] = useState("");
+
+  // ?q=… (the site's search URL, declared to search engines) opens search pre-filled
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get("q");
+    if (q) { setQuery(q); setArmed(true); }
+  }, []);
 
   useEffect(() => {
     if (armed) return;
@@ -40,5 +47,5 @@ export function CommandPaletteLazy() {
   if (!armed) return null;
   // Once armed, the real palette mounts and immediately opens (it re-reads the
   // ⌘K listener itself). We pass a prop so it knows to start open.
-  return <Palette startOpen />;
+  return <Palette startOpen initialQuery={query} />;
 }

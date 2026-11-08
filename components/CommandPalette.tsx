@@ -69,9 +69,9 @@ function score(words: string[], item: Item): number {
   return total - t.length / 40;                   // shorter titles break ties
 }
 
-export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
+export function CommandPalette({ startOpen = false, initialQuery = "" }: { startOpen?: boolean; initialQuery?: string }) {
   const [open, setOpen] = useState(startOpen);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(initialQuery);
   const [sel, setSel] = useState(0);
   const [index, setIndex] = useState<Item[]>(STATIC);
   const router = useRouter();
@@ -126,7 +126,7 @@ export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
     }
     setQ("");
     setSel(0);
-  }, [open]);
+  }, [open]);   // (only runs on close: the open branch returns early)
 
   useEffect(() => setSel(0), [q]);
   useEffect(() => {

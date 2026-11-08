@@ -51,8 +51,36 @@ export default async function DocsPage({ params }: { params: Promise<Params> }) 
 
   const { prev, next } = getAdjacentDocs(doc.href);
 
+  const url = `${site.url}${doc.slug === "" ? "/docs/" : `/docs/${doc.slug}/`}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle",
+        "@id": `${url}#article`,
+        headline: doc.title,
+        description: doc.description,
+        url,
+        inLanguage: "en",
+        isPartOf: { "@type": "WebSite", name: "agentty", url: site.url },
+        about: { "@type": "SoftwareApplication", name: "agentty", applicationCategory: "DeveloperApplication" },
+        publisher: { "@type": "Organization", name: "agentty", url: site.url },
+        image: `${url}opengraph-image`,
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: `${site.url}/` },
+          { "@type": "ListItem", position: 2, name: "Docs", item: `${site.url}/docs/` },
+          ...(doc.slug ? [{ "@type": "ListItem", position: 3, name: doc.title, item: url }] : []),
+        ],
+      },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <header className="doc-head">
         <Breadcrumb title={doc.title} />
         <h1>{doc.title}</h1>
