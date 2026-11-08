@@ -1,0 +1,149 @@
+{
+ "measured": "2026-11-08T23:25:03.457Z",
+ "machine": {
+  "cpu": "Intel(R) Core(TM) i5-6200U CPU @ 2.30GHz",
+  "threads": 4,
+  "memGB": 16,
+  "os": "Linux 7.2.9-zen1-1-zen",
+  "node": "v26.10.0"
+ },
+ "method": "fresh empty HOME per tool, no login, no network needed; runs interleaved round-robin across tools so background load is shared equally",
+ "tools": [
+  {
+   "id": "agentty",
+   "name": "agentty",
+   "version": "agentty 0.9.51",
+   "startupMs": {
+    "median": 2.5,
+    "p10": 2.3,
+    "p90": 4.6,
+    "runs": 30
+   },
+   "readyMs": {
+    "median": 49.4,
+    "p10": 36.7,
+    "p90": 75.4,
+    "runs": 10
+   },
+   "idleRssMB": 21.4,
+   "diskMB": 23,
+   "packageMB": 23,
+   "runtime": null
+  },
+  {
+   "id": "claude",
+   "name": "Claude Code",
+   "version": "2.1.319 (Claude Code)",
+   "startupMs": {
+    "median": 14.2,
+    "p10": 13.5,
+    "p90": 21.7,
+    "runs": 30
+   },
+   "readyMs": {
+    "median": 638.1,
+    "p10": 581.4,
+    "p90": 1514.9,
+    "runs": 10
+   },
+   "idleRssMB": 151.5,
+   "diskMB": 324.7,
+   "packageMB": 324.7,
+   "runtime": null
+  },
+  {
+   "id": "codex",
+   "name": "Codex CLI",
+   "version": "codex-cli 0.167.0",
+   "startupMs": {
+    "median": 77.8,
+    "p10": 70.4,
+    "p90": 132.7,
+    "runs": 30
+   },
+   "readyMs": {
+    "median": 449,
+    "p10": 361.1,
+    "p90": 993.4,
+    "runs": 10
+   },
+   "idleRssMB": 151.2,
+   "diskMB": 536.2,
+   "packageMB": 437.4,
+   "runtime": {
+    "name": "node",
+    "MB": 98.8
+   }
+  },
+  {
+   "id": "gemini",
+   "name": "Gemini CLI",
+   "version": "0.67.0",
+   "startupMs": {
+    "median": 2630.5,
+    "p10": 2484.7,
+    "p90": 4098.2,
+    "runs": 30
+   },
+   "readyMs": {
+    "median": 3004.8,
+    "p10": 2967.2,
+    "p90": 6650.5,
+    "runs": 10
+   },
+   "idleRssMB": 439.9,
+   "diskMB": 196.9,
+   "packageMB": 98.1,
+   "runtime": {
+    "name": "node",
+    "MB": 98.8
+   }
+  },
+  {
+   "id": "opencode",
+   "name": "opencode",
+   "version": "1.19.5",
+   "startupMs": {
+    "median": 800.8,
+    "p10": 729.1,
+    "p90": 1313.7,
+    "runs": 30
+   },
+   "readyMs": {
+    "median": 5248.9,
+    "p10": 4942.4,
+    "p90": 9620.9,
+    "runs": 10
+   },
+   "idleRssMB": 669.3,
+   "diskMB": 408.9,
+   "packageMB": 408.9,
+   "runtime": null
+  },
+  {
+   "id": "aider",
+   "name": "Aider",
+   "version": "aider 0.86.2",
+   "startupMs": {
+    "median": 1089.1,
+    "p10": 1040.4,
+    "p90": 1870.6,
+    "runs": 30
+   },
+   "readyMs": {
+    "median": 1047.9,
+    "p10": 967.6,
+    "p90": 1693.5,
+    "runs": 10
+   },
+   "idleRssMB": 73.7,
+   "diskMB": 653,
+   "packageMB": 653,
+   "runtime": {
+    "name": "python",
+    "MB": null,
+    "note": "uv-managed CPython 3.12 (what aider's official installer uses)"
+   }
+  }
+ ]
+}
