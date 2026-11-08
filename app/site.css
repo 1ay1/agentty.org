@@ -322,7 +322,7 @@ body:has(.home) { --gutter: 24px; }
 .home-install > span { color: var(--text-faint); font-size: 12.5px; }
 .home-links {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px;
-  margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--border-soft); font-size: 13.5px;
+  margin-top: 36px; font-size: 13.5px;
 }
 .home-links a { color: var(--text); text-decoration: none; }
 .home-links a:hover { color: var(--accent); text-decoration: underline; }
