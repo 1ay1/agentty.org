@@ -59,7 +59,17 @@ echo "==> Fetching GitHub repo stats (stars + forks)"
 # on a network error / rate-limit — keeps the committed repo data.
 node scripts/fetch-repo.mjs || echo "   (repo-stats fetch skipped; using committed data)"
 
-npm run build
+# Next's static export intermittently dies at its last step (ENOENT renaming
+# .next/export/*.html, a webpack cache pack, or a manifest) and leaves no
+# out/index.html. Retry once from a pristine tree, and never sync an
+# incomplete export over the live site.
+build_ok() { [ -f "$PROJECT/out/index.html" ] && [ -f "$PROJECT/out/sitemap.xml" ] && [ -d "$PROJECT/out/docs" ]; }
+for attempt in 1 2; do
+  if npm run build && build_ok; then break; fi
+  if [ "$attempt" = 2 ]; then echo "!! build failed twice — leaving the live site untouched" >&2; exit 1; fi
+  echo "==> build failed (attempt $attempt); retrying from a clean tree"
+  rm -rf "$PROJECT/.next" "$PROJECT/out" "$PROJECT/node_modules/.cache" 2>/dev/null || true
+done
 
 echo "==> Pre-compressing static assets (gzip) for gzip_static"
 # Build .gz siblings for the hashed, long-cached assets so nginx can serve
