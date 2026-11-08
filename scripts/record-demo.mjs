@@ -106,7 +106,7 @@ git("add", "-A");
 git("commit", "-q", "-m", "initial import");
 
 // agentty's own settings (what the Appearance → Scheme picker writes): the
-// demo renders in the Flexoki Dark theme.
+// demo renders in the Flexoki Dark theme; everything else is agentty's default.
 const THEME = process.env.DEMO_THEME || "Flexoki Dark";
 // the terminal's own default colours for that scheme: agentty asks for them
 // (OSC 10/11) and the replay paints its background/foreground with them
@@ -254,9 +254,7 @@ const frames = [];
 const t0 = Date.now();
 let last = t0;
 const env = { ...process.env, HOME: "/home/dev", USER: "dev", TERM: "xterm-256color", COLORTERM: "truecolor", AGENTTY_PROFILE: "write",
-  // no streaming-reveal effect: its hex-dump overlay reads as noise once
-  // frozen into replay frames (REVEAL_DECORATE=0 alone doesn't remove it)
-  AGENTTY_REVEAL: "0" };
+};
 for (const k of ["NO_COLOR", "PAGER", "GIT_TERMINAL_PROMPT", "CI"]) delete env[k];
 // present the project at a neutral /home/dev/app so no host paths leak into the recording
 const pty = ptySpawn("bwrap", [
