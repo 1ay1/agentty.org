@@ -69,7 +69,7 @@ function cellStyle(c) {
 
 const rec = JSON.parse(fs.readFileSync(IN, "utf8"));
 if (rec.theme) { FG = rec.theme.fg; BG = rec.theme.bg; }
-const term = new Terminal({ cols: rec.cols, rows: rec.rows, allowProposedApi: true, scrollback: 0 });
+const term = new Terminal({ cols: rec.cols, rows: rec.rows, allowProposedApi: true, scrollback: 100000 });
 const write = (s) => new Promise((r) => term.write(s, r));
 
 const styles = [[null, null, 0]], styleIdx = new Map([[JSON.stringify(styles[0]), 0]]);
@@ -146,55 +146,64 @@ function segRow(runs) {
   return out;
 }
 
-// Resample onto a fixed 30fps clock: at every tick, feed the parser all bytes
-// written up to that instant and take a full-screen snapshot. Output before
-// `startMs` (agentty booting) folds into the first snapshot, so the replay
-// opens on the settled screen.
-const snaps = [];   // [tick, rowKeys[], rowRuns[]]
+// Resample onto a fixed 30fps clock and snapshot the VIEWPORT at every tick,
+// addressed by absolute buffer line (scrollback included). agentty renders
+// inline, so as the session grows its output scrolls up into scrollback just
+// like a real terminal — the replay keeps every line and gets a scrollbar.
+// Lines are numbered from the top of the screen at the first tick, so boot
+// output that scrolled away before the replay starts is dropped. Output
+// before `startMs` folds into the first snapshot.
+const snaps = [];   // [tick, base, keys[], runs[]]  — rows base..base+rows-1
 const events = [];
 { let t = 0; for (const [d, s] of rec.frames) { t += d; events.push([t, s]); } }
 const end = events.length ? events[events.length - 1][0] : 0;
-let e = 0;
+let e = 0, base0 = -1;
 const tick0 = Math.ceil((rec.startMs || 0) / FRAME_MS);
 for (let tick = tick0; tick * FRAME_MS <= end + FRAME_MS; tick++) {
   let buf = "";
   while (e < events.length && events[e][0] <= tick * FRAME_MS) buf += events[e++][1];
   if (!buf && snaps.length) continue;
   if (buf) await write(buf);
-  const runs = Array.from({ length: rec.rows }, (_, y) => segRow(snapshotRow(y)));
+  const by = term.buffer.active.baseY;
+  if (base0 < 0) base0 = by;
+  const runs = Array.from({ length: rec.rows }, (_, i) => segRow(snapshotRow(by + i)));
   const keys = runs.map((r) => JSON.stringify(r));
-  const last = snaps[snaps.length - 1];
-  if (last && keys.every((k, y) => k === last[1][y])) continue;
-  snaps.push([tick, keys, runs]);
+  const last = snaps[snaps.length - 1], base = by - base0;
+  if (last && last[1] === base && keys.every((k, i) => k === last[2][i])) continue;
+  snaps.push([tick, base, keys, runs]);
 }
 
 // Drop one-tick layout spikes. agentty sometimes redraws its live region a
-// couple of rows shorter for a single frame (an erase-below + redraw while
-// the reveal line is swapped out) and regrows it on the very next frame. A
+// couple of rows shorter for a single frame and regrows it on the next one. A
 // real 60Hz terminal shows that for ~16ms; held for a full 33ms replay frame
 // it reads as the composer jumping. A spike = a frame far from BOTH
 // neighbours while the neighbours are close to each other, all within two
-// ticks — so genuine layout changes (which persist) are never touched.
-const dist = (a, b) => a[1].reduce((n, k, y) => n + (k !== b[1][y]), 0);
+// ticks and without scrolling — genuine layout changes are never touched.
+const dist = (a, b) => a[2].reduce((n, k, i) => n + (k !== b[2][i]), 0);
 let dropped = 0;
 for (let k = 1; k + 1 < snaps.length; k++) {
   const [a, b, c] = [snaps[k - 1], snaps[k], snaps[k + 1]];
-  if (c[0] - b[0] > 2) continue;
+  if (c[0] - b[0] > 2 || a[1] !== b[1] || b[1] !== c[1]) continue;
   const ab = dist(a, b), bc = dist(b, c), ac = dist(a, c);
   if (ab >= 4 && bc >= 4 && ac <= Math.min(ab, bc) - 3) { snaps.splice(k, 1); k--; dropped++; }
 }
 
-// Emit row diffs between consecutive kept snapshots; each frame's delay is a
-// whole number of ticks, so playback lands on an even 30fps grid.
-const frames = [];
+// Emit line diffs (absolute line numbers) between consecutive kept snapshots;
+// each frame's delay is a whole number of ticks — an even 30fps grid.
+const frames = [], cur = new Map();
+let lines = rec.rows;
 for (let k = 0; k < snaps.length; k++) {
-  const [tick, keys, runs] = snaps[k], prev = snaps[k - 1];
+  const [tick, base, keys, runs] = snaps[k], prev = snaps[k - 1];
   const changed = [];
-  for (let y = 0; y < rec.rows; y++) if (!prev || keys[y] !== prev[1][y]) changed.push([y, runs[y]]);
+  for (let i = 0; i < rec.rows; i++) {
+    const y = base + i;
+    if (cur.get(y) !== keys[i]) { cur.set(y, keys[i]); changed.push([y, runs[i]]); }
+  }
+  lines = Math.max(lines, base + rec.rows);
   frames.push([prev ? tick - prev[0] : 0, changed]);
 }
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify({ fps: FPS, cols: rec.cols, rows: rec.rows, fg: FG, bg: BG, styles, classes, frames }));
+fs.writeFileSync(OUT, JSON.stringify({ fps: FPS, cols: rec.cols, rows: rec.rows, lines, fg: FG, bg: BG, styles, classes, frames }));
 const total = Math.round(frames.reduce((a, f) => a + f[0], 0) * FRAME_MS);
-console.log(`frames ${rec.frames.length} -> ${frames.length} @${FPS}fps (${dropped} layout spikes dropped), styles ${styles.length}, ${total} ms, ${fs.statSync(OUT).size} bytes -> ${path.relative(ROOT, OUT)}`);
+console.log(`frames ${rec.frames.length} -> ${frames.length} @${FPS}fps (${dropped} layout spikes dropped), ${lines} lines, styles ${styles.length}, ${total} ms, ${fs.statSync(OUT).size} bytes -> ${path.relative(ROOT, OUT)}`);

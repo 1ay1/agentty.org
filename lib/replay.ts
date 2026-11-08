@@ -10,7 +10,7 @@ export type Seg = [number, number, string, number];
 export type Frame = [number, [number, Seg[]][]];             // [delay ticks, [row, segs][]]
 export type Style = [string | null, string | null, number];   // fg, bg, flags
 export type Screen = {
-  fps: number; cols: number; rows: number;
+  fps: number; cols: number; rows: number; lines?: number;   // rows = viewport, lines = with scrollback
   fg?: string; bg?: string;
   styles: Style[];
   classes: [number, string][];                               // classIndex → [style, drawn glyph hex | ""]

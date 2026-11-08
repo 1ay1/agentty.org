@@ -20,10 +20,13 @@ import { className, styleRule, type Frame, type Screen, type Seg } from "@/lib/r
  *     compositor layer, so a change re-lays-out and repaints one row only
  *   - does no allocation in the steady state, no string splitting, no
  *     measuring, no reads from layout — writes only, so no forced reflows
- *   - pauses off-screen / in background tabs; reduced-motion: last frame
+ *   - behaves like a terminal: output scrolls up into scrollback (rows are
+ *     appended as the session grows), the view follows the bottom unless the
+ *     reader scrolls up, and there's a real scrollbar
+ *   - plays once, then stays on the finished session (a "replay" button
+ *     appears); pauses off-screen / in background tabs; reduced-motion: the
+ *     finished session, painted once
  */
-
-const HOLD_MS = 4500;          // linger on the finished session before looping
 
 type Cell = { el: HTMLSpanElement; text: Text; c: number; t: string; w: number; gen: number };
 
@@ -45,7 +48,7 @@ export function ReplayTerminal({
     let pendingRows: number[] = [];
     let gen = 0;
     let disposed = false, loading = false, onScreen = false, started = false;
-    let raf = 0, i = 0, t0 = 0, pausedAt = 0, holdUntil = 0;
+    let raf = 0, i = 0, t0 = 0, pausedAt = 0, ended = false, follow = true;
     let due: Float64Array = new Float64Array(0);
     let sheet: CSSStyleSheet | null = null, styleEl: HTMLStyleElement | null = null;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -72,31 +75,54 @@ export function ReplayTerminal({
       }
       if (pool.size > segs.length) pool.forEach((c, k) => { if (c.gen !== g) { c.el.remove(); pool.delete(k); } });
     };
+    const addRows = (n: number) => {          // output scrolled: grow the buffer
+      while (rowEls.length < n) {
+        const d = document.createElement("div");
+        grid.append(d);
+        rowEls.push(d);
+        cells.push(new Map());
+      }
+    };
     const queue = (f: Frame) => {
       for (const [y, segs] of f[1]) { if (!pending[y]) pendingRows.push(y); pending[y] = segs; }
     };
     const flush = () => {
+      let max = 0;
+      for (const y of pendingRows) if (y > max) max = y;
+      addRows(max + 1);
       for (const y of pendingRows) { paint(y, pending[y]!); pending[y] = null; }
       pendingRows.length = 0;
+      if (follow) grid.scrollTop = grid.scrollHeight;   // stick to the bottom, like a terminal
     };
-    const restart = () => {
-      for (let y = 0; y < rows; y++) { if (!pending[y]) pendingRows.push(y); pending[y] = []; }
-      queue(data!.frames[0]);
+    const onScroll = () => {                  // reader scrolled up: stop following until back at the bottom
+      follow = grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 4;
     };
+    grid.addEventListener("scroll", onScroll, { passive: true });
+
+    const replayBtn = box.querySelector<HTMLButtonElement>(".replay-again");
+    const finish = () => { ended = true; if (replayBtn) replayBtn.hidden = false; };
+    const replay = () => {
+      if (!data) return;
+      for (let y = rowEls.length - 1; y >= rows; y--) rowEls[y].remove();
+      rowEls.length = rows; cells.length = rows;
+      for (let y = 0; y < rows; y++) { cells[y].forEach((c) => c.el.remove()); cells[y].clear(); }
+      pending = new Array(data.lines ?? rows).fill(null); pendingRows = [];
+      queue(data.frames[0]); flush();
+      grid.scrollTop = 0; follow = true;
+      ended = false; i = 1; t0 = performance.now(); pausedAt = 0;
+      if (replayBtn) replayBtn.hidden = true;
+      resume();
+    };
+    replayBtn?.addEventListener("click", replay);
 
     // ── clock ──────────────────────────────────────────────────────────────
     const loop = (now: number) => {
       raf = 0;
-      if (disposed || !data || !onScreen || document.hidden) return;
-      if (holdUntil) {
-        if (now < holdUntil) { raf = requestAnimationFrame(loop); return; }
-        holdUntil = 0; t0 = now; i = 1;
-        restart();
-      }
+      if (disposed || !data || !onScreen || document.hidden || ended) return;
       const tick = ((now - t0) * data.fps) / 1000;
       while (i < data.frames.length && due[i] <= tick) queue(data.frames[i++]);
       if (pendingRows.length) flush();
-      if (i >= data.frames.length) holdUntil = now + HOLD_MS;
+      if (i >= data.frames.length) return finish();   // play once, stay on the result
       raf = requestAnimationFrame(loop);
     };
     const pause = () => {
@@ -105,11 +131,10 @@ export function ReplayTerminal({
       if (started && !pausedAt) pausedAt = performance.now();
     };
     const resume = () => {
-      if (!started || raf || !onScreen || document.hidden) return;
+      if (!started || raf || ended || !onScreen || document.hidden) return;
       if (pausedAt) {                      // shift the clock: continue, don't jump
         const gap = performance.now() - pausedAt;
         t0 += gap;
-        if (holdUntil) holdUntil += gap;
         pausedAt = 0;
       }
       raf = requestAnimationFrame(loop);
@@ -138,7 +163,7 @@ export function ReplayTerminal({
 
       // adopt the server-rendered rows and spans as the live pool
       rowEls = Array.from(grid.children) as HTMLElement[];
-      pending = new Array(rows).fill(null);
+      pending = new Array(data.lines ?? rows).fill(null);
       cells = rowEls.map((row, y) => {
         const pool = new Map<number, Cell>();
         const first = data!.frames[0][1].find((r) => r[0] === y)?.[1] ?? [];
@@ -152,10 +177,10 @@ export function ReplayTerminal({
         return pool;
       });
 
-      if (reduce) {                        // final screen, painted once
+      if (reduce) {                        // the finished session, painted once
         for (const f of data.frames) queue(f);
         flush();
-        return;
+        return finish();
       }
       i = 1;
       started = true;
@@ -178,6 +203,8 @@ export function ReplayTerminal({
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
       io.disconnect();
+      grid.removeEventListener("scroll", onScroll);
+      replayBtn?.removeEventListener("click", replay);
       document.removeEventListener("visibilitychange", onVis);
       if (sheet) document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== sheet);
       styleEl?.remove();
@@ -188,11 +215,11 @@ export function ReplayTerminal({
 
   return (
     <div className="replay" ref={boxRef}>
-      <div className="replay-bar">$ agentty — ~/app</div>
       <div className="replay-screen">
-        <div className="replay-grid" ref={gridRef} style={vars} aria-hidden="true">
+        <div className="replay-grid" ref={gridRef} style={vars} aria-hidden="true" tabIndex={-1}>
           {children}
         </div>
+        <button type="button" className="replay-again" hidden>replay ↻</button>
       </div>
       <p className="sr-only">
         Recorded agentty session: it plans the work, runs the failing tests, maps the project with

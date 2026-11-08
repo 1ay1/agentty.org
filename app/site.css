@@ -405,14 +405,13 @@ body:has(.home) { --gutter: 24px; }
 
 /* ── demo terminal (ReplayTerminal) ───────────────────────────────────── */
 .replay { border: 1px solid var(--border); background: #100f0f; contain: layout paint style; isolation: isolate; }
-.replay-bar { display: none; }
-.replay-bar { padding: 6px 12px; border-bottom: 1px solid #282726; color: #878580; font-size: var(--fs-sm); }
-.replay-screen { padding: 16px 18px; overflow: hidden; container-type: inline-size; }
+.replay-screen { position: relative; padding: 16px 6px 16px 18px; overflow: hidden; container-type: inline-size; }
 /* --cols × --rows cells. JetBrains Mono's advance is 0.6em, so the cell width
    sets the font size; the row height snaps to device pixels (no seams). */
 .replay-grid {
   --t: max(1px, .075em);
-  --cw: calc(100cqi / var(--cols));
+  --sb: 12px;                          /* scrollbar gutter, kept out of the cells */
+  --cw: calc((100cqi - var(--sb)) / var(--cols));
   --rh: calc(var(--cw) * 2);
   font-family: var(--mono);
   font-size: calc(var(--cw) / .6);
@@ -423,17 +422,32 @@ body:has(.home) { --gutter: 24px; }
   font-kerning: none;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
-  overflow: hidden;
+  /* a terminal: scrollback above, a scrollbar, follows the bottom */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #403e3c transparent;
   contain: strict;
-  will-change: transform;
+  outline: none;
 }
+.replay-grid::-webkit-scrollbar { width: var(--sb); }
+.replay-grid::-webkit-scrollbar-thumb { background: #403e3c; border: 3px solid #100f0f; background-clip: padding-box; }
+.replay-grid::-webkit-scrollbar-thumb:hover { background: #575653; background-clip: padding-box; }
+.replay-again {
+  position: absolute; right: 22px; bottom: 10px; padding: 2px 8px; cursor: pointer;
+  background: #100f0f; border: 1px solid #403e3c; color: #b7b5ac; font: inherit; font-size: var(--fs-sm);
+}
+.replay-again:hover { color: #cecdc3; border-color: #6f6e69; }
 @supports (width: round(down, 1px, 1px)) {
   .replay-grid { --step: 1px; --rh: round(calc(var(--cw) * 2), var(--step)); --t: max(var(--step), round(calc(var(--cw) * .125), var(--step))); }
   @media (resolution >= 2dppx) { .replay-grid { --step: .5px; } }
 }
 .replay-grid > div { position: relative; height: var(--rh); contain: strict; }
 .replay-grid span { position: absolute; top: 0; height: 100%; overflow: visible; }
-@media (max-width: 720px) { .replay-screen { padding: 8px; } }
+@media (max-width: 720px) { .replay-screen { padding: 8px 2px 8px 8px; } .replay-grid { --sb: 8px; } }
 
 /* ── phone ────────────────────────────────────────────────────────────── */
 @media (max-width: 720px) {
