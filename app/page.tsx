@@ -19,14 +19,13 @@ export default function Home() {
         <figcaption>a real agentty session, replayed from the terminal</figcaption>
       </figure>
 
-      <section>
-        <h2>Install</h2>
-        <CopyRow cmd={site.installOneLiner} />
-        <p className="dim">Linux, macOS, Windows · x86_64 &amp; aarch64. Same line updates it.</p>
-      </section>
-
-      <section>
+      <section className="home-info">
         <dl className="home-facts">
+          <dt>install</dt>
+          <dd className="home-install">
+            <CopyRow cmd={site.installOneLiner} />
+            <span>Linux, macOS, Windows · x86_64 &amp; aarch64 · same line updates it</span>
+          </dd>
           <dt>sandbox</dt><dd>kernel-enforced by claybin; <code>~/.ssh</code>, <code>~/.aws</code>, <code>.env</code> masked</dd>
           <dt>models</dt><dd>switch live: <kbd>^P</kbd> provider, <kbd>^/</kbd> model</dd>
           <dt>editors</dt><dd>Zed over ACP; MCP both ways</dd>
