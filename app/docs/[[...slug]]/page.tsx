@@ -40,7 +40,11 @@ export async function generateMetadata({
     title: seoTitle(doc.title, "docs"),
     description: seoDescription(doc.description),
     alternates: { canonical },
-    openGraph: { title: doc.title, description: doc.description, url: site.url + canonical },
+    openGraph: {
+      type: "article", title: doc.title, description: seoDescription(doc.description), url: site.url + canonical,
+      images: [{ url: `/og/docs/${doc.slug || "index"}.png`, width: 1200, height: 630, alt: doc.title }],
+    },
+    twitter: { card: "summary_large_image", title: doc.title, description: seoDescription(doc.description), images: [`/og/docs/${doc.slug || "index"}.png`] },
   };
 }
 
@@ -65,7 +69,7 @@ export default async function DocsPage({ params }: { params: Promise<Params> }) 
         isPartOf: { "@type": "WebSite", name: "agentty", url: site.url },
         about: { "@type": "SoftwareApplication", name: "agentty", applicationCategory: "DeveloperApplication" },
         publisher: { "@type": "Organization", name: "agentty", url: site.url },
-        image: `${url}opengraph-image`,
+        image: `${site.url}/og/docs/${doc.slug || "index"}.png`,
       },
       {
         "@type": "BreadcrumbList",
