@@ -1,272 +1,156 @@
-// Tiny, dependency-free Markdown → HTML for the blog. Deliberately NOT remark/
-// mdx: the site ships zero runtime deps and renders docs as hand-written JSX, so
-// a blog post is just a Markdown string turned into a safe HTML string at build
-// time. Supports the subset a changelog/announcement post actually needs:
-// headings, paragraphs, fenced + inline code, bold/italic, links, images,
-// ordered/unordered lists, blockquotes, hr, and tables. Output is sanitized by
-// construction (we escape all text; we only emit a fixed tag set).
-
+// Markdown → HTML for every content page (docs, blog, guides, compare, pages,
+// changelog). Build time only: markdown-it is a full CommonMark parser, so
+// nested lists, code blocks inside list items, multi-paragraph items, tables,
+// and blockquotes all render correctly. Raw HTML in content is NOT passed
+// through (html: false) — output is safe by construction.
+//
+// Site extensions on top of CommonMark:
+//   [[Ctrl+K]]                  → <kbd>Ctrl+K</kbd>
+//   :::tip|note|warn [label]    → callout (body is full markdown); aliases:
+//   … :::                         warning, caution, danger, important, info, hint
+//   :::release-table            → directive sentinel, rendered by DocBody
+//   ```lang                     → build-time syntax highlighting (lib/highlight)
+//   headings                    → stable unique ids + a self-link anchor
+//   external links              → open in a new tab, marked ↗
+import MarkdownIt from "markdown-it";
+import container from "markdown-it-container";
 import { highlight } from "./highlight";
 
 export type MdHeading = { id: string; text: string; level: number };
 
 const esc = (s: string) =>
-  s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-// Inline: code spans first (so their contents aren't further formatted), then
-// images, links, bold, italic. Operates on already-escaped text.
-function inline(text: string): string {
-  // pull out `code` spans, replace with placeholders, restore at the end
-  const codes: string[] = [];
-  let out = text.replace(/`([^`]+)`/g, (_m, c) => {
-    codes.push(`<code>${c}</code>`);
-    return `\u0000${codes.length - 1}\u0000`;
-  });
-
-  out = out
-    // keyboard chips [[Ctrl+K]] -> <kbd>Ctrl+K</kbd>
-    .replace(/\[\[([^\]]+)\]\]/g, (_m, k) => `<kbd>${k}</kbd>`)
-    // images ![alt](src)
-    .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_m, alt, src) => `<img src="${src}" alt="${alt}" loading="lazy" />`)
-    // links [text](href)
-    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, t, href) => {
-      const ext = /^https?:\/\//.test(href);
-      // external links get a ↗ marker (class "ext") unless the text already has one
-      const rel = ext ? ` target="_blank" rel="noopener noreferrer"${/[\u2197]\s*$/.test(t) || /<code>/.test(t) ? "" : ' class="ext"'}` : "";
-      return `<a href="${href}"${rel}>${t}</a>`;
-    })
-    // bold **x** / __x__
-    .replace(/(\*\*|__)(?=\S)([\s\S]+?\S)\1/g, "<strong>$2</strong>")
-    // italic *x* / _x_
-    .replace(/(\*|_)(?=\S)([\s\S]+?\S)\1/g, "<em>$2</em>");
-
-  // restore code spans
-  out = out.replace(/\u0000(\d+)\u0000/g, (_m, i) => codes[Number(i)]);
-  return out;
-}
-
-export function markdownToHtml(md: string): string {
-  return renderMarkdown(md).html;
-}
-
-// slug for a heading: lowercase words joined by '-', markup stripped
 const slugify = (raw: string) =>
   raw
     .trim()
     .toLowerCase()
-    .replace(/`/g, "")
-    .replace(/\[\[([^\]]+)\]\]/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-") || "section";
 
-export function renderMarkdown(md: string, ids: Map<string, number> = new Map()): { html: string; headings: MdHeading[] } {
-  const lines = md.replace(/\r\n/g, "\n").split("\n");
-  const html: string[] = [];
-  const headings: MdHeading[] = [];
-  let i = 0;
+const CALLOUTS: Record<string, [string, string]> = {
+  note: ["note", "Note"], info: ["note", "Note"], important: ["note", "Important"],
+  tip: ["tip", "Tip"], hint: ["tip", "Tip"],
+  warn: ["warn", "Warning"], warning: ["warn", "Warning"], caution: ["warn", "Caution"], danger: ["warn", "Danger"],
+};
 
-  const flushParagraph = (buf: string[]) => {
-    if (buf.length) html.push(`<p>${inline(esc(buf.join(" ").trim()))}</p>`);
-    buf.length = 0;
+type Env = { ids: Map<string, number>; headings: MdHeading[] };
+
+function build(): MarkdownIt {
+  const md = new MarkdownIt({ html: false, linkify: false, typographer: false });
+
+  // [[keys]] → <kbd>
+  md.inline.ruler.before("link", "kbd", (state, silent) => {
+    const src = state.src, pos = state.pos;
+    if (src.charCodeAt(pos) !== 0x5b || src.charCodeAt(pos + 1) !== 0x5b) return false;
+    const end = src.indexOf("]]", pos + 2);
+    if (end < 0 || end === pos + 2 || src.slice(pos + 2, end).includes("\n")) return false;
+    if (!silent) {
+      const t = state.push("kbd", "", 0);
+      t.content = src.slice(pos + 2, end);
+    }
+    state.pos = end + 2;
+    return true;
+  });
+  md.renderer.rules.kbd = (tokens, i) => `<kbd>${esc(tokens[i].content)}</kbd>`;
+
+  // callouts
+  md.use(container, "callout", {
+    validate: (params: string) => {
+      const m = params.trim().match(/^([a-z]+)\b/);
+      return !!m && m[1] in CALLOUTS;
+    },
+    render: (tokens: { nesting: number; info: string }[], i: number) => {
+      if (tokens[i].nesting !== 1) return "</aside>\n";
+      const m = tokens[i].info.trim().match(/^([a-z]+)\s*(.*)$/)!;
+      const [type, dflt] = CALLOUTS[m[1]];
+      const cls = type === "note" ? "note" : `note ${type}`;
+      return `<aside class="${cls}" role="note"><span class="label">${md.renderInline(m[2].trim() || dflt)}</span>\n`;
+    },
+  });
+
+  // fenced code → highlighted block with header (language, copy)
+  md.renderer.rules.fence = (tokens, i) => {
+    const t = tokens[i];
+    const { html, label } = highlight(t.content.replace(/\n$/, ""), t.info.split(/\s+/)[0] || "");
+    return (
+      `<div class="codeblock"><div class="codeblock-head"><span>${esc(label)}</span>` +
+      `<button type="button" class="codeblock-copy" aria-label="Copy code">copy</button></div>` +
+      `<pre class="code"><code>${html}</code></pre></div>\n`
+    );
+  };
+  md.renderer.rules.code_block = (tokens, i) =>
+    `<div class="codeblock"><div class="codeblock-head"><span></span><button type="button" class="codeblock-copy" aria-label="Copy code">copy</button></div>` +
+    `<pre class="code"><code>${esc(tokens[i].content.replace(/\n$/, ""))}</code></pre></div>\n`;
+
+  // headings: unique ids, self-link anchor, collected for TOC / search
+  md.renderer.rules.heading_open = (tokens, i, _o, env: Env) => {
+    const level = Number(tokens[i].tag.slice(1));
+    const inline = tokens[i + 1];
+    const plain = (inline.children ?? [])
+      .filter((c) => c.type === "text" || c.type === "code_inline" || c.type === "kbd")
+      .map((c) => c.content)
+      .join("");
+    const base = slugify(plain);
+    const n = env.ids.get(base) ?? 0;
+    env.ids.set(base, n + 1);
+    const id = n ? `${base}-${n}` : base;
+    env.headings.push({ id, text: plain.trim(), level });
+    (tokens[i] as unknown as { _id: string })._id = id;
+    return `<h${level} id="${id}">`;
+  };
+  md.renderer.rules.heading_close = (tokens, i) => {
+    const level = Number(tokens[i].tag.slice(1));
+    const open = tokens[i - 2] as unknown as { _id: string };
+    return level >= 2
+      ? `<a class="anchor" href="#${open._id}" aria-label="Link to this section"></a></h${level}>\n`
+      : `</h${level}>\n`;
   };
 
-  let para: string[] = [];
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // directive: a lone `:::release-table` (etc.) becomes a sentinel the page
-    // hydrates into a live component. Kept out of the escaped text stream.
-    const directive = line.match(/^:::(release-table)\s*$/);
-    if (directive) {
-      flushParagraph(para);
-      html.push(`<div data-directive="${directive[1]}"></div>`);
-      i++;
-      continue;
-    }
-
-    // callout block:  :::note | :::tip | :::warn [optional label]
-    //   ...body lines...
-    // :::
-    // Common aliases (GitHub / Docusaurus spellings) map onto the three styles.
-    const callout = line.match(/^:::(note|tip|warn|warning|caution|danger|important|info|hint)\b\s*(.*)$/);
-    if (callout && !/^:::(release-table)/.test(line)) {
-      flushParagraph(para);
-      const ALIAS: Record<string, [string, string]> = {
-        warning: ["warn", "Warning"], caution: ["warn", "Caution"], danger: ["warn", "Danger"],
-        important: ["note", "Important"], info: ["note", "Note"], hint: ["tip", "Tip"],
-      };
-      const [type, defaultLabel] = ALIAS[callout[1]] ?? [
-        callout[1],
-        callout[1] === "warn" ? "Warning" : callout[1] === "tip" ? "Tip" : "Note",
-      ];
-      const label = callout[2].trim() || defaultLabel;
-      const inner: string[] = [];
-      i++;
-      while (i < lines.length && !/^:::\s*$/.test(lines[i])) {
-        inner.push(lines[i]);
-        i++;
+  // external links: new tab, ↗ marker (unless the text already has one or is code)
+  md.renderer.rules.link_open = (tokens, i, o, _env, self) => {
+    const t = tokens[i];
+    const href = t.attrGet("href") ?? "";
+    if (/^https?:\/\//.test(href)) {
+      t.attrSet("target", "_blank");
+      t.attrSet("rel", "noopener noreferrer");
+      let j = i + 1, text = "", hasCode = false;
+      for (; j < tokens.length && tokens[j].type !== "link_close"; j++) {
+        text += tokens[j].content;
+        if (tokens[j].type === "code_inline") hasCode = true;
       }
-      i++; // closing :::
-      const cls = type === "note" ? "note" : `note ${type}`;
-      const body = renderMarkdown(inner.join("\n"), ids);
-      html.push(
-        `<aside class="${cls}" role="note"><span class="label">${esc(label)}</span>${body.html}</aside>`,
-      );
-      continue;
+      if (!hasCode && !/\u2197\s*$/.test(text)) t.attrJoin("class", "ext");
     }
+    return self.renderToken(tokens, i, o);
+  };
 
-    // fenced code block ```lang
-    const fence = line.match(/^```([\w+#-]*)\s*$/);
-    if (fence) {
-      flushParagraph(para);
-      const code: string[] = [];
-      i++;
-      while (i < lines.length && !/^```\s*$/.test(lines[i])) {
-        code.push(lines[i]);
-        i++;
-      }
-      i++; // closing fence
-      const { html: codeHtml, label } = highlight(code.join("\n"), fence[1]);
-      html.push(
-        `<div class="codeblock">` +
-          `<div class="codeblock-head"><span>${esc(label)}</span>` +
-          `<button type="button" class="codeblock-copy" aria-label="Copy code">copy</button></div>` +
-          `<pre class="code"><code>${codeHtml}</code></pre></div>`,
-      );
-      continue;
-    }
+  // images lazy-load; tables scroll inside a frame
+  const img = md.renderer.rules.image!;
+  md.renderer.rules.image = (tokens, i, o, env, self) => {
+    tokens[i].attrSet("loading", "lazy");
+    return img(tokens, i, o, env, self);
+  };
+  md.renderer.rules.table_open = () => `<div class="tablewrap"><table>\n`;
+  md.renderer.rules.table_close = () => `</table></div>\n`;
 
-    // headings
-    const h = line.match(/^(#{1,4})\s+(.*)$/);
-    if (h) {
-      flushParagraph(para);
-      const level = h[1].length;
-      const text = inline(esc(h[2].trim()));
-      const base = slugify(h[2]);
-      const n = ids.get(base) ?? 0;
-      ids.set(base, n + 1);
-      const id = n ? `${base}-${n}` : base;
-      const plain = h[2].trim().replace(/`/g, "").replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\*\*|__/g, "");
-      headings.push({ id, text: plain, level });
-      html.push(
-        level >= 2
-          ? `<h${level} id="${id}">${text}<a class="anchor" href="#${id}" aria-label="Link to this section"></a></h${level}>`
-          : `<h${level} id="${id}">${text}</h${level}>`,
-      );
-      i++;
-      continue;
-    }
+  return md;
+}
 
-    // horizontal rule
-    if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
-      flushParagraph(para);
-      html.push("<hr />");
-      i++;
-      continue;
-    }
+let md: MarkdownIt | null = null;
 
-    // blockquote
-    if (/^>\s?/.test(line)) {
-      flushParagraph(para);
-      const quote: string[] = [];
-      while (i < lines.length && /^>\s?/.test(lines[i])) {
-        quote.push(lines[i].replace(/^>\s?/, ""));
-        i++;
-      }
-      html.push(`<blockquote>${inline(esc(quote.join(" ")))}</blockquote>`);
-      continue;
-    }
+const DIRECTIVE = /^:::(release-table)\s*$/gm;
 
-    // table: header row | --- | rows
-    if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
-      flushParagraph(para);
-      // Split on `|` but not inside `code` spans and not on escaped `\|`.
-      const cells = (row: string) => {
-        const inner = row.trim().replace(/^\||\|$/g, "");
-        const out: string[] = [];
-        let cur = "";
-        let inCode = false;
-        for (let k = 0; k < inner.length; k++) {
-          const ch = inner[k];
-          if (ch === "\\" && inner[k + 1] === "|") {
-            cur += "|";
-            k++;
-            continue;
-          }
-          if (ch === "`") inCode = !inCode;
-          if (ch === "|" && !inCode) {
-            out.push(cur.trim());
-            cur = "";
-            continue;
-          }
-          cur += ch;
-        }
-        out.push(cur.trim());
-        return out;
-      };
-      const head = cells(line);
-      i += 2; // skip header + separator
-      const rows: string[][] = [];
-      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) {
-        rows.push(cells(lines[i]));
-        i++;
-      }
-      const thead = `<thead><tr>${head.map((c) => `<th>${inline(esc(c))}</th>`).join("")}</tr></thead>`;
-      const tbody = `<tbody>${rows
-        .map((r) => `<tr>${r.map((c) => `<td>${inline(esc(c))}</td>`).join("")}</tr>`)
-        .join("")}</tbody>`;
-      html.push(`<div class="tablewrap"><table>${thead}${tbody}</table></div>`);
-      continue;
-    }
+export function renderMarkdown(src: string, ids: Map<string, number> = new Map()): { html: string; headings: MdHeading[] } {
+  md ??= build();
+  const env: Env = { ids, headings: [] };
+  // directives become a placeholder paragraph, swapped for a sentinel div
+  const text = src.replace(/\r\n/g, "\n").replace(DIRECTIVE, (_m, name) => `\n@@directive:${name}@@\n`);
+  const html = md
+    .render(text, env)
+    .replace(/<p>@@directive:([a-z-]+)@@<\/p>/g, (_m, name) => `<div data-directive="${name}"></div>`);
+  return { html, headings: env.headings };
+}
 
-    // lists (ordered / unordered), allowing nested via 2-space indent
-    if (/^\s*([-*+]|\d+\.)\s+/.test(line)) {
-      flushParagraph(para);
-      const ordered = /^\s*\d+\.\s+/.test(line);
-      const tag = ordered ? "ol" : "ul";
-      const items: string[] = [];
-      const itemRe = ordered ? /^\s*\d+\.\s+(.*)$/ : /^\s*[-*+]\s+(.*)$/;
-      const isItem = (l: string) => itemRe.test(l);
-      const startsBlock = (l: string) =>
-        l.trim() === "" ||
-        /^```/.test(l) ||
-        /^#{1,4}\s/.test(l) ||
-        /^>\s?/.test(l) ||
-        /^\s*\|.*\|\s*$/.test(l);
-      while (i < lines.length && isItem(lines[i])) {
-        const m = lines[i].match(itemRe)!;
-        let text = m[1];
-        i++;
-        // Fold soft-wrapped continuation lines (non-blank, not a new item or
-        // block start) into the current item so one bullet stays one <li>.
-        while (i < lines.length && !isItem(lines[i]) && !startsBlock(lines[i])) {
-          text += " " + lines[i].trim();
-          i++;
-        }
-        items.push(`<li>${inline(esc(text.trim()))}</li>`);
-      }
-      html.push(`<${tag}>${items.join("")}</${tag}>`);
-      continue;
-    }
-
-    // blank line ends a paragraph
-    if (line.trim() === "") {
-      flushParagraph(para);
-      i++;
-      continue;
-    }
-
-    // accumulate paragraph text
-    para.push(line);
-    i++;
-  }
-  flushParagraph(para);
-
-  return { html: html.join("\n"), headings };
+export function markdownToHtml(src: string): string {
+  return renderMarkdown(src).html;
 }
