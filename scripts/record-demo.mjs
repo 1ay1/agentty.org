@@ -180,9 +180,11 @@ function chunk(delta, finish = null) {
 const send = (res, o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
 
 // stream text in small word-ish pieces at a natural pace
-async function streamText(res, text, pace = 28) {
+// No artificial pacing: the mock answers instantly, so every delay in the
+// recording is agentty's own (rendering, its typewriter reveal, real tools).
+async function streamText(res, text) {
   const parts = text.match(/\S+\s*|\s+/g) || [];
-  for (const p of parts) { send(res, chunk({ content: p })); await sleep(pace + Math.random() * 30); }
+  for (const p of parts) send(res, chunk({ content: p }));
 }
 
 let callSeq = 0;
@@ -193,11 +195,10 @@ async function respond(res, messages) {
   const turn = messages.slice(lastUser + 1).filter((m) => m.role === "assistant").length;
   const step = STEPS[Math.min(turn, STEPS.length - 1)];
   const toolResults = messages.filter((m) => m.role === "tool").length;
-  await sleep(450); // time-to-first-token
   send(res, chunk({ role: "assistant", content: "" }));
   if (step.say) await streamText(res, step.say + "\n");
   if (step.final) {
-    await streamText(res, step.final, 22);
+    await streamText(res, step.final);
     send(res, chunk({}, "stop"));
     setTimeout(finished, 1500);
   } else {
@@ -209,7 +210,6 @@ async function respond(res, messages) {
       send(res, chunk({ tool_calls: [{ index: k, id, type: "function", function: { name, arguments: "" } }] }));
       for (let i = 0; i < json.length; i += 24) {
         send(res, chunk({ tool_calls: [{ index: k, function: { arguments: json.slice(i, i + 24) } }] }));
-        await sleep(10);
       }
     }
     send(res, chunk({}, "tool_calls"));
@@ -253,7 +253,10 @@ await new Promise((r) => srv.listen(11434, "::", r)); // dual-stack: localhost â
 const frames = [];
 const t0 = Date.now();
 let last = t0;
-const env = { ...process.env, HOME: "/home/dev", USER: "dev", TERM: "xterm-256color", COLORTERM: "truecolor", AGENTTY_PROFILE: "write" };
+const env = { ...process.env, HOME: "/home/dev", USER: "dev", TERM: "xterm-256color", COLORTERM: "truecolor", AGENTTY_PROFILE: "write",
+  // keep the real typewriter reveal; drop its decorative hex overlay, which
+  // reads as noise once frozen into replay frames
+  AGENTTY_REVEAL_DECORATE: "0" };
 for (const k of ["NO_COLOR", "PAGER", "GIT_TERMINAL_PROMPT", "CI"]) delete env[k];
 // present the project at a neutral /home/dev/app so no host paths leak into the recording
 const pty = ptySpawn("bwrap", [
