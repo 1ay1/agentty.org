@@ -296,7 +296,8 @@ td .win { color: var(--text); font-weight: 400; }
 .docs-toc a.active { color: var(--text); font-weight: 500; border-left-color: var(--accent); }
 
 /* reading column */
-.docs-main { font-size: 14px; line-height: 1.75; --doc-measure: 72ch; }
+/* the grid track is the measure (72ch); prose, callouts and code all fill it */
+.docs-main { font-size: 14px; line-height: 1.75; --doc-measure: 100%; }
 .breadcrumb { font-size: 12px; margin-bottom: 20px; gap: 6px; }
 .breadcrumb .sep { color: var(--border); }
 .docs-main h1 { font-size: 24px; letter-spacing: -0.01em; margin: 0 0 8px; }

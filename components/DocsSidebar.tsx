@@ -22,7 +22,7 @@ export function DocsSidebar() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
       >
-        <span>📚 {currentTitle}</span>
+        <span>{currentTitle}</span>
         <span>{open ? "▲" : "▼"}</span>
       </button>
       <aside className={`docs-side ${open ? "open" : ""}`} aria-label="Documentation">
