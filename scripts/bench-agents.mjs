@@ -65,50 +65,41 @@ function treeRss(pid) {
   return total;
 }
 
+// Every measurement is interleaved round-robin across tools (A B C … A B C …)
+// so background load on the machine lands on every tool equally.
+
 // ── startup: `--version` ───────────────────────────────────────────────────
-function startup(tool) {
-  const home = freshHome(), env = envFor(home), times = [];
-  for (let i = 0; i < 33; i++) {
-    const t0 = process.hrtime.bigint();
-    const r = spawnSync(tool.bin, ["--version"], { env, stdio: ["ignore", "pipe", "pipe"], timeout: 30000 });
-    const ms = Number(process.hrtime.bigint() - t0) / 1e6;
-    if (r.status !== 0) throw new Error(`${tool.id} --version exited ${r.status}: ${String(r.stderr).slice(0, 200)}`);
-    if (i >= 3) times.push(ms);                       // first 3 are warm-up
-  }
-  fs.rmSync(home, { recursive: true, force: true });
-  return stats(times);
+function oneVersion(tool, env) {
+  const t0 = process.hrtime.bigint();
+  const r = spawnSync(tool.bin, ["--version"], { env, stdio: ["ignore", "pipe", "pipe"], timeout: 30000 });
+  if (r.status !== 0) throw new Error(`${tool.id} --version exited ${r.status}: ${String(r.stderr).slice(0, 200)}`);
+  return Number(process.hrtime.bigint() - t0) / 1e6;
 }
 
 // ── launch: interactive UI in a pty, until the first screen settles ────────
-async function launch(tool, runs = 8) {
-  const times = [], rss = [];
-  for (let i = 0; i < runs + 1; i++) {
-    const home = freshHome();
-    fs.mkdirSync(`${home}/project`);
-    const t0 = performance.now();
-    const p = ptySpawn(tool.bin, [], { name: "xterm-256color", cols: 100, rows: 30, cwd: `${home}/project`, env: envFor(home) });
-    let last = 0, bytes = 0;
-    p.onData((d) => { bytes += d.length; last = performance.now(); });
-    // answer terminal queries like a real terminal would (cursor position, colours)
-    p.onData((d) => {
-      if (d.includes("\x1b[6n")) p.write("\x1b[30;1R");
-      if (d.includes("\x1b]11;?")) p.write("\x1b]11;rgb:1010/0f0f/0f0f\x1b\\");
-      if (d.includes("\x1b]10;?")) p.write("\x1b]10;rgb:cece/cdcd/c3c3\x1b\\");
-      if (d.includes("\x1b[c")) p.write("\x1b[?62;22c");
-    });
-    while (performance.now() - t0 < 30000) {
-      await sleep(20);
-      if (bytes > 200 && performance.now() - last >= 500) break;
-    }
-    const settled = last - t0;
-    const mem = treeRss(p.pid);
-    try { p.kill("SIGKILL"); } catch {}
-    await sleep(150);
-    fs.rmSync(home, { recursive: true, force: true });
-    if (i === 0) continue;                             // warm-up
-    times.push(settled); rss.push(mem);
+async function oneLaunch(tool) {
+  const home = freshHome();
+  fs.mkdirSync(`${home}/project`);
+  const t0 = performance.now();
+  const p = ptySpawn(tool.bin, [], { name: "xterm-256color", cols: 100, rows: 30, cwd: `${home}/project`, env: envFor(home) });
+  let last = 0, bytes = 0;
+  p.onData((d) => {
+    bytes += d.length; last = performance.now();
+    // answer terminal queries like a real terminal would
+    if (d.includes("\x1b[6n")) p.write("\x1b[30;1R");
+    if (d.includes("\x1b]11;?")) p.write("\x1b]11;rgb:1010/0f0f/0f0f\x1b\\");
+    if (d.includes("\x1b]10;?")) p.write("\x1b]10;rgb:cece/cdcd/c3c3\x1b\\");
+    if (d.includes("\x1b[c")) p.write("\x1b[?62;22c");
+  });
+  while (performance.now() - t0 < 30000) {
+    await sleep(20);
+    if (bytes > 200 && performance.now() - last >= 500) break;
   }
-  return { ready: stats(times), rssMB: +(rss.sort((a, b) => a - b)[rss.length >> 1] / 1048576).toFixed(1) };
+  const settled = last - t0, mem = treeRss(p.pid);
+  try { p.kill("SIGKILL"); } catch {}
+  await sleep(150);
+  fs.rmSync(home, { recursive: true, force: true });
+  return { settled, mem };
 }
 
 // ── run ────────────────────────────────────────────────────────────────────
@@ -117,23 +108,30 @@ const pythonNote = "uv-managed CPython 3.12 (what aider's official installer use
 const out = {
   measured: new Date().toISOString(),
   machine: { cpu: os.cpus()[0].model.trim(), threads: os.cpus().length, memGB: Math.round(os.totalmem() / 2 ** 30), os: `${os.type()} ${os.release()}`, node: process.version },
-  method: "fresh empty HOME per tool, no login, no network needed; sequential runs on an otherwise idle machine",
+  method: "fresh empty HOME per tool, no login, no network needed; runs interleaved round-robin across tools so background load is shared equally",
   tools: [],
 };
-for (const tool of TOOLS) {
-  const version = String(spawnSync(tool.bin, ["--version"], { env: envFor(os.tmpdir()), encoding: "utf8" }).stdout).trim().split("\n")[0];
-  process.stdout.write(`${tool.name.padEnd(12)} ${version.padEnd(28)} `);
-  const s = startup(tool);
-  process.stdout.write(`startup ${s.median}ms `);
-  const l = await launch(tool);
-  process.stdout.write(`ready ${l.ready.median}ms  rss ${l.rssMB}MB `);
+const versions = TOOLS.map((t) => String(spawnSync(t.bin, ["--version"], { env: envFor(os.tmpdir()), encoding: "utf8" }).stdout).trim().split("\n")[0]);
+const homes = TOOLS.map(() => freshHome()), envs = homes.map(envFor);
+const vt = TOOLS.map(() => []);
+for (let round = 0; round < 33; round++)
+  TOOLS.forEach((t, k) => { const ms = oneVersion(t, envs[k]); if (round >= 3) vt[k].push(ms); });
+homes.forEach((h) => fs.rmSync(h, { recursive: true, force: true }));
+console.log("startup done");
+const lt = TOOLS.map(() => []), lm = TOOLS.map(() => []);
+for (let round = 0; round < 9; round++)
+  for (const [k, t] of TOOLS.entries()) { const r = await oneLaunch(t); if (round >= 1) { lt[k].push(r.settled); lm[k].push(r.mem); } }
+console.log("launch done");
+for (const [k, tool] of TOOLS.entries()) {
+  const s = stats(vt[k]), ready = stats(lt[k]);
+  const rssMB = +(lm[k].sort((a, b) => a - b)[lm[k].length >> 1] / 1048576).toFixed(1);
   const pkg = [].concat(tool.dir).reduce((a, d) => a + du(d), 0);
   const runtime = tool.runtime === "node" ? nodeBytes : 0;
   const diskMB = +((pkg + runtime) / 1048576).toFixed(1);
-  console.log(`disk ${diskMB}MB${tool.runtime ? ` (incl. ${(runtime / 1048576).toFixed(0)}MB ${tool.runtime})` : ""}`);
+  console.log(`${tool.name.padEnd(12)} ${versions[k].slice(0, 26).padEnd(26)} startup ${String(s.median).padStart(7)}ms  ready ${String(ready.median).padStart(7)}ms  rss ${String(rssMB).padStart(6)}MB  disk ${diskMB}MB`);
   out.tools.push({
-    id: tool.id, name: tool.name, version,
-    startupMs: s, readyMs: l.ready, idleRssMB: l.rssMB,
+    id: tool.id, name: tool.name, version: versions[k],
+    startupMs: s, readyMs: ready, idleRssMB: rssMB,
     diskMB, packageMB: +(pkg / 1048576).toFixed(1),
     runtime: tool.runtime ? { name: tool.runtime, MB: +(runtime / 1048576).toFixed(1) } : tool.id === "aider" ? { name: "python", MB: null, note: pythonNote } : null,
   });
