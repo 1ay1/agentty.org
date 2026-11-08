@@ -26,21 +26,23 @@ export default function Home() {
       </section>
 
       <section>
-        <ul className="home-facts">
-          <li>Sandboxed shell: <code>bwrap</code> / <code>sandbox-exec</code>; <code>~/.ssh</code> stays out of reach.</li>
-          <li>Switch provider or model mid-thread with <code>^P</code>, no restart.</li>
-          <li>Runs in Zed over ACP; serves and consumes MCP.</li>
-          <li>Air-gap a whole session over SSH: <code>agentty airgap user@host</code>.</li>
-          <li>Saved threads, checkpoints you can rewind, subagents, local retrieval.</li>
-        </ul>
+        <dl className="home-facts">
+          <dt>sandbox</dt><dd>every shell call runs in <code>bwrap</code> / <code>sandbox-exec</code>; <code>~/.ssh</code> stays out of reach</dd>
+          <dt>models</dt><dd>switch provider or model mid-thread with <kbd>^P</kbd>, no restart</dd>
+          <dt>editors</dt><dd>runs in Zed over ACP; serves and consumes MCP</dd>
+          <dt>air-gap</dt><dd><code>agentty airgap user@host</code> runs a whole session over SSH</dd>
+          <dt>memory</dt><dd>saved threads, rewindable checkpoints, subagents, local retrieval</dd>
+        </dl>
       </section>
 
-      <p className="home-links">
-        <Link href="/docs">Docs</Link> · <Link href="/docs/quick-start">Quick start</Link> ·{" "}
-        <Link href="/docs/providers">Providers</Link> ·{" "}
-        <a href={repo.url} target="_blank" rel="noreferrer">GitHub ({starLabel})</a> ·{" "}
-        <a href={site.discord} target="_blank" rel="noopener noreferrer">Discord</a> · MIT
-      </p>
+      <nav className="home-links" aria-label="More">
+        <Link href="/docs">docs</Link>
+        <Link href="/docs/quick-start">quick start</Link>
+        <Link href="/docs/providers">providers</Link>
+        <a href={repo.url} target="_blank" rel="noreferrer">github <span>{starLabel}</span></a>
+        <a href={site.discord} target="_blank" rel="noopener noreferrer">discord</a>
+        <span className="home-license">MIT</span>
+      </nav>
     </div>
   );
 }

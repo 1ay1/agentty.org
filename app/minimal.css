@@ -147,10 +147,15 @@ body:has(.home) .nav-links a:first-child { padding-left: 0; }
 .home { max-width: 760px; margin: 0; padding: 40px 24px 56px var(--gutter); text-align: left; }
 .home-logo { margin: 0 0 18px; }
 .home-logo .agentty-logo { margin: 0; font-size: clamp(6px, 1.6vw, 10px) !important; }
-.home-facts { list-style: none; padding: 0; margin: 0; color: var(--text-dim); }
-.home-facts li { margin: 0 0 4px; }
-.home-facts li::before { content: "- "; color: var(--text-faint); }
-.home-links { margin-top: 28px; color: var(--text-faint); }
+.home-facts { display: grid; grid-template-columns: max-content 1fr; gap: 10px 28px; margin: 0; line-height: 1.55; }
+.home-facts dt { color: var(--text-faint); }
+.home-facts dd { margin: 0; color: var(--text-dim); }
+.home-facts code, .home-facts kbd { background: none; padding: 0; font: inherit; color: var(--text); }
+.home-links { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border-soft); font-size: 13.5px; }
+.home-links a { color: var(--text); text-decoration: none; }
+.home-links a:hover { color: var(--accent); text-decoration: underline; }
+.home-links a span, .home-license { color: var(--text-faint); }
+.home-license { margin-left: auto; }
 /* one line at any width: 43 chars × 0.6em advance ≈ 26em of content box */
 .home h1 { white-space: nowrap; font-size: min(24px, calc((min(760px, 100vw) - var(--gutter) - 24px) / 26.5)); margin: 0 0 6px; }
 
