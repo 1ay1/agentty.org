@@ -393,7 +393,12 @@ td .win { color: var(--text); font-weight: 400; }
   /* header: logo + one menu button — search/theme/discord/github live in the menu */
   .nav .cmdk-trigger, .nav .ghbtn, .nav .nav-cta > .theme-toggle, .nav-inner > .theme-toggle { display: none !important; }
   .nav-toggle { border-radius: 0 !important; background: none !important; border: 1px solid var(--border) !important; width: 40px; height: 36px; }
-  .mobile-menu { border-radius: 0 !important; box-shadow: none !important; }
+  .mobile-menu { border-radius: 0 !important; box-shadow: none !important; background: var(--bg) !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    padding-left: var(--gutter) !important; padding-right: var(--gutter) !important; border-bottom: 1px solid var(--border); }
+  .mobile-menu-links a { padding-left: 0 !important; padding-right: 0 !important; background: none !important; }
+  .mobile-menu-links a[aria-current] { color: var(--accent) !important; }
+  .mobile-util { background: none !important; border: 1px solid var(--border-soft) !important; }
   .mobile-menu a, .mobile-util { border-radius: 0 !important; min-height: 44px; display: flex; align-items: center; }
 
   /* comfortable tap targets for every navigational link */
