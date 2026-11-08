@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getAllPosts, getPost, getAdjacent, formatDate } from "@/lib/blog";
 import { site } from "@/lib/site";
 import { DocBody } from "@/components/DocBody";
+import { TableOfContents } from "@/components/TableOfContents";
 
 export function generateStaticParams() {
   return getAllPosts().map((p) => ({ slug: p.slug }));
@@ -53,7 +54,7 @@ export default async function BlogPost({
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) notFound();
-  const { next } = getAdjacent(slug);
+  const { next, prev } = getAdjacent(slug);
   const postUrl = `${site.url}/blog/${slug}/`;
   const ogImage = `${postUrl}opengraph-image`;
 
@@ -109,33 +110,48 @@ export default async function BlogPost({
   };
 
   return (
-    <article className="page post">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <nav className="breadcrumb" aria-label="Breadcrumb">
-        <Link href="/">Home</Link>
-        <span className="sep">/</span>
-        <Link href="/blog">Blog</Link>
-      </nav>
-      <h1>{post.title}</h1>
-      <p className="post-meta">
-        <time dateTime={post.date}>{formatDate(post.date)}</time> · {post.readingMinutes} min read · {post.author}
-        {post.tags.length > 0 && <> · {post.tags.join(", ")}</>}
-      </p>
-      <p className="lead">{post.excerpt}</p>
-      <DocBody html={post.html} />
-      <nav className="docnav" aria-label="More">
-        {next ? (
-          <Link href={`/blog/${next.slug}`} className="next">
-            <span className="dir">Next post →</span>
-            {next.title}
-          </Link>
-        ) : (
-          <Link href="/blog" className="next">
-            <span className="dir">Blog</span>
-            All posts
-          </Link>
-        )}
-      </nav>
-    </article>
+    <div className="post-shell">
+      <article className="post">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <nav className="breadcrumb" aria-label="Breadcrumb">
+          <Link href="/">Home</Link>
+          <span className="sep">/</span>
+          <Link href="/blog">Blog</Link>
+        </nav>
+        <header className="post-head">
+          <h1>{post.title}</h1>
+          <p className="post-meta">
+            <time dateTime={post.date}>{formatDate(post.date)}</time>
+            <span>{post.readingMinutes} min read</span>
+            <span>{post.author}</span>
+          </p>
+          <p className="lead">{post.excerpt}</p>
+          {post.tags.length > 0 && (
+            <p className="post-tags">{post.tags.map((t) => <span key={t}>{t}</span>)}</p>
+          )}
+        </header>
+        <DocBody html={post.html} />
+        <nav className="docnav" aria-label="More posts">
+          {prev ? (
+            <Link href={`/blog/${prev.slug}`}>
+              <span className="dir">← Newer</span>
+              {prev.title}
+            </Link>
+          ) : <span />}
+          {next ? (
+            <Link href={`/blog/${next.slug}`} className="next">
+              <span className="dir">Older →</span>
+              {next.title}
+            </Link>
+          ) : (
+            <Link href="/blog" className="next">
+              <span className="dir">Blog</span>
+              All posts
+            </Link>
+          )}
+        </nav>
+      </article>
+      <TableOfContents />
+    </div>
   );
 }

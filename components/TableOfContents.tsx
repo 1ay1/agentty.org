@@ -20,7 +20,7 @@ export function TableOfContents() {
     setActive("");
     activeRef.current = "";
     const nodes = Array.from(
-      document.querySelectorAll<HTMLElement>(".docs-main h2[id], .docs-main h3[id]")
+      document.querySelectorAll<HTMLElement>(".doc-body h2[id], .doc-body h3[id]")
     );
     setHeadings(
       nodes.map((n) => ({

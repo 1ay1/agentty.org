@@ -53,7 +53,14 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 /** Inner HTML for <code> plus the display label. Unknown/plain → escaped text. */
 export function highlight(code: string, info: string): { html: string; label: string } {
-  const key = info.trim().toLowerCase();
+  let key = info.trim().toLowerCase();
+  // An unlabelled block whose every line is a shell command or a # comment is
+  // shell — common in posts written before the fences were labelled.
+  if (!key) {
+    const lines = code.split("\n").filter((l) => l.trim());
+    const cmd = /^\s*(\$ |#|(sudo|time|curl|wget|agentty|git|npm|npx|node|cd|export|make|cmake|python3?|pip|cargo|brew|chmod|ls|cat|echo|mkdir|rm|cp|mv|ssh|docker|apt|pacman)\b)/;
+    if (lines.length && lines.every((l) => cmd.test(l))) key = "bash";
+  }
   const lang = LANGS[key];
   if (!lang) return { html: esc(code), label: key && key !== "text" && key !== "txt" && key !== "plain" ? key : "" };
   try {

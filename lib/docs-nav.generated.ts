@@ -10,6 +10,7 @@ export const docsNav: NavSection[] = [
     items: [
       { title: "Introduction", href: "/docs" },
       { title: "agentty vs Claude Code", href: "/docs/vs-claude-code" },
+      { title: "Coming from Codex or Claude Code", href: "/docs/switching" },
       { title: "Installation", href: "/docs/installation" },
       { title: "Quick Start", href: "/docs/quick-start" },
       { title: "Authentication", href: "/docs/authentication" },
@@ -27,6 +28,7 @@ export const docsNav: NavSection[] = [
       { title: "Forking a Thread", href: "/docs/fork" },
       { title: "Configuration", href: "/docs/configuration" },
       { title: "Smart Mode", href: "/docs/smart-mode" },
+      { title: "Storage", href: "/docs/storage" },
       { title: "Smart Mode: Roles & Routing", href: "/docs/smart-mode-routing" },
       { title: "Smart Mode: Orchestration", href: "/docs/smart-mode-orchestration" },
       { title: "Smart Mode: Reference", href: "/docs/smart-mode-reference" },

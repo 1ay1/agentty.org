@@ -62,19 +62,18 @@ export default function BlogIndex() {
       {posts.length === 0 ? (
         <p>No posts yet.</p>
       ) : (
-        <ul className="index-list">
+        <ol className="post-list">
           {posts.map((p) => (
             <li key={p.slug}>
+              <time dateTime={p.date}>{p.date}</time>
               <Link href={`/blog/${p.slug}`}>
-                <span className="il-meta">
-                  <time dateTime={p.date}>{formatDate(p.date)}</time> · {p.readingMinutes} min
-                </span>
-                <span className="il-title">{p.title}</span>
-                <span className="il-sub">{p.excerpt}</span>
+                <span className="pl-title">{p.title}</span>
+                <span className="pl-sub">{p.excerpt}</span>
+                <span className="pl-meta">{p.readingMinutes} min read{p.tags.length ? ` · ${p.tags.slice(0, 3).join(", ")}` : ""}</span>
               </Link>
             </li>
           ))}
-        </ul>
+        </ol>
       )}
     </div>
   );
