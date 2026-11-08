@@ -7,7 +7,8 @@
 //   launch    open the interactive UI in a real pseudo-terminal (returning user:
 //             first-run setup done once beforehand); time until its first prompt
 //             is fully on screen, read from the rendered terminal → 10 runs
-//   memory    resident memory of the whole process tree 2 s after that
+//   memory    resident memory of the whole process tree 2 s after that, plus
+//             any background server the tool keeps running (jcode)
 //   disk      everything the tool needs on disk, including the runtime it
 //             needs (Node.js or Python) if it isn't a self-contained binary
 //
@@ -31,6 +32,7 @@ const NODE = execFileSync("which", ["node"], { encoding: "utf8" }).trim();
 const READY = {
   agentty: /1–6 choose/, claude: /Choose the text style/, codex: /Press enter to continue/,
   gemini: /3\. Don't trust/, opencode: /ctrl\+p commands/, aider: /\(Y\)es\/\(N\)o/,
+  jcode: /Esc to skip onboarding/,
 };
 
 const TOOLS = [
@@ -39,6 +41,9 @@ const TOOLS = [
   { id: "codex", name: "Codex CLI", bin: `${B}/codex/node_modules/.bin/codex`, dir: `${B}/codex/node_modules`, runtime: "node" },
   { id: "gemini", name: "Gemini CLI", bin: `${B}/gemini/node_modules/.bin/gemini`, dir: `${B}/gemini/node_modules`, runtime: "node" },
   { id: "opencode", name: "opencode", bin: `${B}/opencode/node_modules/.bin/opencode`, dir: `${B}/opencode/node_modules`, runtime: null },
+  // jcode runs its UI as a client of a background server it starts on first
+  // launch and leaves running; that server is part of its footprint
+  { id: "jcode", name: "jcode", bin: `${B}/jcode/home/.local/bin/jcode`, dir: `${B}/jcode/home/.jcode/builds`, runtime: null, daemon: /bench-agents\/jcode\// },
   { id: "aider", name: "Aider", bin: `${B}/aider/bin/aider`, dir: [`${B}/aider/tool`, `${B}/aider/python`], runtime: null },
 ];
 
@@ -61,6 +66,22 @@ const envFor = (home) => ({
   TERM: "xterm-256color", COLORTERM: "truecolor", XDG_CONFIG_HOME: `${home}/.config`, XDG_DATA_HOME: `${home}/.local/share`,
   XDG_CACHE_HOME: `${home}/.cache`, XDG_STATE_HOME: `${home}/.local/state`,
 });
+// resident memory of a tool's detached server processes (not in the pty's tree)
+function daemonRss(re, skip) {
+  let total = 0;
+  for (const d of fs.readdirSync("/proc")) {
+    if (!/^\d+$/.test(d) || skip.has(d)) continue;
+    let exe = ""; try { exe = fs.readlinkSync(`/proc/${d}/exe`); } catch { continue; }
+    if (!re.test(exe)) continue;
+    try { total += Number(fs.readFileSync(`/proc/${d}/status`, "utf8").match(/VmRSS:\s+(\d+)/)?.[1] ?? 0) * 1024; } catch {}
+  }
+  return total;
+}
+function treePids(pid, out = new Set()) {
+  out.add(String(pid));
+  try { for (const t of fs.readdirSync(`/proc/${pid}/task`)) for (const c of fs.readFileSync(`/proc/${pid}/task/${t}/children`, "utf8").trim().split(/\s+/).filter(Boolean)) treePids(c, out); } catch {}
+  return out;
+}
 function treeRss(pid) {
   // resident memory of pid and all descendants (kB → bytes)
   let total = 0;
@@ -106,7 +127,7 @@ async function oneLaunch(tool, home) {
     if (READY[tool.id].test(screen())) { ready = performance.now() - t0; break; }
   }
   await sleep(2000);                                       // settle, then measure memory
-  const mem = treeRss(p.pid);
+  const mem = treeRss(p.pid) + (tool.daemon ? daemonRss(tool.daemon, treePids(p.pid)) : 0);
   try { p.kill("SIGKILL"); } catch {}
   await sleep(150);
   if (Number.isNaN(ready)) throw new Error(`${tool.id}: ready marker never appeared:\n${screen()}`);
@@ -151,5 +172,6 @@ for (const [k, tool] of TOOLS.entries()) {
     runtime: tool.runtime ? { name: tool.runtime, MB: +(runtime / 1048576).toFixed(1) } : tool.id === "aider" ? { name: "python", MB: null, note: pythonNote } : null,
   });
 }
+for (const t of TOOLS) if (t.daemon) for (const d of fs.readdirSync("/proc")) { try { if (t.daemon.test(fs.readlinkSync(`/proc/${d}/exe`))) process.kill(Number(d)); } catch {} }
 fs.writeFileSync(path.join(ROOT, "lib/bench.generated.json"), JSON.stringify(out, null, 1) + "\n");
 console.log("→ lib/bench.generated.json");
