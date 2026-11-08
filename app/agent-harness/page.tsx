@@ -10,7 +10,7 @@ import { stats } from "@/lib/stats";
 const URL = `${site.url}/agent-harness/`;
 const TITLE = "What is an agent harness?";
 const DESCRIPTION =
-  "An agent harness is the software around an AI model that turns it into a working agent: tools, a sandbox, context management and model routing. What it does and why it matters.";
+  "An agent harness is the software around an AI model that makes it a working agent: tools, sandbox, context and model routing. What it is and why it matters.";
 
 const FAQ: [string, string][] = [
   [
