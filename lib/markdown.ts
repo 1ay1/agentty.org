@@ -13,6 +13,8 @@
 //   headings                    → stable unique ids + a self-link anchor
 //   external links              → open in a new tab, marked ↗
 import MarkdownIt from "markdown-it";
+
+type MD = InstanceType<typeof MarkdownIt>;
 import container from "markdown-it-container";
 import { highlight } from "./highlight";
 
@@ -36,7 +38,7 @@ const CALLOUTS: Record<string, [string, string]> = {
 
 type Env = { ids: Map<string, number>; headings: MdHeading[] };
 
-function build(): MarkdownIt {
+function build(): MD {
   const md = new MarkdownIt({ html: false, linkify: false, typographer: false });
 
   // [[keys]] → <kbd>
@@ -84,7 +86,8 @@ function build(): MarkdownIt {
     `<pre class="code"><code>${esc(tokens[i].content.replace(/\n$/, ""))}</code></pre></div>\n`;
 
   // headings: unique ids, self-link anchor, collected for TOC / search
-  md.renderer.rules.heading_open = (tokens, i, _o, env: Env) => {
+  md.renderer.rules.heading_open = (tokens, i, _o, envAny) => {
+    const env = envAny as Env;
     const level = Number(tokens[i].tag.slice(1));
     const inline = tokens[i + 1];
     const plain = (inline.children ?? [])
@@ -110,13 +113,13 @@ function build(): MarkdownIt {
   // external links: new tab, ↗ marker (unless the text already has one or is code)
   md.renderer.rules.link_open = (tokens, i, o, _env, self) => {
     const t = tokens[i];
-    const href = t.attrGet("href") ?? "";
+    const href = String(t.attrGet("href") ?? "");
     if (/^https?:\/\//.test(href)) {
       t.attrSet("target", "_blank");
       t.attrSet("rel", "noopener noreferrer");
       let j = i + 1, text = "", hasCode = false;
       for (; j < tokens.length && tokens[j].type !== "link_close"; j++) {
-        text += tokens[j].content;
+        text += String(tokens[j].content);
         if (tokens[j].type === "code_inline") hasCode = true;
       }
       if (!hasCode && !/\u2197\s*$/.test(text)) t.attrJoin("class", "ext");
@@ -136,7 +139,7 @@ function build(): MarkdownIt {
   return md;
 }
 
-let md: MarkdownIt | null = null;
+let md: MD | null = null;
 
 const DIRECTIVE = /^:::(release-table)\s*$/gm;
 
@@ -144,10 +147,10 @@ export function renderMarkdown(src: string, ids: Map<string, number> = new Map()
   md ??= build();
   const env: Env = { ids, headings: [] };
   // directives become a placeholder paragraph, swapped for a sentinel div
-  const text = src.replace(/\r\n/g, "\n").replace(DIRECTIVE, (_m, name) => `\n@@directive:${name}@@\n`);
+  const text = src.replace(/\r\n/g, "\n").replace(DIRECTIVE, (_m: string, name: string) => `\n@@directive:${name}@@\n`);
   const html = md
     .render(text, env)
-    .replace(/<p>@@directive:([a-z-]+)@@<\/p>/g, (_m, name) => `<div data-directive="${name}"></div>`);
+    .replace(/<p>@@directive:([a-z-]+)@@<\/p>/g, (_m: string, name: string) => `<div data-directive="${name}"></div>`);
   return { html, headings: env.headings };
 }
 
