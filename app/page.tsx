@@ -3,6 +3,7 @@ import { site } from "@/lib/site";
 import { repo, starLabel } from "@/lib/repo";
 import { CopyRow } from "@/components/CopyRow";
 import { ReplayDemo } from "@/components/ReplayDemo";
+import { BenchBars } from "@/components/BenchBars";
 import { AgenttyLogo } from "@/components/AgenttyLogo";
 
 export default function Home() {
@@ -18,6 +19,10 @@ export default function Home() {
         <ReplayDemo />
         <figcaption>a real agentty session, replayed from the terminal</figcaption>
       </figure>
+
+      <section className="home-bench" aria-label="Benchmarks">
+        <BenchBars metrics={["ready", "rss"]} />
+      </section>
 
       <section className="home-info">
         <dl className="home-facts">

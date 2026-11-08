@@ -26,6 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/community",
     "/acknowledgements",
     "/agent-harness",
+    "/benchmarks",
   ];
   const docRoutes = docsNav.flatMap((s) => s.items.map((i) => i.href));
   const posts = getAllPosts();
@@ -38,7 +39,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${site.url}${path === "/" ? "" : path}/`,
     ...(path === "/" ? { lastModified: newest } : {}),
     changeFrequency: "weekly",
-    priority: path === "/" ? 1 : path === "/agent-harness" ? 0.95 : path === "/blog" ? 0.9 : 0.7,
+    priority: path === "/" ? 1 : path === "/agent-harness" || path === "/benchmarks" ? 0.95 : path === "/blog" ? 0.9 : 0.7,
   }));
 
   const docByHref = new Map(getAllDocs().map((d) => [slash(d.href), d]));

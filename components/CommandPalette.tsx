@@ -13,6 +13,7 @@ type Row = [string, string, string, (string | null)?, string?];
 const STATIC: Item[] = [
   { title: "Home", href: "/", group: "Pages" },
   { title: "What is an agent harness?", href: "/agent-harness/", group: "Pages" },
+  { title: "Benchmarks: agentty vs Claude Code, Codex, Gemini CLI, opencode, Aider", href: "/benchmarks/", group: "Pages" },
   { title: "Changelog", href: "/changelog/", group: "Pages" },
   { title: "Blog", href: "/blog/", group: "Pages" },
   { title: "Guides", href: "/guides/", group: "Pages" },
