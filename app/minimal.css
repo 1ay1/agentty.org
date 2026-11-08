@@ -150,7 +150,12 @@ body:has(.home) .nav-links a:first-child { padding-left: 0; }
 /* everything under the demo shares its width, so right edges line up */
 .home-info, .home-links { width: min(780px, calc(100vw - var(--gutter) - 16px)); }
 .home .home-info { margin-top: 36px; }
-.home-facts { display: grid; grid-template-columns: 9ch 1fr; gap: 12px 24px; margin: 0; line-height: 1.55; align-items: baseline; }
+.home-facts { display: grid; grid-template-columns: 9ch minmax(0, 1fr); gap: 12px 24px; margin: 0; line-height: 1.55; align-items: baseline; }
+.home-facts dd { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .home-facts { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
+  .home-facts dd { margin-bottom: 12px; }
+}
 .home-install { display: grid; gap: 8px; }
 .home-install .copyrow { margin: 0; }
 .home-install > span { color: var(--text-faint); font-size: 12.5px; }
