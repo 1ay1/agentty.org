@@ -23,7 +23,7 @@ export async function generateMetadata({
   return {
     title: seoTitle(post.title),
     description: seoDescription(post.excerpt),
-    keywords: [...post.tags, "agentty", "terminal coding agent", "claude code alternative"],
+    keywords: [...post.tags, "agentty", "agent harness", "terminal coding agent", "claude code alternative"],
     authors: [{ name: post.author, url: site.github }],
     alternates: { canonical: `/blog/${slug}` },
     openGraph: {

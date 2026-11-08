@@ -43,7 +43,7 @@ export function GET() {
     <title>agentty blog</title>
     <link>${site.url}/blog/</link>
     <atom:link href="${site.url}/blog/feed.xml" rel="self" type="application/rss+xml" />
-    <description>Release notes, performance deep dives, and design notes from the agentty project — the native C++26 claude-code alternative.</description>
+    <description>Release notes, performance deep dives, and design notes from the agentty project — the native C++26 agent harness for your terminal.</description>
     <language>en-us</language>
     <lastBuildDate>${updated}</lastBuildDate>
     <generator>agentty.org</generator>

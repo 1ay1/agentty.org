@@ -29,7 +29,7 @@ export function ogCard({ section, title, meta }: { section: string; title: strin
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "24px", color: "#878580" }}>
           <span>agentty.org</span>
-          <span style={{ color: "#3aa99f" }}>one small binary · any model</span>
+          <span style={{ color: "#3aa99f" }}>agent harness · any model</span>
         </div>
       </div>
     ),

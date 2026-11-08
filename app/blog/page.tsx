@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   description: `Release notes, performance deep dives, and design notes from the ${site.name} project — the native C++26 claude-code alternative.`,
   keywords: [
     "agentty blog",
+    "agent harness",
     "terminal coding agent",
     "claude code alternative",
     "c++ coding agent",

@@ -5,7 +5,7 @@ import { getComparePages } from "@/lib/seo-pages";
 export const metadata: Metadata = {
   title: { absolute: "agentty vs other coding agents — comparisons" },
   description:
-    "Honest, side-by-side comparisons of agentty against Claude Code, Aider, and other terminal AI coding agents — speed, providers, sandboxing, and when to pick each.",
+    "Side-by-side comparisons of agentty, the agent harness for your terminal, against Claude Code, Aider and other coding agents: speed, providers, sandboxing.",
   alternates: { canonical: "/compare" },
 };
 

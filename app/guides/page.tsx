@@ -5,7 +5,7 @@ import { getGuidePages } from "@/lib/seo-pages";
 export const metadata: Metadata = {
   title: { absolute: "agentty guides — local models, Claude, providers" },
   description:
-    "Practical guides for agentty: run a coding agent locally with Ollama, use Claude from the terminal, integrate providers, and more.",
+    "Practical guides for agentty, the agent harness for your terminal: run models locally with Ollama, use Claude from the terminal, set up providers.",
   alternates: { canonical: "/guides" },
 };
 

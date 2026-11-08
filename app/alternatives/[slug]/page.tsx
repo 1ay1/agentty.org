@@ -25,6 +25,7 @@ export async function generateMetadata({
       `${page.competitor} alternative`,
       `open source ${page.competitor} alternative`,
       `free ${page.competitor} alternative`,
+      "agent harness",
       "terminal coding agent",
       "AI coding agent",
     ],

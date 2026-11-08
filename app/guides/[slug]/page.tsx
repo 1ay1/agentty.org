@@ -23,6 +23,7 @@ export async function generateMetadata({
     description: seoDescription(page.description),
     keywords: [
       page.competitor,
+      "agent harness",
       "terminal coding agent",
       "AI coding agent",
       "agentty guide",

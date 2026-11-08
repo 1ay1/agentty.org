@@ -5,7 +5,7 @@ import { getAlternativePages } from "@/lib/seo-pages";
 export const metadata: Metadata = {
   title: { absolute: "Open-source Claude Code, Aider & Cursor alternatives" },
   description:
-    "agentty is an open-source, native terminal coding agent — a fast, multi-provider alternative to Claude Code, Aider, Cursor, Codex CLI, and more.",
+    "agentty is an open-source agent harness for your terminal: a fast, multi-provider alternative to Claude Code, Aider, Cursor, Codex CLI and other coding agents.",
   alternates: { canonical: "/alternatives" },
 };
 

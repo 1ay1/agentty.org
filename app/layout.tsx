@@ -128,7 +128,7 @@ const jsonLd = {
       isAccessibleForFree: true,
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       keywords:
-        "claude code alternative, terminal coding agent, claude cli, AI coding agent, C++26",
+        "agent harness, AI agent harness, terminal coding agent, claude code alternative, claude cli, AI coding agent, C++26",
       author: { "@id": `${site.url}/#org` },
     },
     {

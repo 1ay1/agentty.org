@@ -24,6 +24,7 @@ export async function generateMetadata({
     keywords: [
       `agentty vs ${page.competitor}`,
       `${page.competitor} alternative`,
+      "agent harness",
       "terminal coding agent",
       "claude code alternative",
       "open source coding agent",
