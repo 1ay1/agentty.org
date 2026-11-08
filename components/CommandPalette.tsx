@@ -12,18 +12,18 @@ type Row = [string, string, string, (string | null)?, string?];
 
 const STATIC: Item[] = [
   { title: "Home", href: "/", group: "Pages" },
-  { title: "Changelog", href: "/changelog", group: "Pages" },
-  { title: "Blog", href: "/blog", group: "Pages" },
-  { title: "Guides", href: "/guides", group: "Pages" },
-  { title: "Community", href: "/community", group: "Pages" },
-  { title: "Contributing", href: "/contributing", group: "Pages" },
-  { title: "Security", href: "/security", group: "Pages" },
-  { title: "License", href: "/license", group: "Pages" },
+  { title: "Changelog", href: "/changelog/", group: "Pages" },
+  { title: "Blog", href: "/blog/", group: "Pages" },
+  { title: "Guides", href: "/guides/", group: "Pages" },
+  { title: "Community", href: "/community/", group: "Pages" },
+  { title: "Contributing", href: "/contributing/", group: "Pages" },
+  { title: "Security", href: "/security/", group: "Pages" },
+  { title: "License", href: "/license/", group: "Pages" },
   { title: "GitHub repository", href: site.github, group: "Links", external: true },
   { title: "Latest release", href: site.releasesLatest, group: "Links", external: true },
   { title: "Discord", href: site.discord, group: "Links", external: true },
 ];
-const SUGGESTED = ["/docs/quick-start", "/docs/installation", "/docs/providers", "/docs/keybindings", "/docs/sandboxing", "/docs/cli"];
+const SUGGESTED = ["/docs/quick-start/", "/docs/installation/", "/docs/providers/", "/docs/keybindings/", "/docs/sandboxing/", "/docs/cli/"];
 
 let indexPromise: Promise<Item[]> | null = null;
 const loadIndex = () =>

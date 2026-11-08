@@ -117,7 +117,7 @@ export default async function BlogPost({
         <nav className="breadcrumb" aria-label="Breadcrumb">
           <Link href="/">Home</Link>
           <span className="sep">/</span>
-          <Link href="/blog">Blog</Link>
+          <Link href="/blog/">Blog</Link>
         </nav>
         <header className="post-head">
           <h1>{post.title}</h1>
@@ -134,18 +134,18 @@ export default async function BlogPost({
         <DocBody html={post.html} />
         <nav className="docnav" aria-label="More posts">
           {prev ? (
-            <Link href={`/blog/${prev.slug}`}>
+            <Link href={`/blog/${prev.slug}/`}>
               <span className="dir">← Newer</span>
               {prev.title}
             </Link>
           ) : <span />}
           {next ? (
-            <Link href={`/blog/${next.slug}`} className="next">
+            <Link href={`/blog/${next.slug}/`} className="next">
               <span className="dir">Older →</span>
               {next.title}
             </Link>
           ) : (
-            <Link href="/blog" className="next">
+            <Link href="/blog/" className="next">
               <span className="dir">Blog</span>
               All posts
             </Link>

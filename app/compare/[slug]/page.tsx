@@ -85,7 +85,7 @@ export default async function ComparePage({
         <p>Ready to try it? One line, no Node or Python.</p>
         <code>{site.installOneLiner}</code>
         <div className="cta-links">
-          <Link href="/docs/installation">Get started</Link>
+          <Link href="/docs/installation/">Get started</Link>
           <a href={site.github}>GitHub</a>
         </div>
       </div>

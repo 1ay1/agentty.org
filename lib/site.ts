@@ -24,12 +24,15 @@ export type NavSection = { title: string; items: NavItem[] };
 // and written to lib/docs-nav.generated.ts by scripts/sync-docs.mjs at build
 // time. Client components (DocsSidebar) import it from here. Editing a doc's
 // frontmatter is the only way to change the sidebar — there is no hand-kept list.
-export { docsNav } from "./docs-nav.generated";
+import { docsNav as rawDocsNav } from "./docs-nav.generated";
+import { slash } from "./url";
+// canonical (trailing-slash) hrefs everywhere the nav is rendered
+export const docsNav: NavSection[] = rawDocsNav.map((s) => ({ ...s, items: s.items.map((i) => ({ ...i, href: slash(i.href) })) }));
 
 export const topNav: NavItem[] = [
-  { title: "Docs", href: "/docs" },
-  { title: "Install", href: "/docs/installation" },
-  { title: "Manual", href: "/docs/interface" },
-  { title: "Blog", href: "/blog" },
-  { title: "Community", href: "/community" },
+  { title: "Docs", href: "/docs/" },
+  { title: "Install", href: "/docs/installation/" },
+  { title: "Manual", href: "/docs/interface/" },
+  { title: "Blog", href: "/blog/" },
+  { title: "Community", href: "/community/" },
 ];

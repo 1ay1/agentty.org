@@ -17,6 +17,7 @@ import MarkdownIt from "markdown-it";
 type MD = InstanceType<typeof MarkdownIt>;
 import container from "markdown-it-container";
 import { highlight } from "./highlight";
+import { slash } from "./url";
 
 export type MdHeading = { id: string; text: string; level: number };
 
@@ -114,6 +115,7 @@ function build(): MD {
   md.renderer.rules.link_open = (tokens, i, o, _env, self) => {
     const t = tokens[i];
     const href = String(t.attrGet("href") ?? "");
+    if (href.startsWith("/")) t.attrSet("href", slash(href));
     if (/^https?:\/\//.test(href)) {
       t.attrSet("target", "_blank");
       t.attrSet("rel", "noopener noreferrer");

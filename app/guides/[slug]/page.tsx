@@ -80,8 +80,8 @@ export default async function GuidePage({
         <p>Install agentty in one line — a single static binary.</p>
         <code>{site.installOneLiner}</code>
         <div className="cta-links">
-          <Link href="/docs/installation">Get started</Link>
-          <Link href="/guides">All guides</Link>
+          <Link href="/docs/installation/">Get started</Link>
+          <Link href="/guides/">All guides</Link>
         </div>
       </div>
 

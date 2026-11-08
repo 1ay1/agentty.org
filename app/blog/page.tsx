@@ -66,7 +66,7 @@ export default function BlogIndex() {
           {posts.map((p) => (
             <li key={p.slug}>
               <time dateTime={p.date}>{p.date}</time>
-              <Link href={`/blog/${p.slug}`}>
+              <Link href={`/blog/${p.slug}/`}>
                 <span className="pl-title">{p.title}</span>
                 <span className="pl-sub">{p.excerpt}</span>
                 <span className="pl-meta">{p.readingMinutes} min read{p.tags.length ? ` · ${p.tags.slice(0, 3).join(", ")}` : ""}</span>

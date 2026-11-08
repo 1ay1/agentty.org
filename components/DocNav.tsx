@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { slash } from "@/lib/url";
 
 // Prev/next footer navigation. The dynamic docs route computes prev/next from
 // the frontmatter-derived order (lib/docs.ts) and passes them in directly.
@@ -12,7 +13,7 @@ export function DocNav({
   return (
     <nav className="docnav" aria-label="Pager">
       {prev ? (
-        <Link href={prev.href}>
+        <Link href={slash(prev.href)}>
           <span className="dir">← Previous</span>
           {prev.title}
         </Link>
@@ -20,7 +21,7 @@ export function DocNav({
         <span />
       )}
       {next ? (
-        <Link href={next.href} className="next">
+        <Link href={slash(next.href)} className="next">
           <span className="dir">Next →</span>
           {next.title}
         </Link>

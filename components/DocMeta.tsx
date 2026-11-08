@@ -5,7 +5,7 @@ export function Breadcrumb({ title }: { title: string }) {
     <nav className="breadcrumb" aria-label="Breadcrumb">
       <Link href="/">Home</Link>
       <span className="sep">/</span>
-      <Link href="/docs">Docs</Link>
+      <Link href="/docs/">Docs</Link>
       <span className="sep">/</span>
       <span className="cur">{title}</span>
     </nav>
