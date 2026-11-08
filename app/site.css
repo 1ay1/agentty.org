@@ -7,18 +7,22 @@
 /* ── tokens ───────────────────────────────────────────────────────────── */
 :root, html[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0d0d0d;
-  --bg-soft: #141414;
-  --bg-elev: #1a1a1a;
-  --border: #2a2a2a;
-  --border-soft: #1f1f1f;
-  --text: #e4e4e4;        /* 15.3:1 */
-  --text-dim: #b8b8b8;    /* 9.8:1 — prose */
-  --text-faint: #8a8a8a;  /* 5.6:1 — labels, meta */
-  --accent: #7fd962;
-  --accent-hover: #a6ee8e;
-  --warn: #e0b84a;
-  --on-accent: #0d0d0d;
+  /* agentty's colours: the Flexoki Dark scheme it renders in, with its
+     brand magenta as the accent (the logo, the ❯ prompt, the composer) */
+  --bg: #100f0f;          /* flexoki black */
+  --bg-soft: #1c1b1a;     /* base-950 */
+  --bg-elev: #282726;     /* base-900 */
+  --border: #343331;      /* base-850 */
+  --border-soft: #282726; /* base-900 */
+  --text: #cecdc3;        /* base-200 · 12.0:1 */
+  --text-dim: #b7b5ac;    /* base-300 · 9.3:1 — prose */
+  --text-faint: #878580;  /* base-500 · 5.2:1 — labels, meta */
+  --accent: #ce5d97;      /* magenta-400 · 5.1:1 — agentty's brand */
+  --accent-hover: #e47da8;/* magenta-300 */
+  --cyan: #3aa99f;        /* cyan-400 */
+  --tip: #879a39;         /* green-400 */
+  --warn: #d0a215;        /* yellow-400 */
+  --on-accent: #100f0f;
   --mono: var(--font-mono), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --gutter: clamp(20px, 6vw, 80px);
   --nav-h: 52px;
@@ -30,18 +34,20 @@
 }
 html[data-theme="light"] {
   color-scheme: light;
-  --bg: #fcfcfa;
-  --bg-soft: #f3f3f0;
-  --bg-elev: #ececE8;
-  --border: #d4d4cf;
-  --border-soft: #e6e6e1;
-  --text: #1c1c1c;        /* 16.6:1 */
-  --text-dim: #3d3d3d;    /* 10.6:1 — prose */
-  --text-faint: #6b6b6b;  /* 5.2:1 — labels, meta */
-  --accent: #2f7d1c;
-  --accent-hover: #1f5a10;
-  --warn: #a8740a;
-  --on-accent: #fff;
+  --bg: #fffcf0;          /* flexoki paper */
+  --bg-soft: #f2f0e5;     /* base-50 */
+  --bg-elev: #e6e4d9;     /* base-100 */
+  --border: #dad8ce;      /* base-150 */
+  --border-soft: #e6e4d9; /* base-100 */
+  --text: #100f0f;        /* black · 18.6:1 */
+  --text-dim: #403e3c;    /* base-800 · 10.4:1 — prose */
+  --text-faint: #6f6e69;  /* base-600 · 5.0:1 — labels, meta */
+  --accent: #a02f6f;      /* magenta-600 · 6.5:1 */
+  --accent-hover: #87285e;/* magenta-700 */
+  --cyan: #24837b;        /* cyan-600 */
+  --tip: #536907;         /* green-700 */
+  --warn: #8e6b01;        /* yellow-700 */
+  --on-accent: #fffcf0;
   --hl-foreground: #1c1b1a; --hl-token-comment: #9f9d96; --hl-token-keyword: #a02f6f;
   --hl-token-string: #24837b; --hl-token-string-expression: #66800b; --hl-token-function: #205ea6;
   --hl-token-constant: #bc5215; --hl-token-parameter: #1c1b1a; --hl-token-punctuation: #6f6e69;
@@ -203,10 +209,10 @@ pre.code .line:empty::before { content: " "; }
 
 /* callouts: a rule and a small label; body is full markdown */
 .note { margin: 0 0 20px; padding: 2px 0 2px 16px; border-left: 2px solid var(--border); color: var(--text-dim); }
-.note.tip { border-left-color: var(--accent); }
+.note.tip { border-left-color: var(--tip); }
 .note.warn { border-left-color: var(--warn); }
 .note .label { display: block; margin: 0 0 4px; }
-.note.tip .label { color: var(--accent); }
+.note.tip .label { color: var(--tip); }
 .note.warn .label { color: var(--warn); }
 .note > :last-child { margin-bottom: 0; }
 
@@ -391,7 +397,7 @@ body:has(.home) { --gutter: 24px; }
 
 /* ── demo terminal (ReplayTerminal) ───────────────────────────────────── */
 .replay { border: 1px solid var(--border); background: #100f0f; contain: layout paint style; isolation: isolate; }
-.replay-bar { padding: 6px 12px; border-bottom: 1px solid #222; color: #6a6a6a; font-size: 12px; }
+.replay-bar { padding: 6px 12px; border-bottom: 1px solid #282726; color: #878580; font-size: 12px; }
 .replay-screen { padding: 12px; overflow: hidden; container-type: inline-size; }
 /* --cols × --rows cells. JetBrains Mono's advance is 0.6em, so the cell width
    sets the font size; the row height snaps to device pixels (no seams). */

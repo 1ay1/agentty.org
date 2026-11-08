@@ -21,8 +21,8 @@ export const viewport = {
   initialScale: 1,
   // Match the mobile browser chrome to the active theme.
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0d0d0d" },
-    { media: "(prefers-color-scheme: light)", color: "#fcfcfa" },
+    { media: "(prefers-color-scheme: dark)", color: "#100f0f" },
+    { media: "(prefers-color-scheme: light)", color: "#fffcf0" },
   ],
 };
 

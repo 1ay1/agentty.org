@@ -12,7 +12,7 @@
    The TUI paints a flat sigil_color (no gradient); we match that. All motion
    is CSS-driven (composited transform + color) so the main thread stays idle. */
 .agentty-logo {
-  --logo-mag: #e29be0;          /* sigil_color — bright magenta (role_brand) */
+  --logo-mag: var(--accent);    /* agentty's brand magenta, per theme */
   /* Phase-1 end mirrors the TUI: (N-1)*stagger + drop = 7*180 + 900 = 2160 ms.
      Used to delay the heartbeat so the cascade entry isn't strobed. */
   font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
