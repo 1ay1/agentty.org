@@ -254,9 +254,9 @@ const frames = [];
 const t0 = Date.now();
 let last = t0;
 const env = { ...process.env, HOME: "/home/dev", USER: "dev", TERM: "xterm-256color", COLORTERM: "truecolor", AGENTTY_PROFILE: "write",
-  // keep the real typewriter reveal; drop its decorative hex overlay, which
-  // reads as noise once frozen into replay frames
-  AGENTTY_REVEAL_DECORATE: "0" };
+  // no streaming-reveal effect: its hex-dump overlay reads as noise once
+  // frozen into replay frames (REVEAL_DECORATE=0 alone doesn't remove it)
+  AGENTTY_REVEAL: "0" };
 for (const k of ["NO_COLOR", "PAGER", "GIT_TERMINAL_PROMPT", "CI"]) delete env[k];
 // present the project at a neutral /home/dev/app so no host paths leak into the recording
 const pty = ptySpawn("bwrap", [
@@ -285,7 +285,7 @@ const prompt = "test_handler is failing — make resolve() use the token cache a
 // one keystroke per 30fps tick: agentty redraws on every key, so a steady
 // cadence gives the replay an even frame rate while typing
 for (const ch of prompt) { pty.write(ch); await sleep(1000 / 30); }
-await sleep(400);
+await sleep(1000 / 30);
 pty.write("\r");
 await Promise.race([done, sleep(Number(process.env.RUN_MS || 60000))]);
 
