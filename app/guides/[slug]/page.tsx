@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getGuidePages, getGuidePage } from "@/lib/seo-pages";
 import { site } from "@/lib/site";
+import { DocBody } from "@/components/DocBody";
 
 export function generateStaticParams() {
   return getGuidePages().map((p) => ({ slug: p.slug }));
@@ -72,7 +73,7 @@ export default async function GuidePage({
           <strong>TL;DR:</strong> {page.verdict}
         </p>
       )}
-      <article className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
+      <DocBody html={page.html} />
 
       <div className="cta">
         <p>Install agentty in one line — a single static binary.</p>

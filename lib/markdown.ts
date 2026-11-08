@@ -6,6 +6,10 @@
 // ordered/unordered lists, blockquotes, hr, and tables. Output is sanitized by
 // construction (we escape all text; we only emit a fixed tag set).
 
+import { highlight } from "./highlight";
+
+export type MdHeading = { id: string; text: string; level: number };
+
 const esc = (s: string) =>
   s
     .replace(/&/g, "&amp;")
@@ -45,8 +49,24 @@ function inline(text: string): string {
 }
 
 export function markdownToHtml(md: string): string {
+  return renderMarkdown(md).html;
+}
+
+// slug for a heading: lowercase words joined by '-', markup stripped
+const slugify = (raw: string) =>
+  raw
+    .trim()
+    .toLowerCase()
+    .replace(/`/g, "")
+    .replace(/\[\[([^\]]+)\]\]/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-") || "section";
+
+export function renderMarkdown(md: string, ids: Map<string, number> = new Map()): { html: string; headings: MdHeading[] } {
   const lines = md.replace(/\r\n/g, "\n").split("\n");
   const html: string[] = [];
+  const headings: MdHeading[] = [];
   let i = 0;
 
   const flushParagraph = (buf: string[]) => {
@@ -85,7 +105,6 @@ export function markdownToHtml(md: string): string {
         callout[1] === "warn" ? "Warning" : callout[1] === "tip" ? "Tip" : "Note",
       ];
       const label = callout[2].trim() || defaultLabel;
-      const icon = type === "warn" ? "\u26a0" : type === "tip" ? "\u2726" : "\u2139";
       const inner: string[] = [];
       i++;
       while (i < lines.length && !/^:::\s*$/.test(lines[i])) {
@@ -94,17 +113,15 @@ export function markdownToHtml(md: string): string {
       }
       i++; // closing :::
       const cls = type === "note" ? "note" : `note ${type}`;
-      const bodyHtml = inline(esc(inner.join(" ").trim()));
+      const body = renderMarkdown(inner.join("\n"), ids);
       html.push(
-        `<div class="${cls}"><p><span class="label"><span class="note-ico">${icon}</span>${esc(
-          label,
-        )}</span>${bodyHtml}</p></div>`,
+        `<aside class="${cls}" role="note"><span class="label">${esc(label)}</span>${body.html}</aside>`,
       );
       continue;
     }
 
     // fenced code block ```lang
-    const fence = line.match(/^```(\w*)\s*$/);
+    const fence = line.match(/^```([\w+#-]*)\s*$/);
     if (fence) {
       flushParagraph(para);
       const code: string[] = [];
@@ -114,8 +131,13 @@ export function markdownToHtml(md: string): string {
         i++;
       }
       i++; // closing fence
-      const lang = fence[1] ? ` data-lang="${fence[1]}"` : "";
-      html.push(`<pre class="code"${lang}><code>${esc(code.join("\n"))}</code></pre>`);
+      const { html: codeHtml, label } = highlight(code.join("\n"), fence[1]);
+      html.push(
+        `<div class="codeblock">` +
+          `<div class="codeblock-head"><span>${esc(label)}</span>` +
+          `<button type="button" class="codeblock-copy" aria-label="Copy code">copy</button></div>` +
+          `<pre class="code"><code>${codeHtml}</code></pre></div>`,
+      );
       continue;
     }
 
@@ -125,12 +147,17 @@ export function markdownToHtml(md: string): string {
       flushParagraph(para);
       const level = h[1].length;
       const text = inline(esc(h[2].trim()));
-      const id = h[2]
-        .trim()
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-");
-      html.push(`<h${level} id="${id}">${text}</h${level}>`);
+      const base = slugify(h[2]);
+      const n = ids.get(base) ?? 0;
+      ids.set(base, n + 1);
+      const id = n ? `${base}-${n}` : base;
+      const plain = h[2].trim().replace(/`/g, "").replace(/\[\[([^\]]+)\]\]/g, "$1").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/\*\*|__/g, "");
+      headings.push({ id, text: plain, level });
+      html.push(
+        level >= 2
+          ? `<h${level} id="${id}">${text}<a class="anchor" href="#${id}" aria-label="Link to this section"></a></h${level}>`
+          : `<h${level} id="${id}">${text}</h${level}>`,
+      );
       i++;
       continue;
     }
@@ -240,5 +267,5 @@ export function markdownToHtml(md: string): string {
   }
   flushParagraph(para);
 
-  return html.join("\n");
+  return { html: html.join("\n"), headings };
 }

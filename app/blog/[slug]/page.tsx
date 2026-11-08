@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllPosts, getPost, getAdjacent, formatDate } from "@/lib/blog";
 import { site } from "@/lib/site";
+import { DocBody } from "@/components/DocBody";
 
 export function generateStaticParams() {
   return getAllPosts().map((p) => ({ slug: p.slug }));
@@ -121,7 +122,7 @@ export default async function BlogPost({
         {post.tags.length > 0 && <> · {post.tags.join(", ")}</>}
       </p>
       <p className="lead">{post.excerpt}</p>
-      <div className="doc-body" dangerouslySetInnerHTML={{ __html: post.html }} />
+      <DocBody html={post.html} />
       <nav className="docnav" aria-label="More">
         {next ? (
           <Link href={`/blog/${next.slug}`} className="next">

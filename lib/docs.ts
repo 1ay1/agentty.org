@@ -5,7 +5,7 @@
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { markdownToHtml } from "./markdown";
+import { renderMarkdown, type MdHeading } from "./markdown";
 import { applyTokens } from "./docs-tokens";
 
 const DOCS_DIR = join(process.cwd(), "content", "docs");
@@ -29,7 +29,7 @@ export type DocMeta = {
   navOrder: number;
 };
 
-export type Doc = DocMeta & { html: string; headings: { id: string; text: string }[] };
+export type Doc = DocMeta & { html: string; headings: MdHeading[]; source: string };
 
 export type NavItem = { title: string; href: string };
 export type NavSection = { title: string; items: NavItem[] };
@@ -51,31 +51,18 @@ function parseFrontmatter(raw: string): { data: Record<string, string>; body: st
 }
 
 
-// Extract H2 headings (with their slugified ids) for the on-page TOC, matching
-// the id scheme markdownToHtml uses.
-function extractHeadings(md: string): { id: string; text: string }[] {
-  const out: { id: string; text: string }[] = [];
-  for (const line of md.split("\n")) {
-    const h = line.match(/^##\s+(.*)$/);
-    if (!h) continue;
-    const text = h[1].trim();
-    const id = text
-      .toLowerCase()
-      .replace(/`/g, "")
-      .replace(/\[\[([^\]]+)\]\]/g, "$1")
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-");
-    out.push({ id, text: text.replace(/`/g, "").replace(/\[\[([^\]]+)\]\]/g, "$1") });
-  }
-  return out;
-}
-
 function loadDoc(filename: string): Doc {
   const raw = applyTokens(readFileSync(join(DOCS_DIR, filename), "utf8"));
   const { data, body } = parseFrontmatter(raw);
   const slug = data.slug ?? filename.replace(/\.md$/, "");
   const isIndex = filename === "index.md" || slug === "";
-  const withTokens = body;
+  // Many docs open by restating their frontmatter description as the first
+  // paragraph; it's already shown as the lead, so drop the duplicate.
+  const desc = (data.description || "").trim();
+  const norm = (t: string) => t.replace(/[*_`]/g, "").replace(/\s+/g, " ").trim().replace(/\.$/, "").toLowerCase();
+  const paras = body.replace(/^\s*#\s+.*\n/, "").trimStart().split(/\n\s*\n/);
+  const content = desc && paras[0] && norm(paras[0]) === norm(desc) ? paras.slice(1).join("\n\n") : body;
+  const md = renderMarkdown(content);
   return {
     slug: isIndex ? "" : slug,
     href: isIndex ? "/docs" : `/docs/${slug}`,
@@ -83,8 +70,9 @@ function loadDoc(filename: string): Doc {
     description: data.description || "",
     navSection: data.nav_section || "Advanced",
     navOrder: Number(data.nav_order ?? 999),
-    html: markdownToHtml(withTokens),
-    headings: extractHeadings(withTokens),
+    html: md.html,
+    headings: md.headings.filter((h) => h.level === 2 || h.level === 3),
+    source: `# ${data.title || slug}\n\n${desc ? desc + "\n\n" : ""}${content.replace(/^\s*#\s+.*\n/, "").trim()}\n`,
   };
 }
 

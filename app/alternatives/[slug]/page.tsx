@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAlternativePages, getAlternativePage } from "@/lib/seo-pages";
 import { site } from "@/lib/site";
+import { DocBody } from "@/components/DocBody";
 
 export function generateStaticParams() {
   return getAlternativePages().map((p) => ({ slug: p.slug }));
@@ -73,7 +74,7 @@ export default async function AlternativePage({
           <strong>In short:</strong> {page.verdict}
         </p>
       )}
-      <article className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
+      <DocBody html={page.html} />
 
       <div className="cta">
         <p>Install in one line — a single static binary, no Node or Python.</p>

@@ -2,71 +2,98 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { docsNav, topNav, site } from "@/lib/site";
+import { site } from "@/lib/site";
 
-type Item = { title: string; href: string; section: string; external?: boolean };
+// Search over every docs page and its sections, blog posts, guides and the
+// site's pages. The index (/search.json, built statically) is fetched once,
+// the first time the palette opens.
+type Item = { title: string; href: string; group: string; parent?: string; external?: boolean };
+type Row = [string, string, string, string?];
 
-const index: Item[] = [
-  { title: "Home", href: "/", section: "Pages" },
-  ...topNav.map((n) => ({ ...n, section: "Pages" })),
-  ...docsNav.flatMap((s) => s.items.map((i) => ({ ...i, section: s.title }))),
-  { title: "Acknowledgements", href: "/acknowledgements", section: "Pages" },
-  { title: "License", href: "/license", section: "Pages" },
-  { title: "Security", href: "/security", section: "Pages" },
-  { title: "Contributing", href: "/contributing", section: "Pages" },
-  { title: "Code of Conduct", href: "/code-of-conduct", section: "Pages" },
-  { title: "GitHub repository ↗", href: site.github, section: "Links", external: true },
-  { title: "Latest release ↗", href: site.releasesLatest, section: "Links", external: true },
+const STATIC: Item[] = [
+  { title: "Home", href: "/", group: "Pages" },
+  { title: "Changelog", href: "/changelog", group: "Pages" },
+  { title: "Blog", href: "/blog", group: "Pages" },
+  { title: "Guides", href: "/guides", group: "Pages" },
+  { title: "Community", href: "/community", group: "Pages" },
+  { title: "Contributing", href: "/contributing", group: "Pages" },
+  { title: "Security", href: "/security", group: "Pages" },
+  { title: "License", href: "/license", group: "Pages" },
+  { title: "GitHub repository", href: site.github, group: "Links", external: true },
+  { title: "Latest release", href: site.releasesLatest, group: "Links", external: true },
+  { title: "Discord", href: site.discord, group: "Links", external: true },
 ];
+const SUGGESTED = ["/docs/quick-start", "/docs/installation", "/docs/providers", "/docs/keybindings", "/docs/sandboxing", "/docs/cli"];
 
-// tiny fuzzy: subsequence match + contiguous bonus
-function score(q: string, t: string): number {
-  if (!q) return 1;
-  const s = t.toLowerCase();
-  let qi = 0;
-  let sc = 0;
-  let streak = 0;
-  for (let i = 0; i < s.length && qi < q.length; i++) {
-    if (s[i] === q[qi]) {
-      qi++;
-      streak++;
-      sc += streak;
-    } else {
-      streak = 0;
+let indexPromise: Promise<Item[]> | null = null;
+const loadIndex = () =>
+  (indexPromise ??= fetch("/search.json")
+    .then((r) => (r.ok ? r.json() : []))
+    .then((rows: Row[]) => [...rows.map(([title, href, group, parent]) => ({ title, href, group, parent })), ...STATIC])
+    .catch(() => STATIC));
+
+// Rank a title against the query: every query word must appear; whole-word and
+// word-prefix hits score highest, then substring, then in-order subsequence.
+function score(words: string[], item: Item): number {
+  const t = item.title.toLowerCase();
+  const hay = item.parent ? `${t} ${item.parent.toLowerCase()}` : t;
+  let total = 0;
+  for (const w of words) {
+    let s = 0;
+    if (new RegExp(`(^|[^a-z0-9])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(t)) s = t.startsWith(w) ? 120 : 90;
+    else if (t.includes(w)) s = 50;
+    else if (hay.includes(w)) s = 25;
+    else {
+      let i = 0;
+      for (const ch of t) if (ch === w[i]) i++;
+      if (i < w.length || w.length < 3) return 0;
+      s = 8;
     }
+    total += s;
   }
-  return qi === q.length ? sc : 0;
+  if (!item.parent) total += 15;                  // pages before their sections
+  return total - t.length / 40;                   // shorter titles break ties
 }
 
 export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
   const [open, setOpen] = useState(startOpen);
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
+  const [index, setIndex] = useState<Item[]>(STATIC);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const results = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    if (!query) return index.slice(0, 9);
-    return index
-      .map((it) => ({ it, sc: score(query, it.title) }))
-      .filter((r) => r.sc > 0)
-      .sort((a, b) => b.sc - a.sc)
-      .slice(0, 10)
-      .map((r) => r.it);
-  }, [q]);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (open) loadIndex().then(setIndex);
+  }, [open]);
+
+  const results = useMemo(() => {
+    const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) {
+      const byHref = new Map(index.map((i) => [i.href, i]));
+      return SUGGESTED.map((h) => byHref.get(h)).filter((x): x is Item => !!x);
+    }
+    return index
+      .map((it) => ({ it, sc: score(words, it) }))
+      .filter((r) => r.sc > 0)
+      .sort((a, b) => b.sc - a.sc)
+      .slice(0, 12)
+      .map((r) => r.it);
+  }, [q, index]);
+
+  useEffect(() => {
+    const typing = (el: EventTarget | null) =>
+      el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen((o) => !o);
-      }
-      if (e.key === "Escape") setOpen(false);
+      } else if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey && !typing(e.target)) {
+        e.preventDefault();
+        setOpen(true);
+      } else if (e.key === "Escape") setOpen(false);
     };
-    // The nav trigger + mobile "Search" dispatch this event; listening for it
-    // here (not just ⌘K) is what makes click-to-open work every time — the lazy
-    // wrapper only arms once, so after the first close it can't re-open us.
     const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
     window.addEventListener("agentty:open-palette", onOpen);
@@ -77,20 +104,19 @@ export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 10);
-    else {
-      setQ("");
-      setSel(0);
+    if (open) {
+      inputRef.current?.focus();
+      const y = window.scrollY;
+      document.documentElement.style.overflow = "hidden";
+      return () => { document.documentElement.style.overflow = ""; window.scrollTo(0, y); };
     }
+    setQ("");
+    setSel(0);
   }, [open]);
 
   useEffect(() => setSel(0), [q]);
-
-  // Keep the highlighted result visible when arrowing past the fold.
-  const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = resultsRef.current?.querySelector<HTMLElement>(".cmdk-item.sel");
-    el?.scrollIntoView({ block: "nearest" });
+    resultsRef.current?.querySelector<HTMLElement>(".cmdk-item.sel")?.scrollIntoView({ block: "nearest" });
   }, [sel]);
 
   const go = (it: Item) => {
@@ -103,79 +129,60 @@ export function CommandPalette({ startOpen = false }: { startOpen?: boolean }) {
 
   return (
     <div className="cmdk-overlay" onClick={() => setOpen(false)}>
-      <div
-        className="cmdk"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Jump to a page or doc"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="cmdk-top">
-          <span className="cmdk-edge">╭</span>
-          <span className="cmdk-fill" />
-          <span className="cmdk-cap"> JUMP TO </span>
-          <span className="cmdk-fill" />
-          <span className="cmdk-edge">╮</span>
-        </div>
+      <div className="cmdk" role="dialog" aria-modal="true" aria-label="Search" onClick={(e) => e.stopPropagation()}>
         <div className="cmdk-inputrow">
-          <span className="cmdk-prompt">❯</span>
+          <span className="cmdk-prompt" aria-hidden="true">/</span>
           <input
             ref={inputRef}
             className="cmdk-input"
-            aria-label="Search pages and docs"
-            placeholder="jump to a page or doc…"
+            aria-label="Search the docs"
+            placeholder="search docs, sections, posts…"
             value={q}
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="cmdk-results"
+            aria-activedescendant={results[sel] ? `cmdk-${sel}` : undefined}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "ArrowDown") {
+              if (e.key === "ArrowDown" || (e.ctrlKey && e.key === "n")) {
                 e.preventDefault();
                 setSel((s) => Math.min(s + 1, results.length - 1));
-              }
-              if (e.key === "ArrowUp") {
+              } else if (e.key === "ArrowUp" || (e.ctrlKey && e.key === "p")) {
                 e.preventDefault();
                 setSel((s) => Math.max(s - 1, 0));
-              }
-              if (e.key === "Enter" && results[sel]) go(results[sel]);
+              } else if (e.key === "Enter" && results[sel]) go(results[sel]);
             }}
           />
+          <kbd className="cmdk-esc">esc</kbd>
         </div>
 
-        <div className="cmdk-results" ref={resultsRef} role="listbox" aria-label="Results">
-          {results.length === 0 && (
-            <div className="cmdk-empty">no match for “{q}”</div>
-          )}
+        <div className="cmdk-results" id="cmdk-results" ref={resultsRef} role="listbox" aria-label="Results">
+          {!q.trim() && <div className="cmdk-heading">Suggested</div>}
+          {results.length === 0 && <div className="cmdk-empty">No results for “{q}”</div>}
           {results.map((r, i) => (
             <button
               key={r.href + r.title}
+              id={`cmdk-${i}`}
               className={`cmdk-item ${i === sel ? "sel" : ""}`}
               role="option"
               aria-selected={i === sel}
-              onMouseEnter={() => setSel(i)}
+              onMouseMove={() => setSel(i)}
               onClick={() => go(r)}
             >
-              <span className="cmdk-glyph">{i === sel ? "▌" : " "}</span>
-              <span className="cmdk-title">{r.title}</span>
-              <span className="cmdk-section">{r.section}</span>
+              <span className="cmdk-title">
+                {r.parent && <span className="cmdk-parent">{r.parent} › </span>}
+                {r.title}
+                {r.external && " ↗"}
+              </span>
+              <span className="cmdk-section">{r.group}</span>
             </button>
           ))}
         </div>
 
         <div className="cmdk-foot">
-          <span>
-            <kbd>↑</kbd>
-            <kbd>↓</kbd> move
-          </span>
-          <span>
-            <kbd>↵</kbd> open
-          </span>
-          <span>
-            <kbd>esc</kbd> close
-          </span>
-        </div>
-        <div className="cmdk-bot">
-          <span className="cmdk-edge">╰</span>
-          <span className="cmdk-fill" />
-          <span className="cmdk-edge">╯</span>
+          <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+          <span><kbd>↵</kbd> open</span>
+          <span><kbd>/</kbd> or <kbd>⌘K</kbd> search</span>
         </div>
       </div>
     </div>

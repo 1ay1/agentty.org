@@ -1,5 +1,3 @@
-"use client";
-
 import { release } from "@/lib/release";
 
 // The per-platform download table on /docs/installation. Rendered from the live

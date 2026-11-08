@@ -18,7 +18,12 @@ export function CommandPaletteLazy() {
     if (armed) return;
     const arm = () => setArmed(true);
     const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        arm();
+      } else if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey && !typing) {
         e.preventDefault();
         arm();
       }

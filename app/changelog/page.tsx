@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { markdownToHtml } from "@/lib/markdown";
 import { applyTokens } from "@/lib/docs-tokens";
 import { site } from "@/lib/site";
+import { DocBody } from "@/components/DocBody";
 
 // The changelog is rendered straight from the agentty repo's CHANGELOG.md,
 // synced into content/changelog.md on every deploy (scripts/sync-changelog.mjs).
@@ -50,7 +51,7 @@ export default function ChangelogPage() {
         </a>{" "}
         in the repo.
       </p>
-      <div className="doc-body" dangerouslySetInnerHTML={{ __html: html }} />
+      <DocBody html={html} />
     </div>
   );
 }

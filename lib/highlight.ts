@@ -1,0 +1,66 @@
+// Build-time syntax highlighting for every fenced code block on the site.
+// Runs only inside markdownToHtml (server components / static export), so it
+// ships zero bytes of JS. Colours are CSS variables (--hl-*) defined in
+// app/site.css for both themes, so one HTML output serves dark and light.
+import { createHighlighterCoreSync, createCssVariablesTheme } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import shellscript from "@shikijs/langs/shellscript";
+import json from "@shikijs/langs/json";
+import jsonc from "@shikijs/langs/jsonc";
+import yaml from "@shikijs/langs/yaml";
+import toml from "@shikijs/langs/toml";
+import ini from "@shikijs/langs/ini";
+import python from "@shikijs/langs/python";
+import cpp from "@shikijs/langs/cpp";
+import cmake from "@shikijs/langs/cmake";
+import markdown from "@shikijs/langs/markdown";
+import diff from "@shikijs/langs/diff";
+import typescript from "@shikijs/langs/typescript";
+import javascript from "@shikijs/langs/javascript";
+import powershell from "@shikijs/langs/powershell";
+
+const theme = createCssVariablesTheme({
+  name: "site",
+  variablePrefix: "--hl-",
+  variableDefaults: {},
+  fontStyle: true,
+});
+
+let hl: ReturnType<typeof createHighlighterCoreSync> | null = null;
+const highlighter = () =>
+  (hl ??= createHighlighterCoreSync({
+    themes: [theme],
+    langs: [shellscript, json, jsonc, yaml, toml, ini, python, cpp, cmake, markdown, diff, typescript, javascript, powershell],
+    engine: createJavaScriptRegexEngine(),
+  }));
+
+// fence info string → [shiki grammar, label shown in the block header]
+const LANGS: Record<string, [string, string]> = {
+  bash: ["shellscript", "bash"], sh: ["shellscript", "sh"], shell: ["shellscript", "shell"],
+  zsh: ["shellscript", "zsh"], console: ["shellscript", "console"],
+  json: ["json", "json"], jsonc: ["jsonc", "jsonc"], json5: ["jsonc", "json5"],
+  yaml: ["yaml", "yaml"], yml: ["yaml", "yaml"], toml: ["toml", "toml"],
+  conf: ["ini", "conf"], ini: ["ini", "ini"], kdl: ["ini", "kdl"],
+  python: ["python", "python"], py: ["python", "python"],
+  cpp: ["cpp", "c++"], "c++": ["cpp", "c++"], c: ["cpp", "c"], hpp: ["cpp", "c++"],
+  cmake: ["cmake", "cmake"], markdown: ["markdown", "markdown"], md: ["markdown", "markdown"],
+  diff: ["diff", "diff"], ts: ["typescript", "ts"], typescript: ["typescript", "ts"],
+  js: ["javascript", "js"], javascript: ["javascript", "js"],
+  powershell: ["powershell", "powershell"], ps1: ["powershell", "powershell"],
+};
+
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Inner HTML for <code> plus the display label. Unknown/plain → escaped text. */
+export function highlight(code: string, info: string): { html: string; label: string } {
+  const key = info.trim().toLowerCase();
+  const lang = LANGS[key];
+  if (!lang) return { html: esc(code), label: key && key !== "text" && key !== "txt" && key !== "plain" ? key : "" };
+  try {
+    const out = highlighter().codeToHtml(code, { lang: lang[0], theme: "site" });
+    const inner = out.slice(out.indexOf("<code>") + 6, out.lastIndexOf("</code>"));
+    return { html: inner, label: lang[1] };
+  } catch {
+    return { html: esc(code), label: lang[1] };
+  }
+}

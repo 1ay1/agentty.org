@@ -1,56 +1,27 @@
-"use client";
-
-import { useEffect, useRef } from "react";
-import { createRoot } from "react-dom/client";
+import { Fragment } from "react";
 import { ReleaseTable } from "./ReleaseTable";
+import { DocEnhance } from "./DocEnhance";
 
-// Renders pre-built docs HTML and progressively enhances it on the client:
-//  1. every `<pre class="code">` gets a floating copy button (matching the
-//     hand-written <Code> component's UX);
-//  2. any `<div data-directive="release-table">` sentinel is hydrated into the
-//     live per-platform download table.
-// The server output is complete, styled HTML — enhancement is additive, so the
-// page is fully readable before/without JS.
+// Server component: the docs HTML is complete at build time — highlighted code,
+// copy buttons, heading anchors, and directive blocks (the release table is
+// rendered right here, not hydrated later), so nothing shifts after load.
+// DocEnhance only attaches one delegated click handler.
+const DIRECTIVES: Record<string, () => React.ReactNode> = {
+  "release-table": () => <ReleaseTable />,
+};
+
 export function DocBody({ html }: { html: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const root = ref.current;
-    if (!root) return;
-    const cleanups: (() => void)[] = [];
-
-    // 1. copy buttons on code blocks
-    root.querySelectorAll<HTMLPreElement>("pre.code").forEach((pre) => {
-      if (pre.querySelector(".codeblock-copy")) return;
-      const code = pre.querySelector("code");
-      const btn = document.createElement("button");
-      btn.className = "codeblock-copy floating";
-      btn.setAttribute("aria-label", "Copy code");
-      btn.textContent = "copy";
-      const onClick = () => {
-        navigator.clipboard?.writeText(code?.textContent ?? "");
-        btn.textContent = "copied";
-        setTimeout(() => (btn.textContent = "copy"), 1400);
-      };
-      btn.addEventListener("click", onClick);
-      pre.appendChild(btn);
-      cleanups.push(() => btn.removeEventListener("click", onClick));
-    });
-
-    // 2. directive sentinels → live components
-    root.querySelectorAll<HTMLDivElement>('div[data-directive]').forEach((el) => {
-      if (el.dataset.hydrated) return;
-      el.dataset.hydrated = "1";
-      const kind = el.getAttribute("data-directive");
-      if (kind === "release-table") {
-        const r = createRoot(el);
-        r.render(<ReleaseTable />);
-        cleanups.push(() => queueMicrotask(() => r.unmount()));
-      }
-    });
-
-    return () => cleanups.forEach((c) => c());
-  }, [html]);
-
-  return <div ref={ref} className="doc-body" dangerouslySetInnerHTML={{ __html: html }} />;
+  const parts = html.split(/<div data-directive="([a-z-]+)"><\/div>/);
+  return (
+    <div className="doc-body">
+      {parts.map((p, i) =>
+        i % 2 === 0 ? (
+          p && <div key={i} className="doc-chunk" dangerouslySetInnerHTML={{ __html: p }} />
+        ) : (
+          <Fragment key={i}>{DIRECTIVES[p]?.()}</Fragment>
+        ),
+      )}
+      <DocEnhance />
+    </div>
+  );
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getComparePages, getComparePage } from "@/lib/seo-pages";
 import { site } from "@/lib/site";
+import { DocBody } from "@/components/DocBody";
 
 export function generateStaticParams() {
   return getComparePages().map((p) => ({ slug: p.slug }));
@@ -77,7 +78,7 @@ export default async function ComparePage({
           <strong>Short answer:</strong> {page.verdict}
         </p>
       )}
-      <article className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
+      <DocBody html={page.html} />
 
       <div className="cta">
         <p>Ready to try it? One line, no Node or Python.</p>

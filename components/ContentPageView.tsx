@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getContentPage } from "@/lib/pages";
 import { site } from "@/lib/site";
+import { DocBody } from "@/components/DocBody";
 
 // Thin renderer for a repo-sourced content page. Every static page (security,
 // contributing, …) is just this + a slug; the prose lives in the agentty repo
@@ -37,7 +38,7 @@ export function ContentPageView({ slug }: { slug: string }) {
     <div className="page">
       <h1>{page.title}</h1>
       {page.description && <p className="lead">{page.description}</p>}
-      <div className="doc-body" dangerouslySetInnerHTML={{ __html: page.html }} />
+      <DocBody html={page.html} />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumb, EditThisPage } from "@/components/DocMeta";
 import { DocNav } from "@/components/DocNav";
 import { DocBody } from "@/components/DocBody";
+import { PageActions } from "@/components/PageActions";
 import {
   getDoc,
   getDocSlugs,
@@ -51,9 +52,23 @@ export default async function DocsPage({ params }: { params: Promise<Params> }) 
 
   return (
     <>
-      <Breadcrumb title={doc.title} />
-      <h1>{doc.title}</h1>
-      {doc.description && <p className="lead">{doc.description}</p>}
+      <header className="doc-head">
+        <Breadcrumb title={doc.title} />
+        <h1>{doc.title}</h1>
+        {doc.description && <p className="lead">{doc.description}</p>}
+        <PageActions md={`/md/${doc.slug || "index"}.md`} />
+      </header>
+
+      {doc.headings.filter((h) => h.level === 2).length > 2 && (
+        <details className="toc-inline">
+          <summary>On this page</summary>
+          <ol>
+            {doc.headings.filter((h) => h.level === 2).map((h) => (
+              <li key={h.id}><a href={`#${h.id}`}>{h.text}</a></li>
+            ))}
+          </ol>
+        </details>
+      )}
 
       <DocBody html={doc.html} />
 
