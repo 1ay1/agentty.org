@@ -194,10 +194,9 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
 :where(.doc-body p, .doc-body li, .note) > code { overflow-wrap: anywhere; }
 .doc-body kbd { white-space: nowrap; }
 td code, td kbd { white-space: nowrap; overflow-wrap: normal; }
-/* a table's first column is its key: never squeezed, never wrapped */
-td:first-child { white-space: nowrap; width: 1%; }
-td:first-child:has(> :not(code, kbd, a, strong, em)) { white-space: normal; width: auto; }
-td + td { overflow-wrap: break-word; }
+/* chips never break, so a column is never squeezed below its widest chip;
+   cells still wrap between chips and words */
+td { overflow-wrap: break-word; }
 .doc-body kbd { border-bottom-width: 2px; }
 
 /* code blocks: a header (language, copy) over the highlighted code */
