@@ -5,6 +5,7 @@ import { getAllPosts, getPost, getAdjacent, formatDate } from "@/lib/blog";
 import { site } from "@/lib/site";
 import { DocBody } from "@/components/DocBody";
 import { TableOfContents } from "@/components/TableOfContents";
+import { seoDescription, seoTitle } from "@/lib/seo";
 
 export function generateStaticParams() {
   return getAllPosts().map((p) => ({ slug: p.slug }));
@@ -20,8 +21,8 @@ export async function generateMetadata({
   if (!post) return { title: "Not found" };
   const url = `${site.url}/blog/${slug}/`;
   return {
-    title: post.title,
-    description: post.excerpt,
+    title: seoTitle(post.title),
+    description: seoDescription(post.excerpt),
     keywords: [...post.tags, "agentty", "terminal coding agent", "claude code alternative"],
     authors: [{ name: post.author, url: site.github }],
     alternates: { canonical: `/blog/${slug}` },

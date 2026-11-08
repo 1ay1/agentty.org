@@ -11,6 +11,7 @@ import {
   docSourcePath,
 } from "@/lib/docs";
 import { site } from "@/lib/site";
+import { seoDescription, seoTitle } from "@/lib/seo";
 
 // One dynamic route renders every /docs page from the Markdown synced out of the
 // agentty repo (docs/website/*.md → content/docs/*.md). Adding a doc is adding a
@@ -36,8 +37,8 @@ export async function generateMetadata({
   if (!doc) return {};
   const canonical = doc.slug === "" ? "/docs" : `/docs/${doc.slug}`;
   return {
-    title: doc.title,
-    description: doc.description,
+    title: seoTitle(doc.title, "docs"),
+    description: seoDescription(doc.description),
     alternates: { canonical },
     openGraph: { title: doc.title, description: doc.description, url: site.url + canonical },
   };

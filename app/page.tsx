@@ -40,7 +40,13 @@ export default function Home() {
         <Link href="/docs/providers">providers</Link>
         <a href={repo.url} target="_blank" rel="noreferrer">github <span>{starLabel}</span></a>
         <a href={site.discord} target="_blank" rel="noopener noreferrer">discord</a>
-        <span className="home-license">MIT</span>
+        <Link href="/blog">blog</Link>
+        <Link href="/guides">guides</Link>
+        <Link href="/changelog">changelog</Link>
+        <span className="home-license">
+          MIT · <Link href="/license">license</Link> · <Link href="/security">security</Link> ·{" "}
+          <Link href="/acknowledgements">acknowledgements</Link> · <Link href="/code-of-conduct">code of conduct</Link>
+        </span>
       </nav>
     </div>
   );

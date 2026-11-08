@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getComparePages, getComparePage } from "@/lib/seo-pages";
 import { site } from "@/lib/site";
 import { DocBody } from "@/components/DocBody";
+import { seoDescription, seoTitle } from "@/lib/seo";
 
 export function generateStaticParams() {
   return getComparePages().map((p) => ({ slug: p.slug }));
@@ -18,8 +19,8 @@ export async function generateMetadata({
   const page = getComparePage(slug);
   if (!page) return { title: "Not found" };
   return {
-    title: page.title,
-    description: page.description,
+    title: seoTitle(page.title),
+    description: seoDescription(page.description),
     keywords: [
       `agentty vs ${page.competitor}`,
       `${page.competitor} alternative`,

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getAlternativePages, getAlternativePage } from "@/lib/seo-pages";
 import { site } from "@/lib/site";
 import { DocBody } from "@/components/DocBody";
+import { seoDescription, seoTitle } from "@/lib/seo";
 
 export function generateStaticParams() {
   return getAlternativePages().map((p) => ({ slug: p.slug }));
@@ -18,8 +19,8 @@ export async function generateMetadata({
   const page = getAlternativePage(slug);
   if (!page) return { title: "Not found" };
   return {
-    title: page.title,
-    description: page.description,
+    title: seoTitle(page.title),
+    description: seoDescription(page.description),
     keywords: [
       `${page.competitor} alternative`,
       `open source ${page.competitor} alternative`,

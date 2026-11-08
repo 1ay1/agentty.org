@@ -11,7 +11,7 @@ import { DocBody } from "@/components/DocBody";
 // Zero hand-authoring — edit CHANGELOG.md in 1ay1/agentty and it appears here.
 
 export const metadata: Metadata = {
-  title: "Changelog",
+  title: { absolute: "Changelog · agentty — every release, added, changed, fixed" },
   description:
     "Release history for agentty — every version's added, changed, and fixed, straight from the repo's CHANGELOG.md.",
   alternates: { canonical: "/changelog" },

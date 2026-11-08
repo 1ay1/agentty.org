@@ -5,6 +5,7 @@ import "./site.css";
 import { SiteNav } from "@/components/SiteNav";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { site } from "@/lib/site";
+import { seoDescription } from "@/lib/seo";
 import { stats } from "@/lib/stats";
 import { release } from "@/lib/release";
 
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     default: "agentty — a blazing-fast coding agent in your terminal",
     template: "%s · agentty",
   },
-  description: site.description,
+  description: seoDescription(site.description),
   applicationName: "agentty",
   generator: "Next.js",
   referrer: "strict-origin-when-cross-origin",
@@ -69,14 +70,14 @@ export const metadata: Metadata = {
     type: "website",
     url: site.url,
     title: "agentty — a blazing-fast coding agent in your terminal",
-    description: site.description,
+    description: seoDescription(site.description),
     siteName: "agentty",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
     title: "agentty — a blazing-fast coding agent in your terminal",
-    description: site.description,
+    description: seoDescription(site.description),
     creator: "@agentty",
   },
   robots: {
@@ -114,7 +115,7 @@ const jsonLd = {
       applicationCategory: "DeveloperApplication",
       applicationSubCategory: "AI Coding Agent",
       operatingSystem: "Linux, macOS, Windows",
-      description: site.description,
+      description: seoDescription(site.description),
       url: site.url,
       downloadUrl: site.releasesLatest,
       // The PUBLISHED release, not whichever binary sits on the build host.

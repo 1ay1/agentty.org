@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getContentPage } from "@/lib/pages";
 import { site } from "@/lib/site";
+import { seoDescription, seoTitle } from "@/lib/seo";
 import { DocBody } from "@/components/DocBody";
 
 // Thin renderer for a repo-sourced content page. Every static page (security,
@@ -13,8 +14,8 @@ export function renderContentMetadata(slug: string): Metadata {
   const page = getContentPage(slug);
   if (!page) return {};
   return {
-    title: page.title,
-    description: page.description,
+    title: seoTitle(page.title),
+    description: seoDescription(page.description),
     alternates: { canonical: `/${slug}` },
     openGraph: {
       title: page.title,

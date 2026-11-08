@@ -437,7 +437,9 @@ td .win { color: var(--text); }
 .home-links a { color: var(--text); text-decoration: none; }
 .home-links a:hover { color: var(--accent); text-decoration: underline; }
 .home-links a span, .home-license { color: var(--text-faint); }
-.home-license { flex-basis: 100%; margin-top: 4px; }   /* its own line under the links */
+.home-license { flex-basis: 100%; margin-top: 4px; font-size: var(--fs-sm); }
+.home-license a { color: var(--text-faint); }
+.home-license a:hover { color: var(--text); }   /* its own line under the links */
 
 /* ── demo terminal (ReplayTerminal) ───────────────────────────────────── */
 .replay { position: relative; border: 1px solid var(--border); background: #100f0f; contain: layout style; isolation: isolate; }

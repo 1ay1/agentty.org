@@ -4,7 +4,7 @@ import { getAllPosts, formatDate } from "@/lib/blog";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Blog",
+  title: { absolute: "Blog · agentty — notes from building a terminal coding agent" },
   description: `Release notes, performance deep dives, and design notes from the ${site.name} project — the native C++26 claude-code alternative.`,
   keywords: [
     "agentty blog",
