@@ -21,18 +21,17 @@ const OUT = process.argv[2] || path.join(ROOT, "demo/session.json");
 // The binary: AGENTTY_BIN, else the LATEST GitHub release (so the demo always
 // shows the current UI), downloaded once into the temp dir.
 async function latestRelease() {
-  const api = await fetch("https://api.github.com/repos/agentty-org/agentty/releases/latest");
-  if (!api.ok) throw new Error(`GitHub API ${api.status}`);
-  const rel = await api.json();
-  const asset = rel.assets.find((a) => a.name === "agentty-linux-x86_64");
-  if (!asset) throw new Error(`no linux-x86_64 asset in ${rel.tag_name}`);
-  const dest = path.join(os.tmpdir(), `agentty-${rel.tag_name}`);
+  // the releases/latest page redirects to /tag/vX.Y.Z — no API, no rate limit
+  const r = await fetch("https://github.com/agentty-org/agentty/releases/latest", { redirect: "manual" });
+  const tag = (r.headers.get("location") || "").split("/tag/")[1];
+  if (!tag) throw new Error(`can't resolve the latest release (HTTP ${r.status})`);
+  const dest = path.join(os.tmpdir(), `agentty-${tag}`);
   if (!fs.existsSync(dest)) {
-    const bin = await fetch(asset.browser_download_url);
+    const bin = await fetch(`https://github.com/agentty-org/agentty/releases/download/${tag}/agentty-linux-x86_64`);
     if (!bin.ok) throw new Error(`download ${bin.status}`);
     fs.writeFileSync(dest, Buffer.from(await bin.arrayBuffer()), { mode: 0o755 });
   }
-  console.log(`using agentty ${rel.tag_name} from GitHub releases`);
+  console.log(`using agentty ${tag} from GitHub releases`);
   return dest;
 }
 const AGENTTY_BIN = process.env.AGENTTY_BIN || await latestRelease();
