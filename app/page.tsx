@@ -27,11 +27,11 @@ export default function Home() {
 
       <section>
         <dl className="home-facts">
-          <dt>sandbox</dt><dd>every shell call runs in <code>bwrap</code> / <code>sandbox-exec</code>; <code>~/.ssh</code> stays out of reach</dd>
-          <dt>models</dt><dd>switch provider or model mid-thread with <kbd>^P</kbd>, no restart</dd>
-          <dt>editors</dt><dd>runs in Zed over ACP; serves and consumes MCP</dd>
-          <dt>air-gap</dt><dd><code>agentty airgap user@host</code> runs a whole session over SSH</dd>
-          <dt>memory</dt><dd>saved threads, rewindable checkpoints, subagents, local retrieval</dd>
+          <dt>sandbox</dt><dd><code>bwrap</code> / <code>sandbox-exec</code>; <code>~/.ssh</code> out of reach</dd>
+          <dt>models</dt><dd>switch provider or model live with <kbd>^P</kbd></dd>
+          <dt>editors</dt><dd>Zed over ACP; MCP both ways</dd>
+          <dt>air-gap</dt><dd><code>agentty airgap user@host</code> over SSH</dd>
+          <dt>memory</dt><dd>threads, checkpoints, subagents, local retrieval</dd>
         </dl>
       </section>
 
