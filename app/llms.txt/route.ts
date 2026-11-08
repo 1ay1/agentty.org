@@ -7,7 +7,7 @@ export const dynamic = "force-static";
 // entry pointing at the page's raw markdown.
 export function GET() {
   const docs = new Map(getAllDocs().map((d) => [d.href, d]));
-  let out = `# ${site.name}\n\n> A fast coding agent for your terminal, written in C++26: one small static binary, any model.\n\n`;
+  let out = `# ${site.name}\n\n> A fast agent harness for your terminal (a coding agent around any model), written in C++26: one small static binary, any model.\n\n`;
   for (const sec of docsNav) {
     out += `## ${sec.title}\n\n`;
     for (const it of sec.items) {

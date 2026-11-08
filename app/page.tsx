@@ -10,7 +10,7 @@ export default function Home() {
     <div className="home">
       <header className="home-head">
         <div className="home-logo"><AgenttyLogo /></div>
-        <h1>Blazing-fast coding agent in your terminal.</h1>
+        <h1>Blazing-fast agent harness for your terminal.</h1>
         <p>One small binary, any model.</p>
       </header>
 

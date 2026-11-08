@@ -417,8 +417,8 @@ td .win { color: var(--text); }
 /* homepage rhythm: 20px inside the hero, 28px between sections */
 .home-logo { margin: 0 0 12px; }
 .home-logo .agentty-logo { margin: 0; font-size: clamp(6px, 1.6vw, 10px) !important; }
-/* one line at any width: 43 chars × 0.6em ≈ 26em */
-.home h1 { white-space: nowrap; font-size: min(var(--fs-lg), calc((min(760px, 100vw) - var(--gutter) - 24px) / 26.5)); margin: 0 0 6px; }
+/* one line at any width: 45 chars × 0.6em ≈ 27em */
+.home h1 { white-space: nowrap; font-size: min(var(--fs-lg), calc((min(760px, 100vw) - var(--gutter) - 24px) / 27.5)); margin: 0 0 6px; }
 .home-head p { color: var(--text-dim); margin: 0; }
 .home-demo { margin: 12px 0 0; }
 .home-demo, .home-info, .home-links { width: min(780px, calc(100vw - var(--gutter) - 16px)); }

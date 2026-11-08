@@ -30,7 +30,7 @@ export const viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: "agentty — a blazing-fast coding agent in your terminal",
+    default: "agentty — the agent harness for your terminal",
     template: "%s · agentty",
   },
   description: seoDescription(site.description),
@@ -44,6 +44,8 @@ export const metadata: Metadata = {
     "claude code alternative",
     "claude cli",
     "claude terminal",
+    "agent harness",
+    "AI agent harness",
     "terminal coding agent",
     "terminal AI agent",
     "AI coding agent",
@@ -69,14 +71,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: site.url,
-    title: "agentty — a blazing-fast coding agent in your terminal",
+    title: "agentty — the agent harness for your terminal",
     description: seoDescription(site.description),
     siteName: "agentty",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "agentty — a blazing-fast coding agent in your terminal",
+    title: "agentty — the agent harness for your terminal",
     description: seoDescription(site.description),
     creator: "@agentty",
   },
@@ -112,7 +114,7 @@ const jsonLd = {
       name: "agentty",
       alternateName: ["agent++", "agentty cli"],
       applicationCategory: "DeveloperApplication",
-      applicationSubCategory: "AI Coding Agent",
+      applicationSubCategory: "AI Agent Harness",
       operatingSystem: "Linux, macOS, Windows",
       description: seoDescription(site.description),
       url: site.url,

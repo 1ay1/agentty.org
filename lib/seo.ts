@@ -14,13 +14,13 @@ export function seoTitle(title: string, section?: string): { absolute: string } 
   const options = [section ? `${t} · agentty ${section}` : "", `${t} · agentty`, t].filter(Boolean);
   const fits = options.find((o) => o.length <= 60) ?? t;
   // very short titles ("FAQ", "License") say what agentty is, too
-  if (fits.length < 24) return { absolute: /agentty/i.test(t) ? `${t} — the terminal coding agent` : `${t} — agentty, the terminal coding agent` };
+  if (fits.length < 24) return { absolute: /agentty/i.test(t) ? `${t} — the terminal agent harness` : `${t} — agentty, the terminal agent harness` };
   // a title that already says "agentty" doesn't need the brand twice
   return { absolute: /agentty/i.test(t) && fits !== t && t.length <= 60 ? t : fits };
 }
 
 /** Meta description clamped to ~155 chars at a word boundary; short ones get context. */
-export function seoDescription(desc: string, context = "agentty — a fast, sandboxed coding agent for your terminal: one small binary, any model."): string {
+export function seoDescription(desc: string, context = "agentty — a fast, sandboxed agent harness for your terminal: one small binary, any model."): string {
   let d = desc.replace(/\s+/g, " ").trim();
   if (d.length < 70) d = d ? `${d.replace(/\.?$/, ".")} ${context}` : context;
   if (d.length <= 158) return d;

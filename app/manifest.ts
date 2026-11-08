@@ -4,10 +4,10 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "agentty — a blazing-fast coding agent in your terminal",
+    name: "agentty — the agent harness for your terminal",
     short_name: "agentty",
     description:
-      "A native C++26 terminal coding agent. One static binary, sandboxed by default.",
+      "A native C++26 agent harness for your terminal. One static binary, any model, sandboxed by default.",
     start_url: "/",
     display: "browser",
     background_color: "#0b0810",
