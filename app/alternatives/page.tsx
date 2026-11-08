@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getAlternativePages } from "@/lib/seo-pages";
 
 export const metadata: Metadata = {
-  title: "Open-source coding agent alternatives — Claude Code, Aider, Cursor & more",
+  title: { absolute: "Open-source Claude Code, Aider & Cursor alternatives" },
   description:
     "agentty is an open-source, native terminal coding agent — a fast, multi-provider alternative to Claude Code, Aider, Cursor, Codex CLI, and more.",
   alternates: { canonical: "/alternatives" },

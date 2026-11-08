@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getGuidePages } from "@/lib/seo-pages";
 
 export const metadata: Metadata = {
-  title: "agentty guides — run AI coding agents locally, with Ollama, Claude & more",
+  title: { absolute: "agentty guides — local models, Claude, providers" },
   description:
     "Practical guides for agentty: run a coding agent locally with Ollama, use Claude from the terminal, integrate providers, and more.",
   alternates: { canonical: "/guides" },
