@@ -4,9 +4,10 @@
 // For each tool, with a fresh empty HOME (no config, no login) on the same
 // machine, sequentially:
 //   startup   `--version`, 3 warm-ups then 30 timed runs → median / p10 / p90
-//   launch    open the interactive UI in a real pseudo-terminal; time until the
-//             first screen is fully drawn (output quiet for 500 ms) → 8 runs
-//   memory    resident memory of the whole process tree once that screen is up
+//   launch    open the interactive UI in a real pseudo-terminal (returning user:
+//             first-run setup done once beforehand); time until its first prompt
+//             is fully on screen, read from the rendered terminal → 10 runs
+//   memory    resident memory of the whole process tree 2 s after that
 //   disk      everything the tool needs on disk, including the runtime it
 //             needs (Node.js or Python) if it isn't a self-contained binary
 //
@@ -20,9 +21,17 @@ import { createRequire } from "node:module";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { spawn: ptySpawn } = createRequire(path.join(ROOT, "deploy/live/package.json"))("node-pty");
+const { Terminal } = createRequire(path.join(ROOT, "package.json"))("@xterm/headless");
 const B = process.argv[2] || path.join(os.homedir(), "bench-agents");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const NODE = execFileSync("which", ["node"], { encoding: "utf8" }).trim();
+
+// "ready" = the moment the tool's first interactive prompt is fully on screen
+// (the last line of it, read from the rendered terminal, not raw bytes)
+const READY = {
+  agentty: /1–6 choose/, claude: /Choose the text style/, codex: /Press enter to continue/,
+  gemini: /3\. Don't trust/, opencode: /ctrl\+p commands/, aider: /\(Y\)es\/\(N\)o/,
+};
 
 const TOOLS = [
   { id: "agentty", name: "agentty", bin: `${B}/agentty/agentty`, dir: `${B}/agentty`, runtime: null },
@@ -77,29 +86,31 @@ function oneVersion(tool, env) {
 }
 
 // ── launch: interactive UI in a pty, until the first screen settles ────────
-async function oneLaunch(tool) {
-  const home = freshHome();
-  fs.mkdirSync(`${home}/project`);
+async function oneLaunch(tool, home) {
+  const term = new Terminal({ cols: 100, rows: 30, allowProposedApi: true });
   const t0 = performance.now();
   const p = ptySpawn(tool.bin, [], { name: "xterm-256color", cols: 100, rows: 30, cwd: `${home}/project`, env: envFor(home) });
-  let last = 0, bytes = 0;
   p.onData((d) => {
-    bytes += d.length; last = performance.now();
+    term.write(d);
     // answer terminal queries like a real terminal would
     if (d.includes("\x1b[6n")) p.write("\x1b[30;1R");
     if (d.includes("\x1b]11;?")) p.write("\x1b]11;rgb:1010/0f0f/0f0f\x1b\\");
     if (d.includes("\x1b]10;?")) p.write("\x1b]10;rgb:cece/cdcd/c3c3\x1b\\");
     if (d.includes("\x1b[c")) p.write("\x1b[?62;22c");
   });
+  const screen = () => { const b = term.buffer.active; let t = ""; for (let y = 0; y < term.rows; y++) t += b.getLine(b.viewportY + y)?.translateToString(true) + "\n"; return t; };
+  let ready = NaN;
   while (performance.now() - t0 < 30000) {
-    await sleep(20);
-    if (bytes > 200 && performance.now() - last >= 500) break;
+    await sleep(10);
+    await new Promise((r) => term.write("", r));          // flush the parser
+    if (READY[tool.id].test(screen())) { ready = performance.now() - t0; break; }
   }
-  const settled = last - t0, mem = treeRss(p.pid);
+  await sleep(2000);                                       // settle, then measure memory
+  const mem = treeRss(p.pid);
   try { p.kill("SIGKILL"); } catch {}
   await sleep(150);
-  fs.rmSync(home, { recursive: true, force: true });
-  return { settled, mem };
+  if (Number.isNaN(ready)) throw new Error(`${tool.id}: ready marker never appeared:\n${screen()}`);
+  return { settled: ready, mem };
 }
 
 // ── run ────────────────────────────────────────────────────────────────────
@@ -118,9 +129,13 @@ for (let round = 0; round < 33; round++)
   TOOLS.forEach((t, k) => { const ms = oneVersion(t, envs[k]); if (round >= 3) vt[k].push(ms); });
 homes.forEach((h) => fs.rmSync(h, { recursive: true, force: true }));
 console.log("startup done");
+// returning-user launches: one home per tool, launched once to finish any
+// first-run setup (round 0), then reused for every timed launch
 const lt = TOOLS.map(() => []), lm = TOOLS.map(() => []);
-for (let round = 0; round < 9; round++)
-  for (const [k, t] of TOOLS.entries()) { const r = await oneLaunch(t); if (round >= 1) { lt[k].push(r.settled); lm[k].push(r.mem); } }
+const lhomes = TOOLS.map(() => { const h = freshHome(); fs.mkdirSync(`${h}/project`); return h; });
+for (let round = 0; round < 11; round++)
+  for (const [k, t] of TOOLS.entries()) { const r = await oneLaunch(t, lhomes[k]); if (round >= 1) { lt[k].push(r.settled); lm[k].push(r.mem); } }
+lhomes.forEach((h) => fs.rmSync(h, { recursive: true, force: true }));
 console.log("launch done");
 for (const [k, tool] of TOOLS.entries()) {
   const s = stats(vt[k]), ready = stats(lt[k]);
