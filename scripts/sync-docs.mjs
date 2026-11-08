@@ -92,13 +92,38 @@ function fromClone() {
       timeout: 120000,
       stdio: ["ignore", "pipe", "ignore"],
     });
+  // blobless (no --depth): full commit history, file contents only for the
+  // sparse docs dir — so each page's real last-modified date is available
   run([
-    "clone", "--depth", "1", "--filter=blob:none", "--sparse",
+    "clone", "--filter=blob:none", "--sparse", "--single-branch",
     "--branch", REF, `https://github.com/${REPO}.git`, dir,
   ]);
   run(["sparse-checkout", "set", "docs/website"], dir);
   log(`source: git clone ${REPO}@${REF} (sparse)`);
+  writeDocDates(dir, run);
   return fromLocal(join(dir, "docs", "website"));
+}
+
+// docs/website/<file>.md → ISO date of its last commit, for the sitemap's
+// <lastmod>. A real date (instead of "now" on every deploy) is what makes
+// search engines trust the field and recrawl what actually changed.
+function writeDocDates(dir, run) {
+  try {
+    const out = run(["log", "--format=@%cI", "--name-only", "--", "docs/website"], dir);
+    const dates = {};
+    let cur = "";
+    for (const line of out.split("\n")) {
+      if (line.startsWith("@")) cur = line.slice(1);
+      else if (line.startsWith("docs/website/") && line.endsWith(".md")) {
+        const name = line.slice("docs/website/".length);
+        if (!name.includes("/") && !dates[name]) dates[name] = cur;   // newest first
+      }
+    }
+    writeFileSync(join(ROOT, "lib", "docs-dates.generated.json"), JSON.stringify(dates, null, 1) + "\n");
+    log(`doc dates: ${Object.keys(dates).length} files`);
+  } catch (e) {
+    log(`doc dates skipped (${e.message.split("\n")[0]})`);
+  }
 }
 
 async function gather() {

@@ -29,7 +29,7 @@ export type DocMeta = {
   navOrder: number;
 };
 
-export type Doc = DocMeta & { html: string; headings: MdHeading[]; source: string };
+export type Doc = DocMeta & { html: string; headings: MdHeading[]; source: string; file: string };
 
 export type NavItem = { title: string; href: string };
 export type NavSection = { title: string; items: NavItem[] };
@@ -72,6 +72,7 @@ function loadDoc(filename: string): Doc {
     navOrder: Number(data.nav_order ?? 999),
     html: md.html,
     headings: md.headings.filter((h) => h.level === 2 || h.level === 3),
+    file: filename,
     source: `# ${data.title || slug}\n\n${desc ? desc + "\n\n" : ""}${content.replace(/^\s*#\s+.*\n/, "").trim()}\n`,
   };
 }
