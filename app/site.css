@@ -387,7 +387,7 @@ body:has(.home) { --gutter: 24px; }
 .home-demo { margin: 12px 0 0; }
 .home-demo, .home-info, .home-links { width: min(780px, calc(100vw - var(--gutter) - 16px)); }
 .home-demo figcaption { margin-top: 8px; color: var(--text-faint); font-size: var(--fs-sm); }
-.home-info { margin-top: 28px; }
+.home-info { margin-top: 16px; }
 .home-facts { display: grid; grid-template-columns: 9ch minmax(0, 1fr); gap: 12px 24px; margin: 0; align-items: baseline; }
 .home-facts dt { color: var(--text-faint); }
 .home-facts dd { margin: 0; min-width: 0; color: var(--text-dim); overflow-wrap: anywhere; }
