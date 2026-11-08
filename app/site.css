@@ -371,7 +371,7 @@ td .win { color: var(--text); }
 
 /* ── homepage ─────────────────────────────────────────────────────────── */
 body:has(.home) { --gutter: 24px; }
-.home { max-width: 760px; padding: 40px 24px 56px var(--gutter); }
+.home { max-width: 760px; padding: 14px 24px 56px var(--gutter); }
 .home-logo { margin: 0 0 18px; }
 .home-logo .agentty-logo { margin: 0; font-size: clamp(6px, 1.6vw, 10px) !important; }
 /* one line at any width: 43 chars × 0.6em ≈ 26em */
