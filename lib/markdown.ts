@@ -72,13 +72,19 @@ export function markdownToHtml(md: string): string {
     // callout block:  :::note | :::tip | :::warn [optional label]
     //   ...body lines...
     // :::
-    const callout = line.match(/^:::(note|tip|warn)\s*(.*)$/);
+    // Common aliases (GitHub / Docusaurus spellings) map onto the three styles.
+    const callout = line.match(/^:::(note|tip|warn|warning|caution|danger|important|info|hint)\b\s*(.*)$/);
     if (callout && !/^:::(release-table)/.test(line)) {
       flushParagraph(para);
-      const type = callout[1];
-      const label =
-        callout[2].trim() ||
-        (type === "warn" ? "Warning" : type === "tip" ? "Tip" : "Note");
+      const ALIAS: Record<string, [string, string]> = {
+        warning: ["warn", "Warning"], caution: ["warn", "Caution"], danger: ["warn", "Danger"],
+        important: ["note", "Important"], info: ["note", "Note"], hint: ["tip", "Tip"],
+      };
+      const [type, defaultLabel] = ALIAS[callout[1]] ?? [
+        callout[1],
+        callout[1] === "warn" ? "Warning" : callout[1] === "tip" ? "Tip" : "Note",
+      ];
+      const label = callout[2].trim() || defaultLabel;
       const icon = type === "warn" ? "\u26a0" : type === "tip" ? "\u2726" : "\u2139";
       const inner: string[] = [];
       i++;
