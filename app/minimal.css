@@ -55,7 +55,9 @@ body {
   font-family: var(--mono);
   font-size: 14.5px;
   line-height: 1.65;
-  letter-spacing: 0;
+  /* every glyph advances exactly one cell (0.6em), whatever the platform's
+     glyph advance rounding does (Linux Chrome snaps 6.56px glyphs to 7px) */
+  letter-spacing: calc(.6em - 1ch);
   font-feature-settings: "zero", "kern";
 }
 body::before, body::after { display: none !important; animation: none !important; }

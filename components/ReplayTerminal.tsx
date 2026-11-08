@@ -60,14 +60,14 @@ export function ReplayTerminal({
           const el = document.createElement("span");
           const text = document.createTextNode("");
           el.append(text);
-          el.style.left = col + "ch";   // 1ch == one cell: font-size is --cw / .6
+          el.style.left = (col * 0.6).toFixed(1) + "em";   // one cell = 0.6em: font-size is --cw / .6
           row.append(el);
           c = { el, text, c: -1, t: "", w: -1, gen: 0 };
           pool.set(col, c);
         }
         if (c.c !== ci) { c.el.className = classNames[ci]; c.c = ci; }
         if (c.t !== txt) { c.text.data = txt; c.t = txt; }
-        if (c.w !== w) { c.el.style.width = w + "ch"; c.w = w; }
+        if (c.w !== w) { c.el.style.width = (w * 0.6).toFixed(1) + "em"; c.w = w; }
         c.gen = g;
       }
       if (pool.size > segs.length) pool.forEach((c, k) => { if (c.gen !== g) { c.el.remove(); pool.delete(k); } });

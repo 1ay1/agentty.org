@@ -23,7 +23,7 @@ export function ReplayDemo() {
           <div key={y}>
             {(first.get(y) ?? []).map(([col, w, text, c]) => (
               <span key={col} data-c={col} className={className(s.classes[c])}
-                style={{ left: `${col}ch`, width: `${w}ch` }}>
+                style={{ left: `${(col * 0.6).toFixed(1)}em`, width: `${(w * 0.6).toFixed(1)}em` }}>
                 {text}
               </span>
             ))}
