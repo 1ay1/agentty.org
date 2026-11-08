@@ -404,8 +404,8 @@ body:has(.home) { --gutter: 24px; }
 .home-license { flex-basis: 100%; margin-top: 4px; }   /* its own line under the links */
 
 /* ── demo terminal (ReplayTerminal) ───────────────────────────────────── */
-.replay { border: 1px solid var(--border); background: #100f0f; contain: layout paint style; isolation: isolate; }
-.replay-screen { position: relative; padding: 16px 6px 16px 18px; overflow: hidden; container-type: inline-size; }
+.replay { position: relative; border: 1px solid var(--border); background: #100f0f; contain: layout style; isolation: isolate; }
+.replay-screen { padding: 16px 6px 16px 18px; overflow: hidden; container-type: inline-size; }
 /* --cols × --rows cells. JetBrains Mono's advance is 0.6em, so the cell width
    sets the font size; the row height snaps to device pixels (no seams). */
 .replay-grid {
@@ -436,11 +436,12 @@ body:has(.home) { --gutter: 24px; }
 .replay-grid::-webkit-scrollbar { width: var(--sb); }
 .replay-grid::-webkit-scrollbar-thumb { background: #403e3c; border: 3px solid #100f0f; background-clip: padding-box; }
 .replay-grid::-webkit-scrollbar-thumb:hover { background: #575653; background-clip: padding-box; }
+/* below the terminal, on the caption line — never over agentty's own UI */
 .replay-again {
-  position: absolute; right: 22px; bottom: 10px; padding: 2px 8px; cursor: pointer;
-  background: #100f0f; border: 1px solid #403e3c; color: #b7b5ac; font: inherit; font-size: var(--fs-sm);
+  position: absolute; right: 0; top: calc(100% + 8px); padding: 0; cursor: pointer;
+  background: none; border: 0; color: var(--text-dim); font: inherit; font-size: var(--fs-sm);
 }
-.replay-again:hover { color: #cecdc3; border-color: #6f6e69; }
+.replay-again:hover { color: var(--accent); }
 @supports (width: round(down, 1px, 1px)) {
   .replay-grid { --step: 1px; --rh: round(calc(var(--cw) * 2), var(--step)); --t: max(var(--step), round(calc(var(--cw) * .125), var(--step))); }
   @media (resolution >= 2dppx) { .replay-grid { --step: .5px; } }
