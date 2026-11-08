@@ -156,8 +156,8 @@ body:has(.home) .nav-links a:first-child { padding-left: 0; }
   .home-facts { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
   .home-facts dd { margin-bottom: 12px; }
 }
-.home-install { display: grid; gap: 8px; }
-.home-install .copyrow { margin: 0; }
+.home-install { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.home-install .copyrow { margin: 0; min-width: 0; max-width: 100%; }
 .home-install > span { color: var(--text-faint); font-size: 12.5px; }
 .home-facts dt { color: var(--text-faint); }
 .home-facts dd { margin: 0; color: var(--text-dim); }
