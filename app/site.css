@@ -447,3 +447,6 @@ body:has(.home) { --gutter: 24px; }
   body { background: #fff; color: #000; }
   .doc-body a.ext::after { content: " (" attr(href) ")"; }
 }
+.codeblock-head:has(> span:empty) .codeblock-copy { opacity: 0; background: var(--bg-soft); }
+.codeblock:hover .codeblock-head .codeblock-copy, .codeblock-copy:focus-visible { opacity: 1; }
+@media (hover: none) { .codeblock-head .codeblock-copy { opacity: 1; } }
