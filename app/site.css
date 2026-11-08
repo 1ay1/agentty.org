@@ -425,6 +425,9 @@ body:has(.home) { --gutter: 24px; }
   .nav-links, .nav-cta { display: none; }
   .nav-toggle { display: inline-flex; }
   .page h1, .docs-main h1 { font-size: 21px; }
+  .doc-body { font-size: 14px; line-height: 1.75; }   /* ~42 chars/line on a phone */
+  .doc-body h2 { font-size: 17px; }
+  pre.code { font-size: 12.5px; }
   .lead { font-size: 14px; }
   .breadcrumb a, .edit-page a { display: inline-block; padding: 6px 0; }
   .docnav { grid-template-columns: 1fr; }
