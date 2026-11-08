@@ -167,7 +167,7 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
 .doc-body strong { color: var(--text); font-weight: 600; }
 .doc-body a { color: var(--text); text-decoration-color: color-mix(in srgb, var(--accent) 70%, transparent); }
 .doc-body a:hover { color: var(--accent); text-decoration-color: var(--accent); }
-.doc-body a[href^="http"]:not(:has(code))::after { content: "\2197"; font-size: .8em; margin-left: 1px; color: var(--text-faint); }
+.doc-body a.ext::after { content: "\2197"; font-size: .8em; margin-left: 1px; color: var(--text-faint); }
 .doc-body blockquote { margin: 0 0 18px; padding: 2px 0 2px 16px; border-left: 2px solid var(--border); }
 .doc-body img { border: 1px solid var(--border-soft); }
 
@@ -179,6 +179,8 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
 
 /* code blocks: a header (language, copy) over the highlighted code */
 .codeblock { margin: 0 0 20px; border: 1px solid var(--border-soft); background: var(--bg-soft); }
+.codeblock-head:has(> span:empty) { position: absolute; right: 0; top: 0; border: 0; padding: 4px 6px; }
+.codeblock { position: relative; }
 .codeblock-head {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 4px 6px 4px 14px; border-bottom: 1px solid var(--border-soft);
@@ -281,7 +283,7 @@ td .win { color: var(--text); }
 .toc-inline summary::-webkit-details-marker { display: none; }
 .toc-inline summary::after { content: "+"; float: right; color: var(--text-faint); }
 .toc-inline[open] summary::after { content: "\2212"; }
-.toc-inline ol { margin: 0; padding: 4px 12px 10px 32px; border-top: 1px solid var(--border-soft); }
+.toc-inline ol { margin: 0; padding: 4px 12px 10px 40px; border-top: 1px solid var(--border-soft); list-style: decimal-leading-zero; }
 .toc-inline li { margin: 4px 0; }
 .toc-inline li::marker { color: var(--text-faint); }
 .toc-inline a { color: var(--text-dim); text-decoration: none; }
@@ -443,5 +445,5 @@ body:has(.home) { --gutter: 24px; }
   .nav, .docs-side, .docs-side-toggle, .docs-toc, .toc-inline, .page-actions, .docnav, .edit-page, .codeblock-copy, .anchor { display: none !important; }
   .docs-shell { display: block; padding: 0; }
   body { background: #fff; color: #000; }
-  .doc-body a[href^="http"]::after { content: " (" attr(href) ")"; }
+  .doc-body a.ext::after { content: " (" attr(href) ")"; }
 }

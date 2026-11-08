@@ -35,7 +35,8 @@ function inline(text: string): string {
     // links [text](href)
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, t, href) => {
       const ext = /^https?:\/\//.test(href);
-      const rel = ext ? ' target="_blank" rel="noopener noreferrer"' : "";
+      // external links get a ↗ marker (class "ext") unless the text already has one
+      const rel = ext ? ` target="_blank" rel="noopener noreferrer"${/[\u2197]\s*$/.test(t) || /<code>/.test(t) ? "" : ' class="ext"'}` : "";
       return `<a href="${href}"${rel}>${t}</a>`;
     })
     // bold **x** / __x__
