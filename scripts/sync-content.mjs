@@ -65,6 +65,8 @@ function localBase() {
   // run logged success.
   try {
     const dir = mkdtempSync(join(tmpdir(), "agentty-content-"));
+  // /tmp is RAM-backed here: never leave a clone behind (775 had piled up, 7.5 GB)
+  process.on("exit", () => rmSync(dir, { recursive: true, force: true }));
     const run = (args, cwd) =>
       execFileSync("git", args, {
         cwd,
