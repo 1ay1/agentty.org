@@ -510,7 +510,8 @@ td .win { color: var(--text); }
 /* one line at any width: 45 chars × 0.6em ≈ 27em */
 .home h1 { white-space: nowrap; font-size: min(var(--fs-lg), calc((min(760px, 100vw) - var(--gutter) - 24px) / 27.5)); margin: 0 0 6px; }
 .home-head p { color: var(--text-dim); margin: 0; }
-.cursor { display: inline-block; width: .6em; height: 1.05em; margin-left: .3ch; vertical-align: -.15em; background: var(--accent); animation: cursor-blink 1.06s steps(1) infinite; }
+/* the header's ▌ is agentty's cursor, and blinks like one */
+.brand-mark { animation: cursor-blink 1.06s steps(1) infinite; }
 @keyframes cursor-blink { 50% { opacity: 0; } }
 .home h1 a { color: inherit; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 5px; }
 .home h1 a:hover { color: var(--accent); }
@@ -617,7 +618,7 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 @page { margin: 18mm 16mm; @top-left { content: "AGENTTY(1)"; font: 9pt monospace; } @top-right { content: "agentty.org"; font: 9pt monospace; } @bottom-right { content: counter(page); font: 9pt monospace; } }
 @media print {
   .nav, .docs-side, .docs-side-toggle, .docs-toc, .toc-inline, .page-actions, .docnav, .edit-page, .codeblock-copy,
-  .codeblock-head, .anchor, .breadcrumb, .cta, .related, .home-demo, .note::before, .skip, .cursor { display: none !important; }
+  .codeblock-head, .anchor, .breadcrumb, .cta, .related, .home-demo, .note::before, .skip { display: none !important; }
   :root { --gutter: 0px; --text: #000; --text-dim: #000; --text-faint: #444; --border: #888; --border-soft: #ccc; --bg-soft: #fff; --accent: #000; }
   html, body { background: #fff; color: #000; }
   body { font-size: 10pt; }

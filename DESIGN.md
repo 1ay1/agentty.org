@@ -50,8 +50,8 @@ or an animation to work, it doesn't belong.
 ## Motion
 
 - None, beyond the wordmark (a faithful port of agentty's welcome screen),
-  the replayed demo, which are the program itself, and one blinking block
-  cursor after the home heading. No fades, no smooth scroll, no scroll
+  the replayed demo, which are the program itself, and the header's `▌`,
+  which blinks like agentty's cursor. No fades, no smooth scroll, no scroll
   effects. Hover changes colour or underline only.
 - Speed is part of the look: static pages, almost no JavaScript.
 
