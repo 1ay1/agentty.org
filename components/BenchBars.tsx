@@ -14,39 +14,38 @@ export const METRICS: Metric[] = [
   { key: "startup", label: "`--version` startup", unit: "ms", value: (t) => t.startupMs.median, fmt: (v) => (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${v < 10 ? v.toFixed(1) : Math.round(v)} ms`) },
 ];
 
-const WIDTH = 34;                     // bar cells for the largest value
-const EIGHTHS = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"];
-
-function bar(v: number, max: number) {
-  const cells = (v / max) * WIDTH;
-  const full = Math.floor(cells), rest = Math.round((cells - full) * 8);
-  const s = "█".repeat(full) + (rest === 8 ? "█" : EIGHTHS[rest]);
-  return s || "▏";                    // always show something
-}
-
 export function BenchBars({ metrics = ["ready"] }: { metrics?: string[] }) {
-  const nameW = Math.max(...bench.tools.map((t) => t.name.length));
   return (
     <div className="bench">
       {METRICS.filter((m) => metrics.includes(m.key)).map((m) => {
         const rows = [...bench.tools].sort((a, b) => m.value(a) - m.value(b));
         const max = Math.max(...rows.map(m.value));
+        const us = m.value(bench.tools.find((t) => t.id === "agentty")!);
         return (
           <figure key={m.key} className="bench-metric">
-            <figcaption>{m.label}, lower is better</figcaption>
-            <pre aria-label={`${m.label}: ` + rows.map((t) => `${t.name} ${m.fmt(m.value(t))}`).join(", ")}>
-              {rows.map((t) => (
-                <span key={t.id} className={t.id === "agentty" ? "bench-row is-us" : "bench-row"}>
-                  {t.name.padEnd(nameW)}  <span className="bench-bar">{bar(m.value(t), max)}</span> {m.fmt(m.value(t))}
-                  {"\n"}
-                </span>
-              ))}
-            </pre>
+            <figcaption>{m.label} <span>lower is better</span></figcaption>
+            <ol aria-label={`${m.label}: ` + rows.map((t) => `${t.name} ${m.fmt(m.value(t))}`).join(", ")}>
+              {rows.map((t) => {
+                const v = m.value(t), ratio = v / us;
+                return (
+                  <li key={t.id} className={t.id === "agentty" ? "is-us" : undefined}>
+                    <span className="bench-name">{t.name}</span>
+                    <span className="bench-track">
+                      <span className="bench-bar" style={{ width: `${Math.max(0.6, (v / max) * 100).toFixed(2)}%` }} />
+                      <span className="bench-val">
+                        {m.fmt(v)}
+                        {t.id !== "agentty" && ratio >= 1.15 && <span className="bench-x">{ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)}×</span>}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
           </figure>
         );
       })}
       <p className="bench-note">
-        median of 10 launches, same machine, fresh install, no login ·{" "}
+        median of 10 launches · same machine · fresh install, no login ·{" "}
         <Link href="/benchmarks/">method &amp; all numbers</Link>
       </p>
     </div>

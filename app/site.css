@@ -287,23 +287,28 @@ td .win { color: var(--text); }
 .related { margin-top: 40px; }
 .related ul { padding-left: 18px; }
 
-/* ── benchmark bars (plain text) ─────────────────────────────────────── */
-.bench { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+/* ── benchmark bars ───────────────────────────────────────────────────── */
+.bench { display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; }
 .bench-metric { margin: 0; min-width: 0; }
-.bench-metric figcaption { color: var(--text-faint); font-size: var(--fs-sm); margin: 0 0 6px; }
-.bench-metric pre {
-  margin: 0; padding: 0; background: none; border: 0; overflow-x: auto;
-  /* a row is ~56 characters (0.6em each): shrink to fit narrow screens */
-  font-size: min(var(--fs-sm), calc((100vw - var(--gutter) - 24px) / 34)); line-height: 1.55; color: var(--text-dim); letter-spacing: 0;
+.bench-metric figcaption { color: var(--text-dim); font-size: var(--fs-sm); margin: 0 0 10px; }
+.bench-metric figcaption span { color: var(--text-faint); }
+.bench-metric figcaption span::before { content: "· "; }
+.bench-metric ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.bench-metric li {
+  display: grid; grid-template-columns: 12ch minmax(0, 1fr); align-items: center; gap: 14px;
+  font-size: var(--fs-sm); line-height: 1.4; color: var(--text-dim);
 }
-.bench-bar { color: var(--border); }
-.bench-row.is-us { color: var(--text); font-weight: 600; }
-.bench-row.is-us .bench-bar { color: var(--accent); }
+.bench-name { white-space: nowrap; }
+.bench-track { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bench-bar { flex: none; height: 6px; max-width: calc(100% - 13ch); background: color-mix(in srgb, var(--text-faint) 45%, transparent); }
+.bench-val { flex: none; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bench-x { margin-left: 8px; color: var(--text-faint); font-size: var(--fs-xs); }
+.bench-metric li.is-us { color: var(--text); font-weight: 600; }
+.bench-metric li.is-us .bench-bar { background: var(--accent); min-width: 3px; }
 .bench-note { margin: 0; font-size: var(--fs-xs); color: var(--text-faint); }
 .bench-note a { color: var(--text-dim); }
 .bench-range { color: var(--text-faint); font-size: var(--fs-xs); }
 .home-bench { margin-top: 28px; width: min(780px, calc(100vw - var(--gutter) - 16px)); }
-html[data-theme="light"] .bench-bar { color: var(--border); }
 
 /* ── blog ─────────────────────────────────────────────────────────────── */
 .post-list { list-style: none; padding: 0; margin: 8px 0 0; }
