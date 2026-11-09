@@ -9,6 +9,7 @@
 //   :::tip|note|warn [label]    → callout (body is full markdown); aliases:
 //   … :::                         warning, caution, danger, important, info, hint
 //   :::release-table            → directive sentinel, rendered by DocBody
+//   :::bench claude,codex       → measured bars, agentty vs those tools (DocBody)
 //   ```lang                     → build-time syntax highlighting (lib/highlight)
 //   headings                    → stable unique ids + a self-link anchor
 //   external links              → open in a new tab, marked ↗
@@ -143,16 +144,20 @@ function build(): MD {
 
 let md: MD | null = null;
 
-const DIRECTIVE = /^:::(release-table)\s*$/gm;
+const DIRECTIVE = /^:::(release-table|bench)(?:[ \t]+([a-z0-9, -]+?))?[ \t]*$/gm;
 
 export function renderMarkdown(src: string, ids: Map<string, number> = new Map()): { html: string; headings: MdHeading[] } {
   md ??= build();
   const env: Env = { ids, headings: [] };
   // directives become a placeholder paragraph, swapped for a sentinel div
-  const text = src.replace(/\r\n/g, "\n").replace(DIRECTIVE, (_m: string, name: string) => `\n@@directive:${name}@@\n`);
+  const text = src
+    .replace(/\r\n/g, "\n")
+    .replace(DIRECTIVE, (_m: string, name: string, arg?: string) => `\n@@directive:${name}${arg ? `:${arg.replace(/\s+/g, "")}` : ""}@@\n`);
   const html = md
     .render(text, env)
-    .replace(/<p>@@directive:([a-z-]+)@@<\/p>/g, (_m: string, name: string) => `<div data-directive="${name}"></div>`);
+    .replace(/<p>@@directive:([a-z-]+)(?::([a-z0-9,-]+))?@@<\/p>/g, (_m: string, name: string, arg?: string) =>
+      `<div data-directive="${name}${arg ? `:${arg}` : ""}"></div>`,
+    );
   return { html, headings: env.headings };
 }
 

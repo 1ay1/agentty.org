@@ -14,11 +14,12 @@ export const METRICS: Metric[] = [
   { key: "startup", label: "--version startup", unit: "ms", value: (t) => t.startupMs.median, fmt: (v) => (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${v < 10 ? v.toFixed(1) : Math.round(v)} ms`) },
 ];
 
-export function BenchBars({ metrics = ["ready"] }: { metrics?: string[] }) {
+export function BenchBars({ metrics = ["ready"], only }: { metrics?: string[]; only?: string[] }) {
+  const tools = only ? bench.tools.filter((t) => t.id === "agentty" || only.includes(t.id)) : bench.tools;
   return (
     <div className="bench">
       {METRICS.filter((m) => metrics.includes(m.key)).map((m) => {
-        const rows = [...bench.tools].sort((a, b) => m.value(a) - m.value(b));
+        const rows = [...tools].sort((a, b) => m.value(a) - m.value(b));
         const max = Math.max(...rows.map(m.value));
         const us = m.value(bench.tools.find((t) => t.id === "agentty")!);
         return (

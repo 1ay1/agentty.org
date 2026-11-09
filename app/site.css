@@ -309,6 +309,7 @@ td .win { color: var(--text); }
 .bench-note a { color: var(--text-dim); }
 .bench-range { color: var(--text-faint); font-size: var(--fs-xs); }
 .home-bench { margin-top: 28px; width: min(780px, calc(100vw - var(--gutter) - 16px)); }
+.doc-body .bench { margin: 24px 0 32px; }
 
 /* ── blog ─────────────────────────────────────────────────────────────── */
 .post-list { list-style: none; padding: 0; margin: 8px 0 0; }
