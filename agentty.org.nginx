@@ -15,6 +15,11 @@ map $http_user_agent $agentty_term {
     "~*^(curl|wget|httpie|xh|fetch|aria2|libfetch|lynx|w3m|links)\b"     1;
 }
 
+# the request path without its query string, for falling back to the HTML page
+map $request_uri $agentty_req_path {
+    "~^(?<p>[^?]*)"  $p;
+}
+
 server {
     listen 80;
     listen [::]:80;
@@ -144,16 +149,23 @@ server {
         add_header Cache-Control "no-cache" always;
     }
 
-    # The terminal edition's pages (see the map above). A page with no
-    # terminal edition answers 404 with the terminal 404, not the HTML one.
+    # The terminal edition's pages (see the map above). A path with no terminal
+    # edition (agentty.org/paste, the dev terminal…) gets the normal page; a
+    # path with neither gets the terminal 404.
     location /t/ {
         default_type "text/plain";
         charset utf-8;
-        try_files $uri =404;
+        try_files $uri @agentty_html;
         error_page 404 /t/404/index.ansi;
         add_header Cache-Control "no-cache" always;
         add_header Vary "User-Agent" always;
         add_header X-Content-Type-Options "nosniff" always;
+    }
+
+    location @agentty_html {
+        root /var/www/agentty.org;
+        try_files $agentty_req_path $agentty_req_path/index.html $agentty_req_path.html =404;
+        error_page 404 /t/404/index.ansi;
     }
 
     # curl -fsSL https://agentty.org/bench | sh — measure the agents on your machine.
