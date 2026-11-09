@@ -48,8 +48,9 @@ function logEntries(md: string): Entry[] {
   return md.split(/^(?=## v)/m).flatMap((sec) => {
     const h = sec.match(/^## v(\S+) · (\d{4}-\d\d-\d\d)/);
     if (!h) return [];
-    const first = sec.match(/^- \*\*(.+?)\*\*/m)?.[1] ?? "";
-    const title = first.replace(/`/g, "").replace(/\.$/, "");
+    const bullet = sec.match(/^[-*] (.+)$/m)?.[1] ?? "";
+    const first = bullet.match(/^\*\*(.+?)\*\*/)?.[1] ?? bullet;
+    const title = first.replace(/\*\*|`|\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[.:]$/, "");
     const id = `v${h[1]}-${h[2]}`.toLowerCase().replace(/[^\w\s-]/g, "");
     return [{ version: h[1], date: h[2], id, title }];
   });
