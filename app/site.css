@@ -393,8 +393,11 @@ td .win { color: var(--text); }
 /* ── docs ─────────────────────────────────────────────────────────────── */
 .docs-shell {
   display: grid; grid-template-columns: 210px minmax(0, var(--measure)) 180px; gap: 56px;
-  padding: 40px 24px 96px var(--gutter);
+  /* no bottom padding here: it would end the sticky sidebars' container before
+     the page ends, and at the bottom they'd slide up under the nav */
+  padding: 40px 24px 0 var(--gutter);
 }
+.docs-main { padding-bottom: 96px; }
 .docs-main h1 { font-size: var(--fs-lg); letter-spacing: -0.01em; }
 .doc-head { margin-bottom: 36px; }
 .doc-head .lead { margin: 10px 0 14px; }
@@ -415,7 +418,7 @@ td .win { color: var(--text); }
 .toc-inline a:hover { color: var(--text); }
 .docs-side, .docs-toc {
   position: sticky; top: calc(var(--nav-h) + 24px); align-self: start;
-  max-height: calc(100vh - var(--nav-h) - 48px); overflow-y: auto; scrollbar-width: none;
+  max-height: calc(100vh - var(--nav-h) - 48px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
 }
 .docs-side::-webkit-scrollbar, .docs-toc::-webkit-scrollbar { display: none; }
 .docs-side .sec { margin-bottom: 24px; }
