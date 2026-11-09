@@ -542,7 +542,11 @@ td .bench-range { display: block; }
 .home-facts dd { margin: 0; min-width: 0; color: var(--text-dim); overflow-wrap: anywhere; }
 .home-facts code, .home-facts kbd { font: inherit; color: var(--text); }
 .home-install { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.home-install > span { color: var(--text-faint); font-size: var(--fs-sm); }
+.home-install > .install-meta { color: var(--text-faint); font-size: var(--fs-sm); }
+/* the platforms pick the command: the current one(s) in ink, the others faint, all underlined */
+.install-meta a { color: var(--text-faint); text-decoration-color: var(--border); }
+.install-meta a.is-on { color: var(--text); text-decoration-color: var(--link-line); }
+.install-meta a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 .home-links {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px;
   margin-top: 28px; font-size: var(--fs-base);
@@ -605,6 +609,7 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
   @media (resolution >= 2dppx) { .replay-grid { --step: .5px; } }
 }
 .replay-grid > div { position: relative; height: var(--rh); contain: strict; }
+.replay-grid > div:first-child { margin-top: calc(var(--skip, 0) * var(--rh) * -1); }
 .replay-grid span { position: absolute; top: 0; height: 100%; overflow: visible; }
 @media (max-width: 720px) { .replay-screen { padding: 8px 2px 8px 8px; } .replay-grid { --sb: 8px; } }
 

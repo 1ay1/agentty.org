@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
 import { repo, starLabel } from "@/lib/repo";
-import { CopyRow } from "@/components/CopyRow";
+import { InstallPicker } from "@/components/InstallPicker";
 import { ReplayDemo } from "@/components/ReplayDemo";
 import { BenchBars } from "@/components/BenchBars";
 import { AgenttyLogo } from "@/components/AgenttyLogo";
@@ -29,8 +29,7 @@ export default function Home() {
         <dl className="home-facts">
           <dt>install</dt>
           <dd className="home-install">
-            <CopyRow cmd={site.installOneLiner} />
-            <span>Linux, macOS, Windows · x86_64 &amp; aarch64 · same line updates it</span>
+            <InstallPicker />
           </dd>
         </dl>
       </section>

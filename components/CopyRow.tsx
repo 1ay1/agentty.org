@@ -5,7 +5,7 @@ import { track } from "@/lib/analytics";
 
 /** A one-line shell command with a copy button. No effects: the command is
  *  the content. Long commands scroll horizontally inside the row. */
-export function CopyRow({ cmd }: { cmd: string }) {
+export function CopyRow({ cmd, prompt = "$" }: { cmd: string; prompt?: string }) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -21,7 +21,7 @@ export function CopyRow({ cmd }: { cmd: string }) {
 
   return (
     <div className="copyrow">
-      <span className="copyrow-caret" aria-hidden="true">$</span>
+      <span className="copyrow-caret" aria-hidden="true">{prompt}</span>
       <code>{cmd}</code>
       <button className="copybtn" onClick={copy} aria-label="Copy install command">
         {copied ? "copied" : "copy"}

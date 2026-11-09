@@ -64,6 +64,8 @@ export function ReplayTerminal({
     let disposed = false, loading = false, onScreen = false, started = false;
     let raf = 0, i = 0, t0 = 0, pausedAt = 0, ended = false, follow = true;
     let due: Float64Array = new Float64Array(0);
+    const blank: boolean[] = [];             // per row: no visible text
+    let skipped = 0;
     const sheets: CSSStyleSheet[] = [], styleEls: HTMLStyleElement[] = [];
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -104,8 +106,20 @@ export function ReplayTerminal({
       let max = 0;
       for (const y of pendingRows) if (y > max) max = y;
       addRows(max + 1);
-      for (const y of pendingRows) { paint(y, pending[y]!); pending[y] = null; }
+      for (const y of pendingRows) {
+        blank[y] = !pending[y]!.some((g) => g[2].trim());
+        paint(y, pending[y]!); pending[y] = null;
+      }
       pendingRows.length = 0;
+      // agentty draws its conversation from where the cursor was, under the
+      // cleared welcome screen, so the buffer starts with blank rows. While
+      // everything fits on one screen they're the real terminal's top; once
+      // the session scrolls, scrolling back up would only find that gap, so
+      // it's skipped (never more than the rows that have scrolled away)
+      let lead = 0;
+      while (lead < rowEls.length && blank[lead] !== false) lead++;
+      const skip = Math.max(0, Math.min(lead, rowEls.length - rows));
+      if (skip !== skipped) { grid.style.setProperty("--skip", String(skip)); skipped = skip; }
       if (follow) grid.scrollTop = grid.scrollHeight;   // stick to the bottom, like a terminal
     };
     const onScroll = () => {                  // reader scrolled up: stop following until back at the bottom
@@ -223,6 +237,7 @@ export function ReplayTerminal({
 
       // adopt the server-rendered rows and spans as the live pool
       rowEls = Array.from(grid.children) as HTMLElement[];
+      for (const [y, segs] of data!.frames[0][1]) blank[y] = !segs.some((g) => g[2].trim());
       pending = new Array(data!.lines ?? rows).fill(null);
       cells = rowEls.map((row, y) => {
         const pool = new Map<number, Cell>();
