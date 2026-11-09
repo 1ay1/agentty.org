@@ -12,8 +12,7 @@ or an animation to work, it doesn't belong.
   on the home page, the pager, the 404 list, the changelog log. Column widths
   are in `ch`, so things line up on the character grid.
 - **Empty space on the right is a margin, not a gap.** Don't fill it. One
-  counterweight on the right is enough (the nav's search / github / theme,
-  the status line's links).
+  counterweight on the right is enough (the nav's search / github / theme).
 - **Hierarchy from space and weight**, not symmetry: vertical rhythm, bold
   vs dim vs faint, size.
 - **Markers hang in the margin.** The text edge stays clean; `$`, `##`,
@@ -37,7 +36,7 @@ or an animation to work, it doesn't belong.
   only on hover.
 - Selection and keyboard focus are inverse video, like a terminal.
 - No cards, shadows, rounded corners or gradients. Hairlines only where
-  data needs separating (tables, the status line).
+  data needs separating (tables, the nav).
 - No icons and no emoji. Use words (`copy`, `menu`, `dark`) and the
   characters a terminal has: `→ · × ▌ │ ─ $`.
 
@@ -45,7 +44,7 @@ or an animation to work, it doesn't belong.
 
 - **Numbers, not adjectives.** "47 ms to ready", not "blazing-fast". Quote
   measured numbers through `{{bench.*}}` tokens so they never go stale.
-- Say what it does, plainly. Lowercase labels. ISO dates (`2026-11-09`),
+- Say what it does, plainly. Lowercase labels and links, the nav included. ISO dates (`2026-11-09`),
   real versions (`v0.9.51`).
 
 ## Motion
@@ -58,7 +57,6 @@ or an animation to work, it doesn't belong.
 
 ## Terminal touches
 
-- The footer is a status line: version, license, size, launch time, build date.
 - A missing page is a shell error: `cd: no such file or directory`.
 - The changelog opens with a `git log --oneline` of releases.
 - `?` lists keyboard shortcuts; `g` + a letter jumps (`g d` docs, `g c` changelog).

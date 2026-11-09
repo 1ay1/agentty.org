@@ -109,16 +109,17 @@ button { font: inherit; color: inherit; }
 .brand:hover { color: var(--text); }
 .brand-mark { color: var(--accent); }
 .brand-ver { font-size: var(--fs-xs); color: var(--text-faint); font-weight: 400; }
-.nav-links { display: flex; gap: 20px; }
+.nav-links { display: flex; gap: 16px; }
 .nav-links a { position: relative; }
 .nav-links a[aria-current] { color: var(--text); }
+.mobile-menu-links a { text-transform: lowercase; }
 .nav-links a[aria-current]::before { content: ">"; position: absolute; right: 100%; margin-right: .6ch; color: var(--accent); }
 .nav-links a, .nav-cta a, .cmdk-trigger {
-  color: var(--text-dim); text-decoration: none; font-size: var(--fs-sm); white-space: nowrap;
+  color: var(--text-faint); text-decoration: none; font-size: var(--fs-sm); white-space: nowrap; text-transform: lowercase;
 }
-.nav-links a:hover, .nav-links a[aria-current], .nav-cta a:hover, .cmdk-trigger:hover { color: var(--text); }
+.nav-links a:hover, .nav-cta a:hover, .cmdk-trigger:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .nav-spacer { flex: 1; }
-.nav-cta { display: flex; align-items: center; gap: 20px; }
+.nav-cta { display: flex; align-items: center; gap: 16px; }
 .cmdk-trigger { display: inline-flex; align-items: center; gap: 8px; padding: 0; background: none; border: 0; cursor: pointer; }
 .cmdk-trigger kbd { font-size: var(--fs-xs); color: var(--text-faint); border: 1px solid var(--border); padding: 0 5px; line-height: 1.5; }
 .theme-toggle { display: inline-flex; align-items: center; height: 24px; padding: 0; background: none; border: 0; color: var(--text-faint); font-size: var(--fs-sm); cursor: pointer; }
@@ -329,20 +330,6 @@ td .win { color: var(--text); }
 .home-bench { margin-top: 28px; width: min(780px, calc(100vw - var(--gutter) - 16px)); }
 .doc-body .bench { margin: 24px 0 32px; }
 
-/* ── status line (footer) ─────────────────────────────────────────────── */
-.statusline {
-  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px;
-  margin-top: 72px; padding: 10px 24px 14px var(--gutter); border-top: 1px solid var(--border-soft);
-  font-size: var(--fs-xs); color: var(--text-faint);
-}
-.statusline p { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; }
-.statusline-facts > * + *::before { content: "·"; margin: 0 8px; color: var(--border); }
-.statusline-facts > .statusline-mark + *::before { content: none; }
-.statusline-mark { color: var(--accent); margin-right: 8px; }
-.statusline-links { gap: 16px; }
-.statusline a { color: var(--text-faint); text-decoration: none; }
-.statusline a:hover { color: var(--text); text-decoration: underline; }
-.statusline kbd { border: 1px solid var(--border); padding: 0 4px; font-size: var(--fs-xs); }
 
 /* ── ? shortcuts ──────────────────────────────────────────────────────── */
 .keys-overlay { position: fixed; inset: 0; z-index: 300; background: color-mix(in srgb, var(--bg) 78%, transparent); }
@@ -606,7 +593,7 @@ td .win { color: var(--text); }
 @page { margin: 18mm 16mm; @top-left { content: "AGENTTY(1)"; font: 9pt monospace; } @top-right { content: "agentty.org"; font: 9pt monospace; } @bottom-right { content: counter(page); font: 9pt monospace; } }
 @media print {
   .nav, .docs-side, .docs-side-toggle, .docs-toc, .toc-inline, .page-actions, .docnav, .edit-page, .codeblock-copy,
-  .codeblock-head, .anchor, .statusline, .breadcrumb, .cta, .related, .home-demo, .note::before, .skip, .cursor { display: none !important; }
+  .codeblock-head, .anchor, .breadcrumb, .cta, .related, .home-demo, .note::before, .skip, .cursor { display: none !important; }
   :root { --gutter: 0px; --text: #000; --text-dim: #000; --text-faint: #444; --border: #888; --border-soft: #ccc; --bg-soft: #fff; --accent: #000; }
   html, body { background: #fff; color: #000; }
   body { font-size: 10pt; }
