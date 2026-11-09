@@ -208,8 +208,13 @@ h4 > .anchor::before { content: "####"; }
 .doc-body img { border: 1px solid var(--border-soft); }
 
 :where(.doc-body, .note, .lead) code, .doc-body kbd {
-  background: var(--bg-soft); padding: .1em .45ch; font-size: .94em; color: var(--text);
+  /* a raised chip a shade above the code-block band, with a hairline edge,
+     so a command in a sentence reads as one at a glance */
+  background: var(--bg-elev); box-shadow: inset 0 0 0 1px var(--border);
+  padding: .1em .5ch; font-size: .94em; color: var(--text); font-weight: 500;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
 }
+:where(.doc-body a) code { box-shadow: inset 0 0 0 1px var(--link-line); }
 .doc-body kbd { border: 1px solid var(--border); border-bottom-width: 2px; background: none; }
 /* long paths/URLs in running text may break; keys and table cells never do */
 :where(.doc-body p, .doc-body li, .note) > code { overflow-wrap: anywhere; }
