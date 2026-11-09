@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { site, topNav } from "@/lib/site";
 import { versionLabel } from "@/lib/release";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PageWeight } from "@/components/PageWeight";
 import { track } from "@/lib/analytics";
 
 const MENU_ID = "mobile-menu";
@@ -68,6 +69,7 @@ export function SiteNav() {
           <span className="brand-name">agentty</span>
           <span className="brand-ver" aria-label={`version ${versionLabel}`}>{versionLabel}</span>
         </Link>
+        <PageWeight />
         <nav className="nav-links" aria-label="Primary">
           {topNav.map((n) => (
             <Link

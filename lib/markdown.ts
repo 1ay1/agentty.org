@@ -19,6 +19,22 @@ type MD = InstanceType<typeof MarkdownIt>;
 import container from "markdown-it-container";
 import { highlight } from "./highlight";
 import { slash } from "./url";
+import captured from "./captured.generated.json";
+
+// ```run blocks: the command, then its real output from the binary, captured
+// at build by scripts/capture-output.mjs. The copy button copies the command.
+const caps = captured as { version: string; outputs: Record<string, string> };
+function runBlock(cmd: string): string {
+  const out = caps.outputs[cmd];
+  const e = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return (
+    `<div class="codeblock run"><div class="codeblock-head"><span>${out !== undefined ? `output from ${e(caps.version)}, captured at build` : "sh"}</span>` +
+    `<button type="button" class="codeblock-copy" aria-label="Copy command" data-copy="${e(cmd).replace(/"/g, "&quot;")}">copy</button></div>` +
+    `<pre class="code"><code><span class="line cmd">${e(cmd)}</span>` +
+    (out !== undefined ? "\n" + out.split("\n").map((l) => `<span class="line out">${e(l)}</span>`).join("\n") : "") +
+    `</code></pre></div>\n`
+  );
+}
 
 export type MdHeading = { id: string; text: string; level: number };
 
@@ -79,6 +95,7 @@ function build(): MD {
   // fenced code → highlighted block with header (language, copy)
   md.renderer.rules.fence = (tokens, i) => {
     const t = tokens[i];
+    if ((t.info || "").trim() === "run") return runBlock(t.content.trim());
     const { html, label } = highlight(t.content.replace(/\n$/, ""), t.info.split(/\s+/)[0] || "");
     return (
       `<div class="codeblock"><div class="codeblock-head"><span>${esc(label)}</span>` +
@@ -149,13 +166,25 @@ let md: MD | null = null;
 
 const DIRECTIVE = /^:::(release-table|bench)(?:[ \t]+([a-z0-9, -]+?))?[ \t]*$/gm;
 
+// directives become a placeholder paragraph: `@@directive:name[:arg]@@`
+export function preprocess(src: string): string {
+  return src
+    .replace(/\r\n/g, "\n")
+    .replace(DIRECTIVE, (_m: string, name: string, arg?: string) => `\n@@directive:${name}${arg ? `:${arg.replace(/\s+/g, "")}` : ""}@@\n`);
+}
+
+/** The site's configured markdown-it (callouts, [[kbd]]), for other renderers. */
+export function parser(): MD {
+  return (md ??= build());
+}
+
+export const CALLOUT_KINDS = CALLOUTS;
+
 export function renderMarkdown(src: string, ids: Map<string, number> = new Map()): { html: string; headings: MdHeading[] } {
   md ??= build();
   const env: Env = { ids, headings: [] };
   // directives become a placeholder paragraph, swapped for a sentinel div
-  const text = src
-    .replace(/\r\n/g, "\n")
-    .replace(DIRECTIVE, (_m: string, name: string, arg?: string) => `\n@@directive:${name}${arg ? `:${arg.replace(/\s+/g, "")}` : ""}@@\n`);
+  const text = preprocess(src);
   const html = md
     .render(text, env)
     .replace(/<p>@@directive:([a-z-]+)(?::([a-z0-9,-]+))?@@<\/p>/g, (_m: string, name: string, arg?: string) =>

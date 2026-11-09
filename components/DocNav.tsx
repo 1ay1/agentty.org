@@ -13,7 +13,7 @@ export function DocNav({
   return (
     <nav className="docnav" aria-label="Pager">
       {prev ? (
-        <Link href={slash(prev.href)}>
+        <Link href={slash(prev.href)} rel="prev">
           <span className="dir">← Previous</span>
           {prev.title}
         </Link>
@@ -21,7 +21,7 @@ export function DocNav({
         <span />
       )}
       {next ? (
-        <Link href={slash(next.href)} className="next">
+        <Link href={slash(next.href)} className="next" rel="next">
           <span className="dir">Next →</span>
           {next.title}
         </Link>

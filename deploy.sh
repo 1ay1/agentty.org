@@ -49,6 +49,9 @@ echo "==> Measuring the real agentty binary (size + cold-start)"
 # absent — it just keeps the last committed measurement.
 node scripts/measure-stats.mjs || echo "   (measurement skipped; using committed stats)"
 
+echo "==> Capturing real command output for the docs (run blocks)"
+node scripts/capture-output.mjs || echo "   (capture skipped; using committed lib/captured.generated.json)"
+
 echo "==> Fetching the latest GitHub release (version + per-platform sizes)"
 # Regenerates lib/release.generated.ts from the Releases API. Never fails the
 # deploy on a network error / rate-limit — keeps the committed release data.

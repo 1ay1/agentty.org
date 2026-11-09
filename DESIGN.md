@@ -57,11 +57,34 @@ or an animation to work, it doesn't belong.
 
 ## Terminal touches
 
-- A missing page is a shell error: `cd: no such file or directory`.
+- A missing page is a shell error: `cd: no such file or directory`, and like a
+  shell it suggests the closest real page (`did you mean /docs/sandboxing?`).
 - The changelog opens with a `git log --oneline` of releases.
-- `?` lists keyboard shortcuts; `g` + a letter jumps (`g d` docs, `g c` changelog).
+- Keys work like `less`: `j k`, `d u`, `g g` / `G`, `[ ]` for the previous /
+  next page, `g` + a letter to jump, `?` for the list.
+- The header reports the page's own weight (`187 KB · 0 cookies`), measured
+  by the browser: the site measures itself the way it measures agentty.
 - Printed, a page reads like a man page: `AGENTTY(1)` running header, CAPS
   section names, indented body, no navigation.
+
+## The terminal edition
+
+`curl agentty.org/<any page>` returns that page rendered for an 80-column
+terminal (lib/term.ts, lib/term-pages.ts → out/t/**/index.ansi; nginx routes
+command-line clients there, deploy/agentty-term.nginx). Same rules as the
+web: text edge at column 4, `##` / `-` / `$` hung into the margin, one
+accent, faint for the quiet parts. Colours are the terminal's own 16, so it
+follows the reader's theme. Links are OSC 8. Nothing is wider than 80
+columns unless the source line itself is (then it's placed, never mangled).
+
+`curl -fsSL agentty.org/bench | sh` (public/bench) measures the agents on
+the reader's own machine and draws the same bars.
+
+## Docs that can't lie
+
+A ```` ```run ```` block holds one `agentty …` command. At build,
+scripts/capture-output.mjs runs it against the real binary and the docs show
+the real output, labelled `output from v0.9.51, captured at build`.
 
 ## Not this
 

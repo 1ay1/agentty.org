@@ -134,13 +134,13 @@ export default async function BlogPost({
         <DocBody html={post.html} />
         <nav className="docnav" aria-label="More posts">
           {prev ? (
-            <Link href={`/blog/${prev.slug}/`}>
+            <Link href={`/blog/${prev.slug}/`} rel="prev">
               <span className="dir">← Newer</span>
               {prev.title}
             </Link>
           ) : <span />}
           {next ? (
-            <Link href={`/blog/${next.slug}/`} className="next">
+            <Link href={`/blog/${next.slug}/`} className="next" rel="next">
               <span className="dir">Older →</span>
               {next.title}
             </Link>

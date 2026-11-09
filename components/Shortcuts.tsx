@@ -4,8 +4,8 @@ import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 // Keyboard shortcuts, the way a terminal program has them: `?` lists them,
-// `g` then a letter jumps somewhere (vim/less style). `/` and Ctrl+K belong to
-// the search palette and are only listed here.
+// `less` keys move through a page, `g` then a letter jumps somewhere. `/` and
+// Ctrl+K belong to the search palette and are only listed here.
 const GOTO: Record<string, { href: string; label: string }> = {
   h: { href: "/", label: "home" },
   d: { href: "/docs/", label: "docs" },
@@ -20,44 +20,69 @@ const typing = (t: EventTarget | null) => {
   return !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 };
 
+// one text row, the page's own rhythm unit
+const row = () => parseFloat(getComputedStyle(document.body).fontSize) * 1.7;
+
 export function Shortcuts() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     let pendingG = 0;
+    const follow = (rel: "prev" | "next") => {
+      const a = document.querySelector<HTMLAnchorElement>(`a[rel~="${rel}"]`);
+      if (a) router.push(a.getAttribute("href")!);
+    };
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || typing(e.target)) return;
-      if (e.key === "Escape") { setOpen(false); return; }
-      if (e.key === "?") { e.preventDefault(); setOpen((o) => !o); return; }
-      if (pendingG && Date.now() - pendingG < 1200 && GOTO[e.key]) {
-        e.preventDefault();
+      if (document.querySelector(".cmdk-overlay")) return;
+      const k = e.key;
+      if (k === "Escape") { setOpen(false); return; }
+      if (k === "?") { e.preventDefault(); setOpen((o) => !o); return; }
+      if (pendingG && Date.now() - pendingG < 1200) {
         pendingG = 0;
-        setOpen(false);
-        router.push(GOTO[e.key].href);
-        return;
+        if (k === "g") { e.preventDefault(); window.scrollTo(0, 0); return; }
+        if (GOTO[k]) { e.preventDefault(); setOpen(false); router.push(GOTO[k].href); return; }
       }
-      pendingG = e.key === "g" ? Date.now() : 0;
+      if (k === "g") { pendingG = Date.now(); return; }
+      pendingG = 0;
+      const half = window.innerHeight / 2;
+      const moves: Record<string, () => void> = {
+        j: () => window.scrollBy(0, row() * 3),
+        k: () => window.scrollBy(0, -row() * 3),
+        d: () => window.scrollBy(0, half),
+        u: () => window.scrollBy(0, -half),
+        G: () => window.scrollTo(0, document.documentElement.scrollHeight),
+        "]": () => follow("next"),
+        "[": () => follow("prev"),
+      };
+      if (moves[k]) { e.preventDefault(); moves[k](); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [router]);
 
   if (!open) return null;
+  const rows: [string, string][] = [
+    ["/", "search"],
+    ["j  k", "down, up"],
+    ["d  u", "half a page"],
+    ["g g  G", "top, bottom"],
+    ["[  ]", "previous, next page"],
+    ...Object.entries(GOTO).map(([k, v]) => [`g ${k}`, v.label] as [string, string]),
+    ["?", "this list"],
+    ["esc", "close"],
+  ];
   return (
     <div className="keys-overlay" onClick={() => setOpen(false)}>
       <div className="keys" role="dialog" aria-label="Keyboard shortcuts" onClick={(e) => e.stopPropagation()}>
-        <p className="keys-title">keyboard shortcuts</p>
+        <p className="keys-title">keyboard, like less</p>
         <dl>
-          <dt><kbd>/</kbd></dt><dd>search</dd>
-          <dt><kbd>ctrl k</kbd></dt><dd>search</dd>
-          {Object.entries(GOTO).map(([k, v]) => (
+          {rows.map(([k, v]) => (
             <Fragment key={k}>
-              <dt><kbd>g {k}</kbd></dt><dd>{v.label}</dd>
+              <dt><kbd>{k}</kbd></dt><dd>{v}</dd>
             </Fragment>
           ))}
-          <dt><kbd>?</kbd></dt><dd>this list</dd>
-          <dt><kbd>esc</kbd></dt><dd>close</dd>
         </dl>
       </div>
     </div>

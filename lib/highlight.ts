@@ -58,7 +58,7 @@ const BLOCK_WORD = /^(then|do|done|fi|else|elif|esac|in|\}|\)|;;)\b/;
 // comments, blanks, indented bodies, continuations of a `\` line, heredoc
 // bodies, or shell keywords that close a block. CSS hangs a `$` before them
 // (a pseudo-element, so copying the block copies only the commands).
-function commandLines(code: string): boolean[] {
+export function commandLines(code: string): boolean[] {
   const out: boolean[] = [];
   let cont = false;
   let heredoc: string | null = null;

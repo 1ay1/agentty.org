@@ -109,6 +109,9 @@ button { font: inherit; color: inherit; }
 .brand:hover { color: var(--text); }
 .brand-mark { color: var(--accent); }
 .brand-ver { font-size: var(--fs-xs); color: var(--text-faint); font-weight: 400; }
+.page-weight { margin-left: -14px; font-size: var(--fs-xs); color: var(--text-faint); white-space: nowrap; cursor: default; }
+.page-weight::before { content: "·"; margin-right: 8px; color: var(--border); }
+@media (max-width: 900px) { .page-weight { display: none; } }
 .nav-links { display: flex; gap: 16px; }
 .nav-links a { position: relative; }
 .nav-links a[aria-current] { color: var(--text); }
@@ -226,6 +229,8 @@ pre.code {
 pre.code code { background: none; border: 0; padding: 0; font-size: inherit; color: inherit; overflow-wrap: normal; }
 pre.code .line:empty::before { content: " "; }
 pre.code .line.cmd::before { content: "$ "; margin-left: calc(var(--hang) * -1); color: var(--accent); user-select: none; }
+.codeblock.run pre.code .line.out { color: var(--text-dim); }
+.codeblock.run .codeblock-head span { color: var(--text-faint); }
 @media (max-width: 720px) { .codeblock { margin-left: 0; } .doc-body :is(ul, ol) { padding-left: 2ch; } }
 .codeblock-copy {
   height: 22px; padding: 0 8px; cursor: pointer; background: none;
@@ -338,7 +343,7 @@ td .win { color: var(--text); }
   padding: 14px 18px; background: var(--bg); border: 1px solid var(--border); font-size: var(--fs-sm);
 }
 .keys-title { margin: 0 0 10px; color: var(--text-faint); }
-.keys dl { display: grid; grid-template-columns: 9ch auto; gap: 4px 16px; margin: 0; }
+.keys dl { display: grid; grid-template-columns: 9ch auto; gap: 2px 16px; margin: 0; }
 .keys dt, .keys dd { margin: 0; }
 .keys dd { color: var(--text-dim); }
 .keys kbd { color: var(--text); }

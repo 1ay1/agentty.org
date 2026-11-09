@@ -1,0 +1,180 @@
+#!/bin/sh
+# agentty.org/bench — measure the terminal coding agents installed on THIS
+# machine, the same way agentty.org/benchmarks does:
+#
+#   curl -fsSL https://agentty.org/bench | sh
+#
+# For each agent it finds on your PATH it measures
+#   • --version startup   median wall-clock of 10 runs (after one warm-up)
+#   • install size        the files the command runs from: the binary, or the
+#                         npm package / Python venv it lives in (runtime not
+#                         counted; noted when the tool needs Node or Python)
+#
+# It only runs `<tool> --version`. Nothing is installed, nothing is sent
+# anywhere, no files are written. Needs perl (for a millisecond clock), which
+# ships with macOS and nearly every Linux.
+
+set -u
+
+TOOLS="agentty claude codex gemini opencode jcode aider crush qwen cursor-agent"
+RUNS=10
+
+# ── output ────────────────────────────────────────────────────────────────
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  B=$(printf '\033[1m'); D=$(printf '\033[2m'); M=$(printf '\033[35m'); R=$(printf '\033[0m')
+else
+  B=; D=; M=; R=
+fi
+say() { printf '    %s\n' "$*"; }
+
+name_of() {
+  case "$1" in
+    agentty) echo agentty ;; claude) echo "Claude Code" ;; codex) echo "Codex CLI" ;;
+    gemini) echo "Gemini CLI" ;; opencode) echo opencode ;; jcode) echo jcode ;;
+    aider) echo Aider ;; crush) echo Crush ;; qwen) echo "Qwen Code" ;; cursor-agent) echo "Cursor CLI" ;;
+    *) echo "$1" ;;
+  esac
+}
+
+if ! command -v perl >/dev/null 2>&1; then
+  echo "agentty.org/bench needs perl for a millisecond clock; it isn't installed." >&2
+  exit 1
+fi
+
+# ── measuring ────────────────────────────────────────────────────────────
+# median ms of RUNS `--version` runs, after one warm-up; 15 s cap per run
+startup_ms() {
+  perl -MTime::HiRes=time -e '
+    my @cmd = @ARGV; my @t;
+    sub run { my $pid = fork(); if (!$pid) { open STDIN, "<", "/dev/null"; open STDOUT, ">", "/dev/null"; open STDERR, ">", "/dev/null"; exec @cmd; exit 127 }
+              local $SIG{ALRM} = sub { kill 9, $pid; }; alarm 15; waitpid($pid, 0); alarm 0; return $? }
+    run();
+    for (1..'"$RUNS"') { my $s = time; my $rc = run(); push @t, (time - $s) * 1000; exit 1 if $rc == 9; }
+    @t = sort { $a <=> $b } @t; my $n = @t;
+    printf "%.1f\n", $n % 2 ? $t[$n/2] : ($t[$n/2-1] + $t[$n/2]) / 2;
+  ' "$@"
+}
+
+realpath_of() { perl -MCwd=realpath -e 'print realpath($ARGV[0])' "$1"; }
+
+# the directories / files a command really runs from (one per line)
+install_root() {
+  p=$(realpath_of "$1")
+  case "$p" in
+    */node_modules/*)
+      pre=${p%%/node_modules/*}; rest=${p#"$pre"/node_modules/}
+      case "$rest" in @*/*) pkg=$(echo "$rest" | cut -d/ -f1-2) ;; *) pkg=$(echo "$rest" | cut -d/ -f1) ;; esac
+      echo "$pre/node_modules/$pkg"
+      # npm ships native builds as sibling packages: @openai/codex-linux-x64
+      for s in "$pre/node_modules/$pkg"-*; do [ -d "$s" ] && echo "$s"; done
+      return ;;
+  esac
+  d=$(dirname "$p")
+  if [ "$(basename "$d")" = bin ] && [ -f "$(dirname "$d")/pyvenv.cfg" ]; then dirname "$d"; return; fi
+  # a small launcher script in its own versioned directory: count the directory
+  kb=$(du -skL "$p" 2>/dev/null | cut -f1)
+  case "$d" in
+    /bin|/sbin|/usr/bin|/usr/sbin|/usr/local/bin|/opt/homebrew/bin|"$HOME"/.local/bin|"$HOME"/bin) ;;
+    *) if [ "${kb:-0}" -lt 1024 ]; then echo "$d"; return; fi ;;
+  esac
+  echo "$p"
+}
+
+# one du over every path, so files hard-linked between packages count once
+size_mb() {
+  set --
+  roots=$(install_root "$bin")
+  old_ifs=$IFS; IFS='
+'
+  for f in $roots; do set -- "$@" "$f"; done
+  IFS=$old_ifs
+  du -skLc "$@" 2>/dev/null | tail -n 1 | awk '{printf "%.0f\n", $1/1024}'
+}
+
+runtime_of() {
+  p=$(realpath_of "$1")
+  case "$p" in */node_modules/*) ;; *)
+    head -c 64 "$p" 2>/dev/null | grep -q python && { echo python; return; }
+    return ;;
+  esac
+  head -c 128 "$p" 2>/dev/null | grep -q node && { echo node; return; }
+  [ -f "$p" ] && file "$p" 2>/dev/null | grep -qi 'script' && echo node
+}
+
+# ── run ──────────────────────────────────────────────────────────────────
+os=$(uname -sm)
+cpu=$( (grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2) || true)
+[ -z "$cpu" ] && cpu=$(sysctl -n machdep.cpu.brand_string 2>/dev/null || true)
+cpu=$(echo "$cpu" | sed 's/^ *//; s/(R)//g; s/(TM)//g; s/ CPU//; s/  */ /g')
+
+printf '\n'
+say "${M}▌${R} ${B}agentty${R}  ${D}bench · this machine${R}"
+printf '\n'
+say "${D}timing --version and measuring install size for every agent on your PATH${R}"
+printf '\n'
+
+tmp=$(mktemp "${TMPDIR:-/tmp}/agentty-bench.XXXXXX") || exit 1
+trap 'rm -f "$tmp"' EXIT INT TERM
+missing=""
+
+for t in $TOOLS; do
+  if ! command -v "$t" >/dev/null 2>&1; then missing="${missing:+$missing, }$(name_of "$t")"; continue; fi
+  bin=$(command -v "$t")
+  [ -t 1 ] && printf '    %s%s%s' "$D" "$(name_of "$t") …" "$R"
+  ms=$(startup_ms "$bin" --version) || ms=""
+  mb=$(size_mb "$bin")
+  rt=$(runtime_of "$bin")
+  [ -t 1 ] && printf '\r\033[K'
+  [ -n "$ms" ] && printf '%s\t%s\t%s\t%s\n' "$t" "$ms" "${mb:-0}" "$rt" >> "$tmp"
+done
+
+if [ ! -s "$tmp" ]; then
+  say "No coding agents found on your PATH."
+  printf '\n'
+  say "Install agentty and run this again:"
+  say "${M}\$${R} curl -fsSL https://agentty.org/install.sh | sh"
+  printf '\n'
+  exit 0
+fi
+
+# ── draw ─────────────────────────────────────────────────────────────────
+draw() { # $1 column, $2 label, $3 unit
+  printf '    %s%s%s\n' "" "$2" " ${D}· lower is better${R}"
+  sort -t "$(printf '\t')" -k"$1","$1"n "$tmp" | perl -e '
+    my ($col, $unit, $B, $D, $M, $R) = @ARGV;
+    my %name = (agentty=>"agentty", claude=>"Claude Code", codex=>"Codex CLI", gemini=>"Gemini CLI", opencode=>"opencode",
+                jcode=>"jcode", aider=>"Aider", crush=>"Crush", qwen=>"Qwen Code", "cursor-agent"=>"Cursor CLI");
+    my @rows = map { chomp; [split /\t/] } <STDIN>;
+    my $max = 0; $max = $_->[$col-1] > $max ? $_->[$col-1] : $max for @rows; $max ||= 1;
+    my ($us) = grep { $_->[0] eq "agentty" } @rows;
+    my @e = ("", "\x{258F}", "\x{258E}", "\x{258D}", "\x{258C}", "\x{258B}", "\x{258A}", "\x{2589}");
+    binmode STDOUT, ":utf8";
+    for my $r (@rows) {
+      my $v = $r->[$col-1]; my $is = $r->[0] eq "agentty";
+      my $n = int($v / $max * 36 * 8 + 0.5); $n = 1 if $n < 1;
+      my $bar = ("\x{2588}" x int($n / 8)) . $e[$n % 8];
+      my $txt = $unit eq "ms" ? ($v >= 1000 ? sprintf("%.1f s", $v/1000) : $v < 10 ? sprintf("%.1f ms", $v) : sprintf("%d ms", $v + 0.5))
+                              : sprintf("%d MB", $v + 0.5);
+      $txt .= " + $r->[3]" if $unit eq "MB" && $r->[3];
+      my $x = "";
+      if ($us && !$is && $us->[$col-1] > 0) { my $k = $v / $us->[$col-1]; $x = $k >= 1.15 ? sprintf(" $D%s\x{d7}$R", $k >= 10 ? int($k + 0.5) : sprintf("%.1f", $k)) : ""; }
+      my $nm = sprintf("%-14s", $name{$r->[0]} // $r->[0]);
+      printf "    %s%s %s%s\n", ($is ? "$B$nm$R" : $nm), ($is ? "$M$bar$R" : "$D$bar$R"), ($is ? "$B$txt$R" : $txt), $x;
+    }
+  ' "$1" "$3" "$B" "$D" "$M" "$R"
+}
+
+draw 2 "--version startup" ms
+printf '\n'
+draw 3 "install size" MB
+printf '\n'
+say "${D}${os}${cpu:+ · $cpu} · median of $RUNS runs${R}"
+[ -n "$missing" ] && say "${D}not on your PATH: $missing${R}"
+if ! command -v agentty >/dev/null 2>&1; then
+  printf '\n'
+  say "agentty isn't installed, so there's nothing to compare against yet:"
+  say "${M}\$${R} curl -fsSL https://agentty.org/install.sh | sh"
+fi
+printf '\n'
+say "${D}launch time and idle memory, measured in a pty:${R} curl agentty.org/benchmarks"
+printf '\n'

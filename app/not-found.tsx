@@ -9,6 +9,7 @@ export default function NotFound() {
         <span className="notfound-prompt">$</span> cd <NotFoundPath />
         {"\n"}
         cd: no such file or directory: <NotFoundPath />
+        <NotFoundPath suggest />
       </pre>
       <p className="notfound-try">try</p>
       <ul className="notfound-list">

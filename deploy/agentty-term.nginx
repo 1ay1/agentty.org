@@ -1,0 +1,49 @@
+# agentty.org — the terminal edition. NOT applied automatically: add these to
+# the live config by hand (see deploy/README.md).
+#
+#   curl agentty.org                  → out/t/index.ansi
+#   curl agentty.org/docs/sandboxing  → out/t/docs/sandboxing/index.ansi
+#   curl agentty.org/bench | sh       → the bench script, as text
+#
+# Browsers are unaffected: only command-line HTTP clients match. Cloudflare
+# doesn't cache extensionless HTML by default, so the edge never mixes the
+# two; keep it that way (no "cache everything" rule on agentty.org/*).
+
+# ── http {} context (e.g. /etc/nginx/conf.d/agentty-term.conf) ─────────────
+map $http_user_agent $agentty_term {
+    default                                                   0;
+    "~*^(curl|wget|httpie|xh|fetch|aria2|libfetch|lynx|w3m|links)\b"  1;
+}
+
+# ── inside the agentty.org `server { listen 443 ... }` block ──────────────
+# (place before `location / {`)
+
+    # one cache entry per audience, so a CDN never serves ANSI to a browser
+    add_header Vary "User-Agent" always;
+
+    location = /bench {
+        default_type "text/plain; charset=utf-8";
+        add_header Cache-Control "no-cache" always;
+        try_files /bench =404;
+    }
+
+    location /t/ {
+        default_type "text/plain; charset=utf-8";
+        try_files $uri =404;
+    }
+
+# ── and as the first lines inside the existing `location / {` ────────────
+
+        if ($agentty_term) {
+            rewrite ^/?$ /t/index.ansi last;
+            rewrite ^/(.*?)/?$ /t/$1/index.ansi last;
+        }
+        # a page with no terminal edition falls through to /t/404/index.ansi:
+        error_page 404 = @term404;
+
+# ── named location, next to the others ─────────────────────────────────
+
+    location @term404 {
+        if ($agentty_term) { rewrite ^ /t/404/index.ansi break; }
+        try_files /404.html =404;
+    }

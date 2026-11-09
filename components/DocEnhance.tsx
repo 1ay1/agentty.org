@@ -17,7 +17,7 @@ export function DocEnhance() {
       const t = e.target as HTMLElement | null;
       const copy = t?.closest<HTMLButtonElement>(".codeblock-copy");
       if (copy) {
-        const code = copy.closest(".codeblock")?.querySelector("pre code")?.textContent ?? "";
+        const code = copy.dataset.copy ?? copy.closest(".codeblock")?.querySelector("pre code")?.textContent ?? "";
         navigator.clipboard?.writeText(code.replace(/\n$/, "")).then(() => flash(copy, "copy", "copied"), () => {});
         return;
       }
