@@ -1,5 +1,5 @@
 {
- "measured": "2026-11-08T23:25:03.457Z",
+ "measured": "2026-11-09T00:00:40.652Z",
  "machine": {
   "cpu": "Intel(R) Core(TM) i5-6200U CPU @ 2.30GHz",
   "threads": 4,
@@ -14,18 +14,18 @@
    "name": "agentty",
    "version": "agentty 0.9.51",
    "startupMs": {
-    "median": 2.5,
+    "median": 2.6,
     "p10": 2.3,
-    "p90": 4.6,
+    "p90": 4.2,
     "runs": 30
    },
    "readyMs": {
-    "median": 49.4,
-    "p10": 36.7,
-    "p90": 75.4,
+    "median": 47,
+    "p10": 25.8,
+    "p90": 73.9,
     "runs": 10
    },
-   "idleRssMB": 21.4,
+   "idleRssMB": 21.2,
    "diskMB": 23,
    "packageMB": 23,
    "runtime": null
@@ -35,18 +35,18 @@
    "name": "Claude Code",
    "version": "2.1.319 (Claude Code)",
    "startupMs": {
-    "median": 14.2,
-    "p10": 13.5,
-    "p90": 21.7,
+    "median": 14.4,
+    "p10": 13.3,
+    "p90": 25.5,
     "runs": 30
    },
    "readyMs": {
-    "median": 638.1,
-    "p10": 581.4,
-    "p90": 1514.9,
+    "median": 634.8,
+    "p10": 593.9,
+    "p90": 894.9,
     "runs": 10
    },
-   "idleRssMB": 151.5,
+   "idleRssMB": 151.6,
    "diskMB": 324.7,
    "packageMB": 324.7,
    "runtime": null
@@ -56,18 +56,18 @@
    "name": "Codex CLI",
    "version": "codex-cli 0.167.0",
    "startupMs": {
-    "median": 77.8,
-    "p10": 70.4,
-    "p90": 132.7,
+    "median": 76.9,
+    "p10": 69.5,
+    "p90": 175.2,
     "runs": 30
    },
    "readyMs": {
-    "median": 449,
-    "p10": 361.1,
-    "p90": 993.4,
+    "median": 401.9,
+    "p10": 375,
+    "p90": 452.2,
     "runs": 10
    },
-   "idleRssMB": 151.2,
+   "idleRssMB": 151.7,
    "diskMB": 536.2,
    "packageMB": 437.4,
    "runtime": {
@@ -80,18 +80,18 @@
    "name": "Gemini CLI",
    "version": "0.67.0",
    "startupMs": {
-    "median": 2630.5,
-    "p10": 2484.7,
-    "p90": 4098.2,
+    "median": 2586.7,
+    "p10": 2453.7,
+    "p90": 4338.3,
     "runs": 30
    },
    "readyMs": {
-    "median": 3004.8,
-    "p10": 2967.2,
-    "p90": 6650.5,
+    "median": 3040.2,
+    "p10": 2944.9,
+    "p90": 4476.9,
     "runs": 10
    },
-   "idleRssMB": 439.9,
+   "idleRssMB": 440.6,
    "diskMB": 196.9,
    "packageMB": 98.1,
    "runtime": {
@@ -104,20 +104,41 @@
    "name": "opencode",
    "version": "1.19.5",
    "startupMs": {
-    "median": 800.8,
-    "p10": 729.1,
-    "p90": 1313.7,
+    "median": 776.7,
+    "p10": 736.3,
+    "p90": 1365.5,
     "runs": 30
    },
    "readyMs": {
-    "median": 5248.9,
-    "p10": 4942.4,
-    "p90": 9620.9,
+    "median": 5189.4,
+    "p10": 4929.1,
+    "p90": 6838.9,
     "runs": 10
    },
-   "idleRssMB": 669.3,
+   "idleRssMB": 651,
    "diskMB": 408.9,
    "packageMB": 408.9,
+   "runtime": null
+  },
+  {
+   "id": "jcode",
+   "name": "jcode",
+   "version": "jcode v0.99.1 (7206efd0c)",
+   "startupMs": {
+    "median": 17.2,
+    "p10": 16.3,
+    "p90": 36.5,
+    "runs": 30
+   },
+   "readyMs": {
+    "median": 55.6,
+    "p10": 35.9,
+    "p90": 60,
+    "runs": 10
+   },
+   "idleRssMB": 105.8,
+   "diskMB": 163.4,
+   "packageMB": 163.4,
    "runtime": null
   },
   {
@@ -125,15 +146,15 @@
    "name": "Aider",
    "version": "aider 0.86.2",
    "startupMs": {
-    "median": 1089.1,
-    "p10": 1040.4,
-    "p90": 1870.6,
+    "median": 1070.4,
+    "p10": 1036.3,
+    "p90": 1668.5,
     "runs": 30
    },
    "readyMs": {
-    "median": 1047.9,
-    "p10": 967.6,
-    "p90": 1693.5,
+    "median": 1004.8,
+    "p10": 953.1,
+    "p90": 1041.4,
     "runs": 10
    },
    "idleRssMB": 73.7,
