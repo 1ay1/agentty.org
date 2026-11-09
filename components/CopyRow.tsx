@@ -21,10 +21,8 @@ export function CopyRow({ cmd }: { cmd: string }) {
 
   return (
     <div className="copyrow">
-      <code>
-        <span className="copyrow-caret" aria-hidden="true">$ </span>
-        {cmd}
-      </code>
+      <span className="copyrow-caret" aria-hidden="true">$</span>
+      <code>{cmd}</code>
       <button className="copybtn" onClick={copy} aria-label="Copy install command">
         {copied ? "copied" : "copy"}
       </button>

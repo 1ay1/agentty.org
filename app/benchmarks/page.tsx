@@ -37,7 +37,7 @@ export default function Benchmarks() {
     <article className="page post">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav className="breadcrumb" aria-label="Breadcrumb">
-        <Link href="/">Home</Link>
+        <Link href="/" aria-label="Home">~</Link>
         <span className="sep">/</span>
         <span className="cur">Benchmarks</span>
       </nav>

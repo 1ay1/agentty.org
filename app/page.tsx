@@ -43,7 +43,7 @@ export default function Home() {
         <dl className="home-facts">
           <dt>sandbox</dt><dd>kernel-enforced by claybin; <code>~/.ssh</code>, <code>~/.aws</code>, <code>.env</code> masked</dd>
           <dt>models</dt><dd>switch live: <kbd>^P</kbd> provider, <kbd>^/</kbd> model</dd>
-          <dt>editors</dt><dd>Zed over ACP; MCP both ways</dd>
+          <dt>editors</dt><dd>Zed and JetBrains over ACP; MCP both ways</dd>
           <dt>air-gap</dt><dd><code>agentty airgap user@host</code> over SSH</dd>
           <dt>memory</dt><dd>threads, checkpoints, subagents, local retrieval</dd>
         </dl>

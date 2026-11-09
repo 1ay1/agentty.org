@@ -115,7 +115,7 @@ export default async function BlogPost({
       <article className="post">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <nav className="breadcrumb" aria-label="Breadcrumb">
-          <Link href="/">Home</Link>
+          <Link href="/" aria-label="Home">~</Link>
           <span className="sep">/</span>
           <Link href="/blog/">Blog</Link>
         </nav>

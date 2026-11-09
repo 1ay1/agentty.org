@@ -3,7 +3,7 @@ import Link from "next/link";
 export function Breadcrumb({ title }: { title: string }) {
   return (
     <nav className="breadcrumb" aria-label="Breadcrumb">
-      <Link href="/">Home</Link>
+      <Link href="/" aria-label="Home">~</Link>
       <span className="sep">/</span>
       <Link href="/docs/">Docs</Link>
       <span className="sep">/</span>
