@@ -148,10 +148,10 @@ export function SiteNav() {
                 openPalette();
               }}
             >
-              Search <kbd>/</kbd>
+              search <kbd>/</kbd>
             </button>
             <div className="mobile-util mobile-util-theme">
-              <span>Theme</span>
+              <span>theme</span>
               <ThemeToggle />
             </div>
           </div>

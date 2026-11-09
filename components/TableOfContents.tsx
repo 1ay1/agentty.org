@@ -132,7 +132,7 @@ export function TableOfContents() {
 
   return (
     <aside className="docs-toc" aria-label="On this page">
-      <p className="t">On this page</p>
+      <p className="t">on this page</p>
       {headings.map((h) => (
         <a
           key={h.id}

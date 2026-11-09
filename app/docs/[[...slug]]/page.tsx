@@ -94,7 +94,7 @@ export default async function DocsPage({ params }: { params: Promise<Params> }) 
 
       {doc.headings.filter((h) => h.level === 2).length > 2 && (
         <details className="toc-inline">
-          <summary>On this page</summary>
+          <summary>on this page</summary>
           <ol>
             {doc.headings.filter((h) => h.level === 2).map((h) => (
               <li key={h.id}><a href={`#${h.id}`}>{h.text}</a></li>

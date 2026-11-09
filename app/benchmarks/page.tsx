@@ -19,6 +19,10 @@ export const metadata: Metadata = {
 
 const date = new Date(bench.measured).toISOString().slice(0, 10);
 const ms = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(2)} s` : `${v.toFixed(1)} ms`);
+const ver = (v: string) => v.replace(/^(agentty|aider|codex-cli|jcode)\s+/, "").replace(/\s*\(.*\)$/, "");
+// a range in one unit: "594–895 ms", "2.94–4.48 s"
+const range = (a: number, b: number) =>
+  b >= 1000 ? `${(a / 1000).toFixed(2)}–${(b / 1000).toFixed(2)} s` : `${a < 10 ? a.toFixed(1) : Math.round(a)}–${b < 10 ? b.toFixed(1) : Math.round(b)} ms`;
 
 export default function Benchmarks() {
   const jsonLd = {
@@ -59,25 +63,25 @@ export default function Benchmarks() {
 
         <h2 id="all-numbers">All numbers</h2>
         <div className="tablewrap">
-          <table>
+          <table className="bench-table">
             <thead>
-              <tr><th>tool</th><th>version</th><th className="num">ready to type</th><th className="num">idle memory</th><th className="num">disk</th><th className="num"><code>--version</code></th></tr>
+              <tr><th>tool</th><th className="ver">version</th><th className="num">ready to type</th><th className="num">idle memory</th><th className="num">disk</th><th className="num"><code>--version</code></th></tr>
             </thead>
             <tbody>
               {bench.tools.map((t) => (
                 <tr key={t.id}>
-                  <td>{t.name}</td>
-                  <td>{t.version.replace(/^(agentty|aider|codex-cli)\s+/, "").replace(/\s*\(.*\)$/, "")}</td>
-                  <td className="num">{ms(t.readyMs.median)} <span className="bench-range">({ms(t.readyMs.p10)}–{ms(t.readyMs.p90)})</span></td>
-                  <td className="num">{t.idleRssMB} MB</td>
-                  <td className="num">{t.diskMB} MB{t.runtime?.MB ? <span className="bench-range"> (incl. {Math.round(t.runtime.MB)} MB {t.runtime.name})</span> : null}</td>
-                  <td className="num">{ms(t.startupMs.median)} <span className="bench-range">({ms(t.startupMs.p10)}–{ms(t.startupMs.p90)})</span></td>
+                  <td>{t.name}<span className="bench-range ver-under">{ver(t.version)}</span></td>
+                  <td className="ver">{ver(t.version)}</td>
+                  <td className="num" data-label="ready to type">{ms(t.readyMs.median)} <span className="bench-range">{range(t.readyMs.p10, t.readyMs.p90)}</span></td>
+                  <td className="num" data-label="idle memory">{t.idleRssMB} MB</td>
+                  <td className="num" data-label="disk">{t.diskMB} MB{t.runtime?.MB ? <span className="bench-range"> incl. {Math.round(t.runtime.MB)} MB {t.runtime.name}</span> : null}</td>
+                  <td className="num" data-label="--version">{ms(t.startupMs.median)} <span className="bench-range">{range(t.startupMs.p10, t.startupMs.p90)}</span></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p>Median, with the 10th–90th percentile range in brackets.</p>
+        <p>Median, with the 10th–90th percentile range under it.</p>
 
         <h2 id="method">Method</h2>
         <ul>

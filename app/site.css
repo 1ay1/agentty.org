@@ -135,7 +135,7 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
   font-size: var(--fs-sm); background: none; border: 0; color: var(--text-dim); cursor: pointer;
 }
 .nav-toggle:hover { color: var(--text); }
-.mobile-util kbd { margin-left: auto; font-size: var(--fs-xs); color: var(--text-faint); border: 1px solid var(--border); padding: 0 5px; }
+.mobile-util kbd { margin-left: 1ch; font-size: var(--fs-xs); color: var(--text-faint); border: 1px solid var(--border); padding: 0 5px; }
 
 .mobile-menu {
   position: absolute; top: var(--nav-h); left: 0; right: 0;
@@ -148,10 +148,11 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
   color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border-soft);
 }
 .mobile-menu-links a[aria-current] { color: var(--accent); }
-.mobile-menu-utils { display: flex; gap: 8px; margin-top: 12px; }
+.mobile-menu-utils { display: flex; flex-direction: column; }
 .mobile-util {
-  flex: 1; min-height: 44px; display: flex; align-items: center; gap: 10px;
-  padding: 0 12px; background: none; border: 1px solid var(--border-soft); color: var(--text-dim); cursor: pointer;
+  min-height: 44px; display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 0; background: none; border: 0; border-bottom: 1px solid var(--border-soft);
+  color: var(--text-faint); font: inherit; text-align: left; cursor: pointer;
 }
 
 /* ── shared text blocks ───────────────────────────────────────────────── */
@@ -282,6 +283,7 @@ td .win { color: var(--text); }
 @media (max-width: 720px) { .copyrow { margin-left: 0; padding-left: 12px; } }
 .copyrow code { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; white-space: nowrap; color: var(--text); scrollbar-width: none; }
 .copyrow code::-webkit-scrollbar { display: none; }
+@media (max-width: 560px) { .copyrow code { white-space: normal; overflow-wrap: anywhere; } .copyrow { align-items: baseline; } }
 .copyrow-caret { flex: none; width: var(--hang); margin-left: calc(var(--hang) * -1); color: var(--accent); }
 @media (max-width: 720px) { .copyrow-caret { width: 2ch; margin-left: 0; } }
 .copybtn {
@@ -340,6 +342,21 @@ td .win { color: var(--text); }
 .bench-note { margin: 0; font-size: var(--fs-xs); color: var(--text-faint); }
 .bench-note a { color: var(--text-dim); }
 .bench-range { color: var(--text-faint); font-size: var(--fs-xs); }
+:is(th, td).num { white-space: nowrap; }
+td .bench-range { display: block; }
+/* phones: the benchmark table becomes one record per tool — the name and
+   version, then its numbers beside lowercase labels, like the home facts */
+.bench-table td .ver-under { display: none; }
+@media (max-width: 560px) {
+  .bench-table thead, .bench-table .ver { display: none; }
+  .bench-table, .bench-table tbody, .bench-table tr { display: block; }
+  .bench-table tr { padding: 10px 0; border-bottom: 1px solid var(--border-soft); }
+  .bench-table td { display: grid; grid-template-columns: 15ch minmax(0, 1fr); gap: 0 12px; padding: 1px 0; border: 0; text-align: left; }
+  .bench-table td:first-child { display: block; padding-bottom: 6px; color: var(--text); font-weight: 600; }
+  .bench-table td[data-label]::before { content: attr(data-label); color: var(--text-faint); grid-row: span 2; }
+  .bench-table td .bench-range { display: block; grid-column: 2; }
+  .bench-table td:first-child .ver-under { display: inline; margin-left: 1ch; font-weight: 400; }
+}
 .home-bench { margin-top: 28px; width: min(780px, calc(100vw - var(--gutter) - 16px)); }
 .doc-body .bench { margin: 24px 0 32px; }
 
@@ -420,12 +437,12 @@ td .win { color: var(--text); }
   padding: 0; background: none; border: 0; cursor: pointer; color: var(--text-faint); text-decoration: none;
 }
 .page-actions button:hover, .page-actions a:hover { color: var(--text); }
-.toc-inline { display: none; margin: 0 0 32px; border: 1px solid var(--border-soft); font-size: var(--fs-sm); }
-.toc-inline summary { padding: 9px 12px; cursor: pointer; color: var(--text-dim); list-style: none; }
+.toc-inline { display: none; margin: 0 0 32px; border-bottom: 1px solid var(--border-soft); font-size: var(--fs-sm); }
+.toc-inline summary { padding: 10px 0; min-height: 44px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: var(--text-faint); list-style: none; }
 .toc-inline summary::-webkit-details-marker { display: none; }
-.toc-inline summary::after { content: "+"; float: right; color: var(--text-faint); }
+.toc-inline summary::after { content: "+"; color: var(--text-faint); }
 .toc-inline[open] summary::after { content: "\2212"; }
-.toc-inline ol { margin: 0; padding: 4px 12px 10px 40px; border-top: 1px solid var(--border-soft); list-style: decimal-leading-zero; }
+.toc-inline ol { margin: 0; padding: 0 0 12px 4ch; list-style: decimal-leading-zero; }
 .toc-inline li { margin: 4px 0; }
 .toc-inline li::marker { color: var(--text-faint); }
 .toc-inline a { color: var(--text-dim); text-decoration: none; }
@@ -466,8 +483,8 @@ td .win { color: var(--text); }
   .docs-side a { padding-top: 8px; padding-bottom: 8px; }
   .docs-side-toggle {
     display: flex; justify-content: space-between; align-items: center; width: 100%;
-    margin-bottom: 16px; padding: 10px 12px; cursor: pointer;
-    background: none; border: 1px solid var(--border-soft); color: var(--text); font-size: var(--fs-sm);
+    margin-bottom: 16px; padding: 10px 0; min-height: 44px; cursor: pointer;
+    background: none; border: 0; border-bottom: 1px solid var(--border-soft); color: var(--text); font: inherit; font-size: var(--fs-sm);
   }
 }
 
@@ -508,7 +525,8 @@ td .win { color: var(--text); }
 .home-logo { margin: 0 0 12px; }
 .home-logo .agentty-logo { margin: 0; font-size: clamp(6px, 1.6vw, 10px) !important; }
 /* one line at any width: 45 chars × 0.6em ≈ 27em */
-.home h1 { white-space: nowrap; font-size: min(var(--fs-lg), calc((min(760px, 100vw) - var(--gutter) - 24px) / 27.5)); margin: 0 0 6px; }
+.home h1 { white-space: nowrap; font-size: var(--fs-lg); margin: 0 0 6px; }
+@media (max-width: 560px) { .home h1 { white-space: normal; text-wrap: balance; line-height: 1.45; } }
 .home-head p { color: var(--text-dim); margin: 0; }
 /* the header's ▌ is agentty's cursor, and blinks like one */
 .brand-mark { animation: cursor-blink 1.06s steps(1) infinite; }
@@ -612,7 +630,8 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
-.mobile-util-theme { justify-content: space-between; }
+.mobile-util-theme { justify-content: flex-start; }
+.mobile-util-theme .theme-toggle { margin-left: auto; color: var(--text); }
 
 /* print reads like a man page: AGENTTY(1) header, CAPS sections, indented body */
 @page { margin: 18mm 16mm; @top-left { content: "AGENTTY(1)"; font: 9pt monospace; } @top-right { content: "agentty.org"; font: 9pt monospace; } @bottom-right { content: counter(page); font: 9pt monospace; } }
