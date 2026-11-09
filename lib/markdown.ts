@@ -67,9 +67,12 @@ function build(): MD {
     render: (tokens: { nesting: number; info: string }[], i: number) => {
       if (tokens[i].nesting !== 1) return "</aside>\n";
       const m = tokens[i].info.trim().match(/^([a-z]+)\s*(.*)$/)!;
-      const [type, dflt] = CALLOUTS[m[1]];
+      const [type] = CALLOUTS[m[1]];
       const cls = type === "note" ? "note" : `note ${type}`;
-      return `<aside class="${cls}" role="note"><span class="label">${md.renderInline(m[2].trim() || dflt)}</span>\n`;
+      // the kind (note / tip / warn) is drawn in the margin by CSS; only a
+      // real title is rendered inline
+      const title = m[2].trim();
+      return `<aside class="${cls}" role="note">${title ? `<span class="label">${md.renderInline(title)}</span>` : ""}\n`;
     },
   });
 

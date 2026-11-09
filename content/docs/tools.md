@@ -10,11 +10,11 @@ Each tool gets a purpose-built widget: diffs render as diffs with a real line-nu
 
 | Tool | Effect class | Description |
 |---|---|---|
-| `read` | Read | Read a file (or a line range). Large files return a symbol outline first. **`symbol="name"`** reads exactly one function/type's definition + body (resolved to its enclosing block) — no line math or `sed`. |
+| `read` | Read | Read a file (or a line range). Large files return a symbol outline first. **`symbol="name"`** reads exactly one function/type's definition + body (resolved to its enclosing block) — no line math or `sed`. An image (PNG, JPEG, GIF or WebP, up to 8 MiB, detected by its contents, not its extension) is attached for a vision model to see. If the provider can't take it, agentty drops it and retries the turn. |
 | `write` | Write | Create a new file with atomic write semantics. |
 | `edit` | Write | Apply targeted text substitutions to an existing file; renders a diff. |
 | `move` | Write | Move or rename a file/directory without a shell. |
-| `remove` | Write | Delete a file or directory (recursive requires an explicit flag). |
+| `remove` | Write | Delete a file or directory (recursive requires an explicit flag). A path that's already gone counts as done, not as an error. |
 | `bash` | Shell | Run a shell command inside the sandbox; shows exit code + output. |
 | `process_start` / `process_poll` / `process_stop` | Shell | Start, poll, and stop a long-running background process (dev servers, watchers) without blocking the turn. Rendered as terminal output — tail-anchored, exit codes and test/compiler summaries lifted out. |
 | `grep` | Read | Regex search across files, rendered as a per-file table with true line numbers. Prefers ripgrep when installed; both backends skip generated trees (`build*`, `_deps`, `node_modules`, `vendor`, `.git`, …) so build artifacts never pollute the hits. **`word=true`** matches whole identifiers only (no `foo` inside `foobar`); **`context:"block"`** returns each hit's whole enclosing function/block so you rarely need a follow-up `read`. |
@@ -24,14 +24,14 @@ Each tool gets a purpose-built widget: diffs render as diffs with a real line-nu
 | `find_definition` | Read | Locate a symbol's definition across the codebase (curated per-language patterns). To find USES, use `grep` with `word=true`; for a ranked overview use `repo_map`. |
 | `search_structural` | Read | Structural (AST-shape) code search on a nested-document model (like Semgrep-generic / ast-grep) — the layer between `grep` (text) and `search_code` (meaning). **Never matches inside comments or string literals.** Metavariables: `$X` matches exactly **one node** (an atom or a balanced `(…)`/`[…]`/`{…}` group) and binds it; `$$$X` matches **many** nodes (arg lists, multi-token conditions). Recurses into nested groups. Dep-free (lexer + nested-tree matcher, no tree-sitter). e.g. `foo($$$)`, `if ($$$C) return $X;`, `catch ($$$) {}`, `$X = $X`. |
 | `web_fetch` | Network | Fetch a URL (capped output) for docs and APIs. |
-| `web_search` | Network | Search the web and return result snippets. |
+| `web_search` | Network | Search the web and return result snippets. In `Ctrl+K → Settings → Web Search` choose which services answer (first, second and last; free ones need no account, others take an API key stored encrypted), set it to auto (the model picks the result count), on (your count and ceiling apply) or off, and exclude sites ([details](/docs/configuration#web-search)). |
 | `todo` | Pure | Maintain a session todo / plan list, rendered as a checklist. |
 | `diagnostics` | Shell | Run the project's build/lint and surface errors and warnings. |
 | `test` | Shell | Run focused project tests (CTest/Cargo/Go/npm/Make auto-detected) with structured pass/fail output. |
 | `skill` | Pure | Load a named skill's full instructions from .agentty/skills/ before attempting a task it covers. |
 | `task` | Network | Spawn an autonomous subagent (explorer / reviewer / tester / coder / general) with its own context and tool budget; returns one condensed report. Read-only roles (explorer, reviewer) automatically route to the cheapest capable model on the active provider — tester/coder/general keep the parent model — so fan-out exploration costs a fraction of the main turn. |
-| `search_docs` | Network | Query your knowledge base — docs, installed skills, and learned memory — with agentty's hybrid BM25 + dense [retrieval engine](/docs/retrieval), reranked, diversified, and expanded over the corpus's [GraphRAG](/docs/retrieval#8-graphrag-expansion-retrieval-over-the-document-graph-default-on) document graph; returns the most relevant passages, source-tagged. Works with zero docs configured (skills + memory are always indexed). |
-| `search_code` | Read | Semantic search over source code by *meaning*, not literal text — finds the relevant function for a conceptual query ("where is retry backoff handled") even with zero shared keywords. See [Retrieval](/docs/retrieval). |
+| `search_docs` | Network | Search your docs folder (`./docs` or `AGENTTY_DOCS_DIR`), installed skills, and remembered facts with hybrid keyword + meaning search; returns the most relevant passages, source-tagged. Works with zero docs configured (skills + memory are always indexed). Its only network use is the local embedding model. See [Retrieval](/docs/retrieval). |
+| `search_code` | Network | Search source code by *meaning*, not literal text — finds the relevant function for a conceptual query ("where is retry backoff handled") even with no shared keywords. Keyword-only out of the box; `ollama pull qwen3-embedding:0.6b` turns on the meaning half. See [Retrieval](/docs/retrieval). |
 | `git_status` | Read | Show branch, staged/unstaged changes, untracked files. |
 | `git_diff` | Read | Show a diff (unstaged, staged, or a ref range). |
 | `git_log` | Read | Show commit history. |
@@ -40,6 +40,7 @@ Each tool gets a purpose-built widget: diffs render as diffs with a real line-nu
 | `git_commit` | Write | Stage files and create a commit. |
 | `remember / forget` | Pure | Persist or remove durable facts across sessions. |
 | `wipe_memory` | Pure | Clear every remembered fact in a scope (confirm-gated). |
+| `tool_search` | Pure | Find and load plugin tools that aren't loaded yet. Only present when some are on demand; a found tool stays loaded for the conversation. See [how tools load](/docs/plugins#how-tools-load). |
 
 :::note
 The **effect class** determines which permission profile auto-runs the tool. *Pure* and *Read* tools run automatically in **Ask** and **Write**; *Write*, *Shell*, and *Network* are gated by [your profile](/docs/profiles). The **Minimal** profile prompts on *every* class, reads included.

@@ -12,9 +12,13 @@ Quick answers to the questions people ask most.
 
 Yes — OAuth against your existing Pro/Max plan is supported (no extra billing, same account). But it's not the only path or even the recommended one: agentty is bring-your-own-model, so most people run it with an API key or a local Ollama model. See [Authentication](/docs/authentication).
 
+## Can I bring my Codex or Claude Code conversations?
+
+Yes. They show up in the thread list ([[Ctrl+J]]) next to agentty's own threads. Open one and keep going, on any model you like. Your `CLAUDE.md` and `AGENTS.md` files, skills and slash commands are read from where those tools keep them, and `agentty mcp import` copies your MCP servers. Nothing in the other tool is changed. See [Coming from Codex or Claude Code](/docs/switching).
+
 ## Will using my Claude subscription with agentty get my account banned?
 
-The honest answer: agentty is a third-party client, so it carries the same footing as any third-party client that speaks to Anthropic's API. What agentty actually does is deliberately unexotic — it completes the **same OAuth flow** and uses the **same `CLAUDE_CODE_OAUTH_TOKEN`** mechanism Claude Code itself uses, sends ordinary Messages-API requests over HTTPS, and adds nothing that spoofs, scrapes, or circumvents rate limits. Credentials live only in `~/.config/agentty/credentials.json` (mode `0600`); nothing is sent anywhere except Anthropic.
+The honest answer: agentty is a third-party client, so it carries the same footing as any third-party client that speaks to Anthropic's API. What agentty actually does is deliberately unexotic — it completes the **same OAuth flow** and uses the **same `CLAUDE_CODE_OAUTH_TOKEN`** mechanism Claude Code itself uses, sends ordinary Messages-API requests over HTTPS, and adds nothing that spoofs, scrapes, or circumvents rate limits. Credentials live only in `~/.agentty/credentials/credentials.json` (mode `0600`); nothing is sent anywhere except Anthropic.
 
 We're not affiliated with Anthropic and can't speak for their enforcement, and their terms can change. If you want **zero ambiguity**, use an `ANTHROPIC_API_KEY` (pay-as-you-go, unquestionably in-bounds) or point agentty at [another provider](/docs/providers) — OpenAI, DeepSeek, Kimi, Gemini, Groq, OpenRouter, or a local Ollama model — with `--provider`. See [Authentication](/docs/authentication).
 
@@ -40,7 +44,11 @@ Linux, macOS, and Windows — all built and tested daily. Prebuilt binaries ship
 
 ## How is it sandboxed?
 
-Every shell/build call runs in a sandbox the kernel enforces, so it holds even if the command tries to escape. The workspace is read-write, system libs read-only, and `~/.ssh` / `/etc` / other projects are blocked. Windows and unrooted Android/Termux run unsandboxed (no user-namespace backend available there); agentty detects this and prints `sandbox: unavailable, running unsandboxed`.
+Every shell/build call runs in a sandbox the kernel enforces, so it holds even if the command tries to escape. The workspace is read-write, system libs read-only, and `~/.ssh` / `/etc` / other projects are blocked. That is true on Linux (namespaces + Landlock + seccomp + cgroup2), on macOS (seatbelt + rlimits) and — since 0.9.29 — on Windows (AppContainer + restricted token + job object + mitigation policies). Windows has no weaker fallback engine: if the host can't build a wall, agentty says `sandbox: unavailable, running unsandboxed` instead of pretending. Unrooted Android/Termux still runs unsandboxed.
+
+## Can I limit which websites commands can reach?
+
+Yes. Commands reach the internet only through agentty's own proxy, which already refuses your local network, `localhost` services and cloud metadata addresses. **Settings → Sandbox → Network → Allowed hosts** narrows it to the sites you name — `github.com`, `*.npmjs.org`, and so on (`*.x` means subdomains, so list `x` too for the site itself). Leave it empty for any public site. Or pick the `airgapped` preset for no network at all. See [Sandboxing](/docs/sandboxing#only-the-sites-you-name).
 
 ## Can I run it on a machine with no internet?
 
@@ -50,13 +58,19 @@ Yes. `agentty airgap user@host` relays traffic from your laptop over SOCKS5-over
 
 Yes. `agentty acp` runs agentty as an [Agent Client Protocol](/docs/acp) agent inside Zed — streaming responses, inline diffs, native permission prompts, and session reload. Any ACP client works; it's the same engine as the TUI, just over JSON-RPC on stdio.
 
+## Does code search send my code anywhere?
+
+No. `search_code` and `search_docs` run on your machine. Keyword search needs nothing; search by meaning uses a local [Ollama](https://ollama.com) model (`ollama pull qwen3-embedding:0.6b`), which agentty finds by itself. The index is stored in your project's `.agentty/cache/`. See [Retrieval](/docs/retrieval).
+
 ## Where are my conversations stored?
 
-As plain JSON, one file per thread, under `~/.agentty/threads/`. Safe to inspect, back up, or delete.
+As plain files under `~/.agentty/threads/`: one append-only `.jsonl` log per thread plus small index sidecars. Safe to inspect, back up, or delete. Move them with `AGENTTY_THREADS_DIR`, expire old ones with `AGENTTY_THREADS_KEEP_DAYS`. `agentty config` shows every folder agentty uses and its size; [Storage](/docs/storage) has the full map.
 
 ## What happens when a conversation runs out of context?
 
 Two options. agentty **auto-compacts** in the background as a thread nears the window — it summarizes the older turns (on the cheapest capable model) and keeps going in the same thread. Or you can **[fork](/docs/fork)** ([[Ctrl+K]] → *Fork thread*): that branches into a *fresh* thread carrying near-zero context, writing the parent's full transcript to disk for the model to read on demand. Compaction keeps one thread alive by compressing its history (lossy); fork starts clean and leaves the history verbatim on disk. Fork when you want a clean slate without losing the ability to look back.
+
+To stop auto-compaction, turn off Settings → **Auto-compact** (or set `"auto_compact": false` in `settings.json`). Then only `/compact` summarizes. Requests are still trimmed to fit the window, so the oldest turns drop out of what the model sees instead of failing.
 
 ## Is it stable / production ready?
 

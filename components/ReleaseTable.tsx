@@ -14,7 +14,7 @@ export function ReleaseTable() {
           <tr>
             <th>Platform</th>
             <th>Binary</th>
-            <th>Size</th>
+            <th className="num">Size</th>
             <th>SHA-256</th>
           </tr>
         </thead>
@@ -27,7 +27,7 @@ export function ReleaseTable() {
                   <code>{p.name}</code>
                 </a>
               </td>
-              <td className="mono">
+              <td className="mono num">
                 <span className="win">{p.sizeMB}</span>
               </td>
               <td className="mono hash">

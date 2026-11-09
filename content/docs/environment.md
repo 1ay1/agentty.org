@@ -31,6 +31,8 @@ channel list and line format.
 | `AGENTTY_TRACE_TOOLS` | Older spelling of `--events jsonl`; `=1` selects the same stream. Prefer the flag — it shows up in `--help`. |
 | `AGENTTY_RAG_TRACE` | Fold rag-cpp's per-stage trace into the retrieval `mode` string shown on the tool card. On by default; `=0` disables. |
 | `AGENTTY_NO_STDERR_REDIRECT` | Keep subsystem stderr (MCP servers, sandbox) on the terminal instead of capturing it. Debug-only — it will scribble over the TUI. |
+| `AGENTTY_STARTUP_TRACE` | A file path. Each startup stage appends `+12.3 ms  name` to it, timed from launch, so you can see where launch time goes. Unset: no cost. |
+| `MIMALLOC_PURGE_DELAY` | mimalloc's own knob. agentty sets it to `0` (give freed memory back to the OS at once) unless you set it. |
 
 ## Providers & models
 
@@ -47,7 +49,7 @@ channel list and line format.
 | `AGENTTY_CHATGPT_DEVICE_AUTH` | Use the device-code flow for ChatGPT sign-in instead of the loopback browser flow — for headless or remote machines. |
 | `AGENTTY_NO_PREWARM` | Skip the TLS/connection prewarm at startup. |
 | `AGENTTY_POOL_IDLE_TTL` | Seconds an idle HTTP/2 connection may be reused (default 90, or 450 under a SOCKS proxy; `0` disables pooling). **Lower this if you see `h2 socket hangup (server accepted request; not replayed automatically)` mid-answer** — that means a proxy/VPN/CDN killed the connection before agentty did. Set it below your network's idle timeout and the pool evicts first, turning a visible failure into an invisible re-dial. `grep http.stream_hangup` in the log shows each hangup's idle age, so the right value is measurable. |
-| `AGENTTY_FORCE_REMOTE` | Force the remote streaming cadence even on a local endpoint. Takes precedence over autodetection. |
+| `AGENTTY_FORCE_REMOTE` | No effect since 0.9.42: there is no separate remote cadence any more. Still accepted. |
 
 ## Smart Mode
 
@@ -77,32 +79,45 @@ a catalog window and the serving endpoint's, the **serving** one wins: it is
 the one that will reject an over-long prompt.
 
 But a gateway is not obliged to say anything — OpenAI's own `/v1/models`
-schema is just `{id, object, created, owned_by}` — so when yours is silent or
-wrong, set it yourself:
+schema is just `{id, object, created, owned_by}` — so when every layer comes
+up empty the picker shows `auto` and the turn runs on the conservative
+default. For that case:
 
-> In the model picker (**^/**), highlight a model and press **^W** to step
-> its window through `auto → 32k → 64k → 128k → 200k → 272k → 400k → 1M → 2M`
-> and back to `auto`. The choice is saved per **provider + model**, so the same
-> model id behind two gateways can carry two different windows.
+> | Variable | Effect |
+> |---|---|
+> | `AGENTTY_MAX_CONTEXT_TOKENS` | The window to assume when nothing else knows one. Spelled to mirror Claude Code's `CLAUDE_CODE_MAX_CONTEXT_TOKENS`, so it is guessable if you have hit this before. |
 
-An override always wins, including over a gateway that advertises a smaller
-window than it actually serves.
+It is consulted **last**, after the catalog, the probe and the model id, so it
+only speaks when nothing better did — it is global, and a session that reaches
+several models should not apply one number to all of them.
+
+In practice almost nothing needs it: between the `/v1/models` listing, the
+endpoint probes and models.dev, discovery covers nearly every provider agentty
+ships. What is left is the genuinely unknowable case — a private gateway
+serving an id no catalog has published.
 
 ## Retrieval (RAG)
 
-Full detail in **[Retrieval](/docs/retrieval)**. Most default sensibly; the
-common ones are `AGENTTY_DOCS_DIR` and `AGENTTY_EMBED_MODEL`.
+Full detail in **[Retrieval](/docs/retrieval)**. Nothing here is needed: with
+Ollama running and `qwen3-embedding:0.6b` or `nomic-embed-text` pulled, search
+by meaning turns on by itself. `agentty diagnostics` shows what is in use.
 
 | Variable | Effect |
 |----------|--------|
-| `AGENTTY_DOCS_DIR` | Directory to index as your knowledge base. |
-| `AGENTTY_EMBED_MODEL` | Embedding model (via Ollama). |
-| `AGENTTY_RAG_PERSIST` | Cache the built index to `.agentty/rag_docs.ragdb` so later sessions open warm. On by default; `=0` disables. |
-| `AGENTTY_RAG_LEARN` | Fold each passage's win-rate back into ranking. On by default; `=0` disables. |
-| `AGENTTY_RAG_PROACTIVE` · `AGENTTY_RAG_PROACTIVE_MIN` · `AGENTTY_RAG_PROACTIVE_BYTES` | Pre-turn auto-retrieval and its thresholds. Off by default. |
+| `AGENTTY_DOCS_DIR` | Folder `search_docs` indexes. Default `./docs`, then `./.agentty/knowledge`. Skills and memory are searched either way. |
+| `AGENTTY_EMBED_BACKEND` | `auto` (default: a local Ollama if found), `ollama`, `openai` (any OpenAI-compatible endpoint), `llamacpp`, `gguf`, `onnx`, or `off` (keyword only). |
+| `AGENTTY_EMBED_MODEL` | Embedding model. On `auto`, agentty uses `qwen3-embedding:0.6b` when it's pulled, else `nomic-embed-text`. |
+| `AGENTTY_EMBED_ENDPOINT` · `AGENTTY_EMBED_PATH` · `AGENTTY_EMBED_API_KEY` | Where a non-Ollama embedder lives (`https://host:port`), its request path, and its key. |
+| `AGENTTY_EMBED_MODEL_PATH` · `AGENTTY_EMBED_TOKENIZER` | Model file (and ONNX tokenizer) for the in-process backends. |
+| `AGENTTY_EMBED_PREFIX` | `0` stops agentty adding the query/document prefixes some models were trained with (nomic, e5, mxbai, arctic). |
+| `AGENTTY_RAG_PERSIST` | Keep indexes on disk so restarts are warm and edits update in place. On by default; `=0` disables. |
+| `AGENTTY_RAG_LEARN` | Nudge ranking toward passages you go on to open. Off by default. |
+| `AGENTTY_RAG_PROACTIVE` · `AGENTTY_RAG_PROACTIVE_MIN` · `AGENTTY_RAG_PROACTIVE_BYTES` | Pre-turn auto-retrieval and its thresholds. Off by default; persist it in `/settings` → *Proactive retrieval (RAG)*. |
 | `AGENTTY_RAG_EXPAND` · `AGENTTY_RAG_HYDE` · `AGENTTY_RAG_GEN_MODEL` | LLM-assisted recall (multi-query, HyDE) via a small local model. Opt-in. |
-| `AGENTTY_RAG_BM25_WEIGHT` · `AGENTTY_RAG_DENSE_WEIGHT` · `AGENTTY_RAG_FUSION` · `AGENTTY_RAG_ADAPTIVE` | Hybrid-search weighting and the fusion strategy. `_ADAPTIVE` (on) picks weights per query. |
+| `AGENTTY_RAG_PRF` · `AGENTTY_RAG_GRAPH` · `AGENTTY_RAG_CORRECT` | Pseudo-relevance feedback, GraphRAG, corrective retry. Opt-in. |
+| `AGENTTY_RAG_BM25_WEIGHT` · `AGENTTY_RAG_DENSE_WEIGHT` · `AGENTTY_RAG_FUSION` · `AGENTTY_RAG_ADAPTIVE` | Hybrid weighting and fusion: `convex` (default, adapts per query) or `rrf` (uses the two weights). |
 | `AGENTTY_RAG_MMR` · `AGENTTY_RAG_MMR_LAMBDA` · `AGENTTY_RAG_DEDUP` · `AGENTTY_RAG_DEDUP_THRESHOLD` | Diversity and near-duplicate suppression in results. Both on by default. |
+| `AGENTTY_RAG_CODE_RERANK` · `AGENTTY_RAG_SPLIT_IDENT` | `search_code`'s code-aware rerank and identifier splitting. On by default; `=0` turns one off (for A/B tests). |
 | `AGENTTY_RAG_AUTOCUT` · `AGENTTY_RAG_AUTOCUT_SENSITIVITY` · `AGENTTY_RAG_RELEVANCE_FLOOR` | Drop weak tail results automatically. On by default. |
 | `AGENTTY_RAG_CONTEXTUAL` · `AGENTTY_RAG_EXTRACTIVE` · `AGENTTY_RAG_STITCH` · `AGENTTY_RAG_CORRECT` · `AGENTTY_RAG_PRF` · `AGENTTY_RAG_GRAPH` | Individual retrieval stages (contextual headers, extractive compression, chunk stitching, correction, pseudo-relevance feedback, graph expansion). |
 | `AGENTTY_RAG_MEMORY` · `AGENTTY_RAG_SKILLS` · `AGENTTY_RAG_MCP` | Include learned memory / skills / MCP resources in the index. |
@@ -116,9 +131,9 @@ common ones are `AGENTTY_DOCS_DIR` and `AGENTTY_EMBED_MODEL`.
 | `AGENTTY_MCP_CONFIG` | Path to the MCP server config. Otherwise `~/.agentty` then `./.agentty`. |
 | `AGENTTY_MCP_ALLOW_PROJECT` | Allow a project-local `.agentty/mcp.json` to add servers. Off by default — a repo you clone should not silently gain tool servers. |
 | `AGENTTY_MCP_TIMEOUT_MS` · `AGENTTY_MCP_CONNECT_TIMEOUT_MS` | Per-call and initial-connect timeouts for MCP servers. |
-| `AGENTTY_MCP_TOOL_BUDGET` | Soft cap on total tools on the wire (native + enabled MCP), default 100. Past it, MCP tools are trimmed and the picker warns. `0` disables the cap; unparsable values keep the default. |
+| `AGENTTY_MCP_TOOL_BUDGET` | Cap on how many tools one request loads (native + plugin). Past it, plugin tools are on demand behind `tool_search`, never hidden. Default: the provider's limit (128 on OpenAI-style providers, none on Anthropic). `0` disables the cap; unparsable values keep the default. |
 | `AGENTTY_MCP_CLIENT_ID` | OAuth client id for MCP servers that require one. |
-| `AGENTTY_SUBAGENT_MAX_SECONDS` | Wall-clock ceiling for one `task` subagent run, default 900 (15 min). Bounds the case the turn cap cannot: a backend that keeps a stream technically alive without finishing it, where the per-stream budget alone allowed hours. On expiry the subagent stops and reports what it has, flagged incomplete. Values outside 1–86399 keep the default. |
+| `AGENTTY_SUBAGENT_MAX_SECONDS` | Wall-clock ceiling for one `task` subagent run, default 900 (15 min). Bounds the case the turn cap cannot: a backend that keeps a stream technically alive without finishing it, where the per-stream budget alone allowed hours. On expiry the subagent stops and reports what it has, flagged incomplete. Values outside 1–86399 keep the default. For `agentty run`, `--timeout` overrides it. |
 | `AGENTTY_ACP_AGENTS` | Path to the ACP agent config (same precedence chain as MCP). |
 | `AGENTTY_ACP_ALLOW_PROJECT` | Allow a project-local ACP agent config. Off by default, same reasoning as MCP. |
 | `AGENTTY_NO_HOOKS` | Disable all lifecycle hooks for this run. |
@@ -129,6 +144,15 @@ common ones are `AGENTTY_DOCS_DIR` and `AGENTTY_EMBED_MODEL`.
 | Variable | Effect |
 |----------|--------|
 | `AGENTTY_HOME` | Root for all agentty state (credentials, threads, settings, logs). Default `~/.agentty`. Point it at a scratch dir to sandbox a session. |
+| `AGENTTY_THREADS_DIR` | Conversation history. Default `<root>/threads`. Kept 0700. |
+| `AGENTTY_CREDENTIALS_DIR` | Sign-ins and API keys. Default `<root>/credentials`. Kept 0700. |
+| `AGENTTY_STATE_DIR` | Approval hashes for project MCP servers, hooks and skills. Default `<root>/state`. |
+| `AGENTTY_CACHE_DIR` | Refetchable data, the model catalog and update stamps. Default `<root>/cache`. Safe to delete. |
+| `AGENTTY_LOGS_DIR` | Diagnostic logs. Default `<root>/logs`. |
+| `AGENTTY_PROJECT_DIR` | The per-project root. Default `<project>/.agentty`. Each project gets its own subfolder under it. |
+| `AGENTTY_RAG_DIR` | Search indexes. Default `<project root>/cache`. Safe to delete, the next search rebuilds. |
+| `AGENTTY_PROJECT_STATE_DIR` | Search feedback. Default `<project root>/state`. |
+| `AGENTTY_THREADS_KEEP_DAYS` | Delete threads idle this many days, once a day. Unset keeps everything. |
 | `AGENTTY_ENCRYPT_PASSPHRASE` / `AGENTTY_PASSPHRASE` | Passphrase for the encrypted credential store — for headless machines where no prompt is possible. |
 | `AGENTTY_USE_KEYSTORE` | Use the OS keychain for credentials instead of the file store. |
 | `AGENTTY_KDF` | Key-derivation parameters for the credential store. Change only if you know why. |
@@ -137,8 +161,99 @@ common ones are `AGENTTY_DOCS_DIR` and `AGENTTY_EMBED_MODEL`.
 | `AGENTTY_SOCKS_PROXY` | Route provider traffic through a SOCKS proxy. See **[Proxies](/docs/proxies)**. |
 | `SSL_CERT_FILE` · `SSL_CERT_DIR` · `CURL_CA_BUNDLE` | Standard OpenSSL root-store overrides. |
 | `AGENTTY_AIRGAP_SSH` | SSH target for airgap mode. See **[Airgap](/docs/airgap)**. |
-| `AGENTTY_NO_SSH_THROTTLE` | Skip render throttling over SSH. A fast LAN hop doesn't need it. |
+| `AGENTTY_NO_SSH_THROTTLE` | No effect since 0.9.42: SSH no longer changes how agentty renders or animates, so there is nothing to turn off. Still accepted. |
 | `AGENTTY_NO_UPDATE_CHECK` | Disable the background update check (also implied by airgap mode). |
+
+### Keeping config local and bulk elsewhere
+
+`AGENTTY_HOME` moves everything. The per-directory variables move one thing
+each, usually the parts that grow:
+
+```sh
+export AGENTTY_THREADS_DIR=/mnt/data/agentty/threads
+export AGENTTY_LOGS_DIR=/mnt/data/agentty/logs
+```
+
+Use `agentty config move threads /mnt/data/agentty/threads` to bring
+existing data along; it prints the export line to add.
+
+See [Storage](/docs/storage) for every file and how long it stays.
+
+### Retrieval indexes are per-project
+
+`AGENTTY_RAG_DIR` is the odd one out, because the data is. Retrieval indexes
+are keyed to the tree that produced them — they are meaningless away from it,
+and sharing one between unrelated checkouts would invalidate it constantly —
+so they default to `<project>/.agentty` rather than anywhere under
+`AGENTTY_HOME`. Only `AGENTTY_RAG_DIR` and `AGENTTY_PROJECT_DIR` move them.
+
+They are also the biggest thing agentty writes per project: on the agentty
+repo itself, 31 MB of code index and 7 MB of docs index. If your code already
+lives on a roomy disk they follow it and there is nothing to do. If it does
+not:
+
+```sh
+export AGENTTY_RAG_DIR=/mnt/data/agentty/rag
+```
+
+With the override set, each project gets its own readable subdirectory
+(`myrepo-04b42962/`) so two checkouts pointed at one location do not fight
+over the same file.
+
+The "project" is the nearest enclosing directory containing `.git`,
+`.agentty`, `.hg` or `.svn` — **not** the directory you launched from. So
+`cd src/ && agentty` reuses the index at the repo root instead of building a
+second one beside it.
+
+#### Superseded indexes are reclaimed
+
+The filename carries an identity tag for the embedding backend that built it
+(`rag_code.e45ba1de.ragdb`), so changing backends can never serve vectors
+from an incompatible space. The cost is that the filename set grows every
+time you switch.
+
+After a successful index write, agentty deletes superseded variants — keeping
+the live one plus the most recent previous one, so A/B-ing two backends does
+not force a full rebuild each time you switch back. Untagged indexes from
+before the tag existed are removed outright: no current build can read them.
+
+Two deliberate limits. Variants newer than an hour are left alone, since
+another agentty process may be mid-write. And if any file in the directory
+cannot be examined, nothing is deleted at all — being wrong about what is
+present should cost disk, not data.
+
+Details worth knowing:
+
+- A **relative** value is resolved against the root, not your current
+  directory — `AGENTTY_LOGS_DIR=logs2` always means `~/.agentty/logs2`.
+- An **empty** value counts as unset, so an exported-but-blank variable
+  relocates nothing.
+- If a directory **can't be created** (unmounted drive, a file in the way),
+  agentty prints one warning and falls back to the default rather than losing
+  the data silently.
+- An overridden threads directory is forced to `0700`, because conversation
+  history is as sensitive as the credentials it used to sit beside.
+
+Symlinking the subdirectories works too, and predates these variables:
+`ln -s /mnt/data/agentty-logs ~/.agentty/logs`.
+
+## Paste
+
+Each overrides one row of Settings → Paste for this run (it wins over
+`settings.json`, locks the row in the pane, and is never saved). Full table with
+defaults: **[Configuration → Paste](/docs/configuration#paste)**.
+
+| Variable | Effect |
+|----------|--------|
+| `AGENTTY_PASTE_FORWARDS` | `0` stops reading the laptop's clipboard through a forwarded agent over ssh. |
+| `AGENTTY_PASTE_DISPLAY` | `0` stops reading this machine's own clipboard. |
+| `AGENTTY_PASTE_TERMINAL` | `auto` · `osc5522` · `osc52` · `off`: how (or whether) to ask the terminal for the clipboard. |
+| `AGENTTY_PASTE_SERVER_CLIPBOARD` | `1`: over ssh, fall back to the server's own clipboard. |
+| `AGENTTY_PASTE_DECODE_TEXT` | `0`: paste `richpaste:1:` lines as text instead of the image or file they carry. |
+| `AGENTTY_PASTE_MAX_MB` | Largest paste read, in MB. |
+| `AGENTTY_PASTE_INLINE_KB` | A copied text file up to this many KB pastes as its text; `0` always saves it. |
+| `AGENTTY_PASTE_SAVE_DIR` | Where pasted files are saved. |
+| `AGENTTY_PASTE_SOCKET` | Ask only this agent socket. |
 
 ## Interface
 
@@ -146,12 +261,12 @@ common ones are `AGENTTY_DOCS_DIR` and `AGENTTY_EMBED_MODEL`.
 |----------|--------|
 | `AGENTTY_GRID` | Grid-protocol rendering for cooperating hosts. `=0` opts out. (`AGENTTY_EMACS_GRID` is the legacy name.) |
 | `AGENTTY_HOST` | Declare the cooperating host explicitly rather than autodetecting. |
-| `AGENTTY_CLIPBOARD_CMD` | Command to pipe clipboard writes through (e.g. `pbcopy`, `wl-copy`) when autodetection fails. |
 | `AGENTTY_PAINTED_CARET` | `=1` draws the caret manually — for terminals with broken cursor-visibility handling. |
 | `AGENTTY_REVEAL` | Master switch for the streaming reveal effect. **On by default everywhere, tmux included**; `0`/`false`/`off`/`no` turns it off, anything else forces it on. Set it to `0` if your terminal/multiplexer combination ghosts the live tail. |
 | `AGENTTY_REVEAL_TYPEWRITER` | The typewriter clip alone — text arriving character-by-character. ANDed with `AGENTTY_REVEAL`; same default and same truthiness rule. |
 | `AGENTTY_REVEAL_DECORATE` | The decorative overlay on the revealing tail alone. ANDed with `AGENTTY_REVEAL`; same default and same truthiness rule. |
-| `AGENTTY_NO_REVEAL_GLIDE` | `=1` disables the bounded **end-of-turn glide** (the visible catch-up when a turn finishes) and restores the immediate finish. Not the reveal animation itself — that's `AGENTTY_REVEAL`. The glide is otherwise on only where frames are dense: not over SSH, and only with synchronized-output support. |
+| `AGENTTY_NO_REVEAL_GLIDE` | `=1` disables the bounded **end-of-turn glide** (the visible catch-up when a turn finishes) and restores the immediate finish. Not the reveal animation itself — that's `AGENTTY_REVEAL`. The glide needs synchronized-output support; it runs over SSH too. |
+| `AGENTTY_REPLAY_ROWS` | Rows of history redrawn into scrollback on open and resize, overriding Appearance → **Scrollback**. `0` turns the redraw off. |
 | `AGENTTY_NO_TAPE` | `=1` replaces the animated activity tape with a quiet static row carrying the same elapsed / tok-s detail. |
 | `AGENTTY_FROZEN_COLLAPSE` | `=1` opts **in** to collapsing frozen turns. Off by default. |
 | `AGENTTY_NO_TRANSFORMS` | Disable output transforms. |
@@ -173,3 +288,10 @@ Standard variables consulted for platform behaviour, listed for completeness:
 `COLUMNS` / `LINES` · `DISPLAY` / `WAYLAND_DISPLAY` / `XDG_SESSION_TYPE` ·
 `SSH_CONNECTION` / `SSH_CLIENT` / `SSH_TTY` / `SSH_AUTH_SOCK` ·
 `MOSH_CONNECTION` / `MOSH_KEY` / `MOSH_SERVER_PID` · `INSIDE_EMACS`.
+
+Other tools' locations, so their files are found where they are:
+
+| Variable | Used for |
+|----------|----------|
+| `CODEX_HOME` | Where Codex keeps its sessions, `AGENTS.md` and `config.toml`. Default `~/.codex`. See [Coming from Codex or Claude Code](/docs/switching). |
+| `CLAUDE_CONFIG_DIR` | Where Claude Code keeps its sessions (`projects/`) and personal `CLAUDE.md`. Default `~/.claude`. |

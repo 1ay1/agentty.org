@@ -16,14 +16,26 @@ or an animation to work, it doesn't belong.
   the status line's links).
 - **Hierarchy from space and weight**, not symmetry: vertical rhythm, bold
   vs dim vs faint, size.
+- **Markers hang in the margin.** The text edge stays clean; `$`, `##`,
+  list dashes, `note` / `tip` / `warn` and the nav's `>` sit just left of it
+  (optical alignment). On phones there's no margin, so they fold back in.
+- **80 columns.** Prose is `--measure` = 80 characters wide, a terminal's
+  width. Only the demo, bars and tables may go wider.
+- **Rows.** Every vertical space is a multiple of `--line`, one text row,
+  as if the page were a terminal grid.
+- **Tables are rules, not boxes**: a line above, one under the header, one
+  below, faint lines between rows, no column lines, numbers right-aligned in
+  tabular figures.
 
 ## Surface
 
 - One monospace face. Two weights.
 - Flat colours: ink in three shades (`--text`, `--text-dim`, `--text-faint`)
-  and **one accent**. The accent means "agentty / this / the current one /
-  act here": the brand mark, the `$` prompt, agentty's own bar, links,
-  the selected item. Never decoration.
+  and **one accent**, spent rarely. It means "agentty / this / the current
+  one": the brand mark, the `$` prompt, agentty's own bar, the nav's `>`,
+  the selected item. Links are ink with a faint underline; they turn magenta
+  only on hover.
+- Selection and keyboard focus are inverse video, like a terminal.
 - No cards, shadows, rounded corners or gradients. Hairlines only where
   data needs separating (tables, the status line).
 - No icons and no emoji. Use words (`copy`, `menu`, `dark`) and the
@@ -38,9 +50,10 @@ or an animation to work, it doesn't belong.
 
 ## Motion
 
-- None, beyond the wordmark (a faithful port of agentty's welcome screen)
-  and the replayed demo, which are the program itself. No fades, no smooth
-  scroll, no scroll effects. Hover changes colour or underline only.
+- None, beyond the wordmark (a faithful port of agentty's welcome screen),
+  the replayed demo, which are the program itself, and one blinking block
+  cursor after the home heading. No fades, no smooth scroll, no scroll
+  effects. Hover changes colour or underline only.
 - Speed is part of the look: static pages, almost no JavaScript.
 
 ## Terminal touches
@@ -49,3 +62,10 @@ or an animation to work, it doesn't belong.
 - A missing page is a shell error: `cd: no such file or directory`.
 - The changelog opens with a `git log --oneline` of releases.
 - `?` lists keyboard shortcuts; `g` + a letter jumps (`g d` docs, `g c` changelog).
+- Printed, a page reads like a man page: `AGENTTY(1)` running header, CAPS
+  section names, indented body, no navigation.
+
+## Not this
+
+No fake `ls -la` listings, typing animations, ASCII-art borders or other
+terminal costume. A touch belongs only if agentty itself would do it.

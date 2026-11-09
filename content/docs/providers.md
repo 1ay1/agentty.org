@@ -103,6 +103,8 @@ The `#name` is a local tag only — it never reaches the wire — but it shows o
 
 Custom hosts you add are **saved** — they reappear in the `^P` picker every session (`Del` on a row removes one, two-press). A local host committed without a key is saved too, so you never re-type it.
 
+**Routing gateways keep a conversation on one backend.** Every request to an OpenAI-compatible host carries an `x-session-id` header with the thread's id. Gateways that route between backends (Bifrost, OpenRouter, LiteLLM) use it to send each turn of a thread where the last one went, so a fallback chain isn't walked again every turn and the backend's prompt cache stays warm. Titles, compaction and subagents send their thread's id too. A host that doesn't know the header ignores it.
+
 ### Adding one from the TUI
 
 You don't need the CLI, and you don't need to hunt for a menu. Open `^P` and **just type the endpoint**:
@@ -148,7 +150,7 @@ agentty login          # choose "Sign in with GitHub Copilot"
 agentty --provider copilot
 ```
 
-Sign-in uses GitHub's **device flow**: agentty shows a one-time code and opens `github.com/login/device` (works over SSH too — just enter the code in any browser). The available model list is fetched live from your account's entitlements, so you see exactly the models your plan offers. agentty stores a durable GitHub token (encrypted, at `~/.config/agentty/copilot_credentials.json`) and transparently exchanges it for the short-lived Copilot session token, refreshing mid-session so long agent runs never drop. `agentty status` shows your plan, entitlement, and the active inference host; `agentty logout` → GitHub Copilot signs out.
+Sign-in uses GitHub's **device flow**: agentty shows a one-time code and opens `github.com/login/device` (works over SSH too — just enter the code in any browser). The available model list is fetched live from your account's entitlements, so you see exactly the models your plan offers. agentty stores a durable GitHub token (encrypted, at `~/.agentty/credentials/copilot_credentials.json`) and transparently exchanges it for the short-lived Copilot session token, refreshing mid-session so long agent runs never drop. `agentty status` shows your plan, entitlement, and the active inference host; `agentty logout` → GitHub Copilot signs out.
 
 :::note
 Copilot routes to the right host automatically (Individual / Business / Enterprise each use a different endpoint) — there's nothing to configure. On the free Copilot tier, agentty surfaces a clear "chat quota exhausted" message rather than a raw error.
@@ -165,7 +167,7 @@ agentty --provider kimi
 
 Sign-in uses Kimi's **OAuth device flow** (RFC 8628), the same in-terminal experience as Claude, ChatGPT, and Copilot: agentty shows a one-time code and opens the Kimi authorization page in your browser. It works over SSH — in the modal press [[c]] to copy the **code** and [[u]] to copy the **URL** (both sent via OSC 52, so they land on your local clipboard even through a remote session), then paste in any browser. [[o]] re-opens the browser. agentty polls in the background and switches the moment you approve.
 
-The token is stored encrypted at `~/.config/agentty/kimi_credentials.json` and refreshed automatically mid-session, so long agent runs never drop. The picker row reflects real sign-in state (`⚠ sign in with Kimi` / `✓ signed in`), and pressing [[Enter]] on the active Kimi row opens the **multi-account manager** (switch / add / remove Kimi accounts) — hold several Kimi accounts and switch entirely in-app. `agentty status` shows the active account; `agentty logout` → Kimi signs out.
+The token is stored encrypted at `~/.agentty/credentials/kimi_credentials.json` and refreshed automatically mid-session, so long agent runs never drop. The picker row reflects real sign-in state (`⚠ sign in with Kimi` / `✓ signed in`), and pressing [[Enter]] on the active Kimi row opens the **multi-account manager** (switch / add / remove Kimi accounts) — hold several Kimi accounts and switch entirely in-app. `agentty status` shows the active account; `agentty logout` → Kimi signs out.
 
 :::tip
 Kimi's inference runs on its OpenAI-compatible endpoint, so tool-calling, streaming, and reasoning all work exactly as they do on every other provider — nothing Kimi-specific to configure. Prefer a raw platform API key instead of the subscription? Use any OpenAI-compatible host: `agentty --provider https://api.moonshot.ai -k <key> -m kimi-k2-0905-preview`.
@@ -183,6 +185,30 @@ agentty --provider deepseek -m deepseek-reasoner    # reasoning model (thinking)
 
 DeepSeek's endpoints live at the API root (no `/v1` prefix) — agentty handles that automatically. Both the chat and reasoner families are recognized as native tool-callers, and **reasoning streams live**: on a reasoning model agentty renders DeepSeek's chain-of-thought exactly like Claude's thinking, and the effort control (cycle it in the model picker) maps straight to the wire. Selecting DeepSeek in `^P` before you've set a key still shows its models (a small bundled list) so you can pick one immediately; the live catalog replaces it once your key is set.
 
+## Google Gemini
+
+Gemini uses an **API key** from [Google AI Studio](https://aistudio.google.com/apikey). Set `GEMINI_API_KEY` (or `GOOGLE_API_KEY`), pass `-k`, or paste it into the in-app prompt. Keys starting with `AIzaSy` or `AQ.` are recognised as Gemini keys when pasted.
+
+```bash
+export GEMINI_API_KEY=AIza…
+agentty --provider gemini -m gemini-2.5-pro
+```
+
+agentty talks to Google's OpenAI-compatible endpoint (`generativelanguage.googleapis.com/v1beta/openai`).
+
+:::note
+There is **no Google sign-in**, so a Google AI Pro subscription can't be used here. As far as we know that plan doesn't add Gemini API quota either. The API key gets the API's own quota: the free tier, or pay-as-you-go once billing is on for the key's Google Cloud project.
+:::
+
+### Quota errors
+
+On the free tier some models have a quota of zero, and the others have small per-minute and per-day limits. When you hit one, Google answers `429` and says how long to wait. agentty reads that wait:
+
+- **A short wait** (a per-minute limit) is retried automatically after the time Google asked for.
+- **A long wait** (over 15 minutes, usually the daily quota) is shown straight away instead of being retried, because retrying can't succeed until the quota resets.
+
+The message is Google's own, so it names the model and the quota you ran out of. `limit: 0` means the free tier gives that model no requests at all: turn on billing for the key's project, or pick another model with `^/`.
+
 ## Local models (Ollama)
 
 Point agentty at a model served by Ollama on `localhost:11434` — no key, no cloud, no data leaving your machine. agentty uses Ollama's native `/api/chat` protocol and salvages tool calls that weaker local models leak as raw JSON, so even smaller models can drive the full tool suite.
@@ -198,7 +224,7 @@ agentty --provider ollama -m qwen2.5-coder
 
 ### Slow first token is normal
 
-A large local model (20-30B on consumer hardware) processes the prompt in **complete silence** before its first token — that can take minutes on a long prompt. agentty knows this: on a local provider the phase chip reads **“processing…”** (not “Streaming”) until the first byte arrives, and the idle/stall timeouts are stretched to 10 minutes for plaintext endpoints (vs 90 s for hosted APIs), so a slow model is never mistaken for a hang. `Esc` still cancels instantly.
+A large local model (20-30B on consumer hardware) processes the prompt in **complete silence** before its first token — that can take minutes on a long prompt. agentty knows this: on a local provider the phase chip reads **“processing…”** (not “Streaming”) until the first byte arrives, and the idle timeout is stretched to 10 minutes for plaintext endpoints (vs 90 s for hosted APIs), so a slow model is never mistaken for a hang. There is no limit on how long a local reply can stream; hosted APIs stop at 30 minutes. `Esc` still cancels instantly.
 
 ### When a local model won't respond
 
@@ -210,3 +236,14 @@ If prompts fail immediately (rather than after a long think), agentty now tells 
 - **A stale saved model** — if the model id recalled for a local host isn't in its live `/v1/models` list, agentty refuses cleanly (*“model X isn't served by this host — pick one (^/)”*) instead of 400-ing every prompt.
 
 When in doubt, `AGENTTY_LOG=wire=trace agentty` shows the exact request and response — see **[Logging & diagnostics](/docs/logging)**.
+
+### The prompt local models get
+
+A model on a server you run (loopback or your LAN, over plain HTTP) gets a short system prompt instead of the long hosted one. Small models follow a few firm rules better than pages of prose. It tells the model to:
+
+- do the work with tools: write files with `write`, change them with `edit`, run commands with the shell tool
+- never paste code into its reply instead of calling a tool
+- treat a big task as normal: work in many steps, one tool call at a time, and never refuse or apologise that a task is too large
+- only say a file changed when a tool reported it
+
+The main turn, [subagents](/docs/subagents) and [`agentty run`](/docs/cli#agentty-run) all get the same prompt. Even so, a small model (around 20B parameters or less) can still give up on a very large request, such as a long spec it must implement in full. Splitting the request into smaller steps, or using a bigger model, works better.

@@ -21,7 +21,7 @@ agentty
 
 First launch opens an auth modal. Pick one:
 
-- **API key** — paste an Anthropic `sk-ant-…` token, or any provider's key. Saved to `~/.config/agentty/credentials.json` (mode `0600`). Unambiguously in-bounds, and works headless/over SSH.
+- **API key** — paste an Anthropic `sk-ant-…` token, or any provider's key. Saved to `~/.agentty/credentials/credentials.json` (mode `0600`). Unambiguously in-bounds, and works headless/over SSH.
 - **OAuth (Claude Pro/Max)** — opens your browser to sign in with your existing subscription; the callback writes the token to the same file.
 
 :::tip
@@ -46,6 +46,8 @@ You start in **Write** (autonomous) — every tool runs without a prompt, kept i
 
 ## Where to go next
 
+- **Coming from Codex or Claude Code?** Press [[Ctrl+J]]: your sessions there are in the list, ready to continue. See [Coming from Codex or Claude Code](/docs/switching).
+- **Better code search (optional):** with [Ollama](https://ollama.com) installed, `ollama pull qwen3-embedding:0.6b` lets agentty find code by meaning, not just keywords. Nothing else to set. See [Retrieval](/docs/retrieval).
 - [The Interface](/docs/interface) — what every part of the screen means.
 - [Keybindings](/docs/keybindings) — the full keymap.
 - [Providers & Models](/docs/providers) — Claude, GPT, Kimi, DeepSeek, Gemini, or a local model.

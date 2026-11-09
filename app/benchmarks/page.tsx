@@ -61,17 +61,17 @@ export default function Benchmarks() {
         <div className="tablewrap">
           <table>
             <thead>
-              <tr><th>tool</th><th>version</th><th>ready to type</th><th>idle memory</th><th>disk</th><th><code>--version</code></th></tr>
+              <tr><th>tool</th><th>version</th><th className="num">ready to type</th><th className="num">idle memory</th><th className="num">disk</th><th className="num"><code>--version</code></th></tr>
             </thead>
             <tbody>
               {bench.tools.map((t) => (
                 <tr key={t.id}>
                   <td>{t.name}</td>
                   <td>{t.version.replace(/^(agentty|aider|codex-cli)\s+/, "").replace(/\s*\(.*\)$/, "")}</td>
-                  <td>{ms(t.readyMs.median)} <span className="bench-range">({ms(t.readyMs.p10)}–{ms(t.readyMs.p90)})</span></td>
-                  <td>{t.idleRssMB} MB</td>
-                  <td>{t.diskMB} MB{t.runtime?.MB ? <span className="bench-range"> (incl. {Math.round(t.runtime.MB)} MB {t.runtime.name})</span> : null}</td>
-                  <td>{ms(t.startupMs.median)} <span className="bench-range">({ms(t.startupMs.p10)}–{ms(t.startupMs.p90)})</span></td>
+                  <td className="num">{ms(t.readyMs.median)} <span className="bench-range">({ms(t.readyMs.p10)}–{ms(t.readyMs.p90)})</span></td>
+                  <td className="num">{t.idleRssMB} MB</td>
+                  <td className="num">{t.diskMB} MB{t.runtime?.MB ? <span className="bench-range"> (incl. {Math.round(t.runtime.MB)} MB {t.runtime.name})</span> : null}</td>
+                  <td className="num">{ms(t.startupMs.median)} <span className="bench-range">({ms(t.startupMs.p10)}–{ms(t.startupMs.p90)})</span></td>
                 </tr>
               ))}
             </tbody>

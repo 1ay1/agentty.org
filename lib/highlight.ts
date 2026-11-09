@@ -51,6 +51,40 @@ const LANGS: Record<string, [string, string]> = {
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+const SHELL = new Set(["bash", "sh", "shell", "zsh"]);
+const BLOCK_WORD = /^(then|do|done|fi|else|elif|esac|in|\}|\)|;;)\b/;
+
+// Which lines of a shell block are commands you'd type at a prompt: not
+// comments, blanks, indented bodies, continuations of a `\` line, heredoc
+// bodies, or shell keywords that close a block. CSS hangs a `$` before them
+// (a pseudo-element, so copying the block copies only the commands).
+function commandLines(code: string): boolean[] {
+  const out: boolean[] = [];
+  let cont = false;
+  let heredoc: string | null = null;
+  for (const line of code.split("\n")) {
+    if (heredoc !== null) {
+      out.push(false);
+      if (line.trim() === heredoc) heredoc = null;
+      continue;
+    }
+    const cmd = !cont && line.length > 0 && !/^\s/.test(line) && !line.startsWith("#") && !BLOCK_WORD.test(line);
+    out.push(cmd);
+    cont = /\\\s*$/.test(line);
+    const hd = line.match(/<<-?\s*['"]?(\w+)['"]?/);
+    if (hd) heredoc = hd[1];
+  }
+  return out;
+}
+
+function markPrompts(html: string, code: string): string {
+  if (code.split("\n").some((l) => l.startsWith("$ "))) return html; // already has prompts
+  const cmds = commandLines(code);
+  let i = 0;
+  return html.replace(/<span class="line"/g, (m) => (cmds[i++] ? '<span class="line cmd"' : m));
+}
+
+
 /** Inner HTML for <code> plus the display label. Unknown/plain → escaped text. */
 export function highlight(code: string, info: string): { html: string; label: string } {
   let key = info.trim().toLowerCase();
@@ -66,7 +100,7 @@ export function highlight(code: string, info: string): { html: string; label: st
   try {
     const out = highlighter().codeToHtml(code, { lang: lang[0], theme: "site" });
     const inner = out.slice(out.indexOf("<code>") + 6, out.lastIndexOf("</code>"));
-    return { html: inner, label: lang[1] };
+    return { html: SHELL.has(lang[1]) ? markPrompts(inner, code) : inner, label: lang[1] };
   } catch {
     return { html: esc(code), label: lang[1] };
   }

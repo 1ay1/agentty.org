@@ -24,6 +24,8 @@ The served tools are the same native tools the TUI uses: file `read`/`write`/`ed
 
 `mcp-serve` is deliberately **native-only**. A configured external MCP server is never re-exported implicitly, preventing credential leaks and recursive MCP proxy loops.
 
+agentty's own settings decide what it serves: a native tool switched off for agentty's model is not offered to MCP clients either. Today that is `web_search` when `Ctrl+K → Settings → Web Search` (or `AGENTTY_WEB_SEARCH`) is `off`. The setting is read when `mcp-serve` starts; restart it after changing it.
+
 ## Point a client at it
 
 Any MCP client can launch agentty as a stdio server. For a client that reads a JSON config (Claude Desktop shown here):
@@ -45,7 +47,8 @@ The reverse of serving is **consuming** — agentty adds tools to a thread by co
 
 - **Provenance naming.** External tools get stable, namespaced names such as `mcp__playwright__browser_click`; they can never collide with or impersonate native tools.
 - **Live catalog.** `tools/list_changed` is honoured live, including removals and schema replacements.
-- **Tool budget / brokering.** To keep provider requests fast and tool choice accurate, agentty sends all native and pinned tools plus at most 16 MCP tools ranked for the current request. The always-available `mcp_search_tools` and `mcp_call` broker exposes the long tail without injecting hundreds of schemas into every turn.
+- **Tool loading.** Every enabled tool is callable. Tools that fit the context budget are sent with each request; the rest are found by the model with `tool_search` and stay loaded once found. On Anthropic they use deferred loading, so the prompt cache holds. See [how tools load](/docs/plugins#how-tools-load).
+- **Resources and prompts.** When a server exposes them, the model gets `mcp__resources__read` and `mcp__prompts__get` (formerly `mcp_read_resource` / `mcp_get_prompt`; the old names still work).
 
 ```json
 {
@@ -90,6 +93,33 @@ Per-server policy is explicit:
 :::note
 MCP consumption is lazy and opt-in — with no `.agentty/mcp.json` present, startup is a single `stat()` that returns nothing, so there is zero overhead when you aren't using it.
 :::
+
+## Importing from other tools
+
+Already set up MCP servers in another tool? Copy them over instead of retyping them:
+
+```bash
+agentty mcp import                  # what each tool offers, found on this machine
+agentty mcp import --from codex     # copy them into ~/.agentty/mcp.json
+agentty mcp import --from claude --dry-run
+```
+
+| `--from` | reads |
+|---|---|
+| `claude` | `~/.claude.json` (this project's servers) and `./.mcp.json` |
+| `codex` | `~/.codex/config.toml` (or `$CODEX_HOME`) and `./.codex/config.toml` |
+| `cursor` | `~/.cursor/mcp.json` and `./.cursor/mcp.json` |
+| `vscode` | `./.vscode/mcp.json` |
+| `junie` | `~/.junie/mcp/mcp.json` and `./.junie/mcp/mcp.json` |
+
+It's a copy, not a link: agentty never reads another tool's MCP config on its own, because those servers start programs, and the other tool editing its file shouldn't change what agentty runs. After the import there's one list, in `mcp.json`, and nothing else to keep in sync. A server name agentty already has is left alone unless you pass `--force`. `agentty config mcp` lists other tools' configs it found but doesn't read, with the import command for each.
+
+JSON configs are copied as they are. Codex's TOML is translated field by field: `command`, `args`, `env`, `cwd`, `url`, `http_headers`, `tool_timeout_sec` / `startup_timeout_sec`, `disabled_tools` and `enabled = false` all carry over. Two things don't, and the import prints a note under the server they belong to:
+
+- **Secrets in environment variables** (`bearer_token_env_var`, `env_http_headers`). agentty won't write a token into a file for you. Add the header by hand, or use `agentty mcp-login` if the server supports OAuth.
+- **`enabled_tools`**, since agentty only has `tools.exclude`.
+
+Coming from Codex or Claude Code for good? [This page](/docs/switching) covers bringing over your conversations and instructions too.
 
 ## Authorizing an OAuth-gated server
 

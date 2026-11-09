@@ -17,6 +17,8 @@ It's **bring-your-own-model**: point it at **OpenAI, DeepSeek, Google Gemini, xA
 - You want **your choice of model** — Claude, GPT, DeepSeek, Kimi, Gemini, Grok, or a local Ollama model — behind one client.
 - You need to run an agent on an **air-gapped host** through an SSH tunnel.
 - You want shell calls **sandboxed by default**, not as an afterthought.
+- You want the agent to **find the right code by meaning**, locally: built-in [search](/docs/retrieval) that never sends your repo anywhere.
+- You're **coming from Codex or Claude Code** and want to keep your conversations and setup: [open them here and carry on](/docs/switching).
 
 :::tip
 Already convinced? Jump straight to [Installation](/docs/installation) or the [Quick Start](/docs/quick-start).
@@ -32,7 +34,7 @@ Already convinced? Jump straight to [Installation](/docs/installation) or the [Q
 
 ## How it works, in one paragraph
 
-agentty is a pure-functional update loop: `(Model, Msg) → (Model, Cmd)`. The view is a single function `Model → Element`, rendered by [maya](https://github.com/1ay1/maya), a sister TUI engine. The Anthropic provider speaks HTTP/2 + SSE directly through an in-house `nghttp2` + OpenSSL stack. Subprocesses use `posix_spawn` + `poll(2)` with in-process kill deadlines. See [Architecture](/docs/architecture) for the full tour.
+agentty is a pure-functional update loop: `(Model, Msg) → (Model, Cmd)`. The view is a single function `Model → Element`, rendered by [maya](https://github.com/agentty-org/maya), a sister TUI engine. The Anthropic provider speaks HTTP/2 + SSE directly through an in-house `nghttp2` + OpenSSL stack. Subprocesses use `posix_spawn` + `poll(2)` with in-process kill deadlines. See [Architecture](/docs/architecture) for the full tour.
 
 ## Project status
 

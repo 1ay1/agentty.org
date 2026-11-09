@@ -30,11 +30,10 @@ variable agentty reads, grouped by subsystem — see
 | `AGENTTY_PASSPHRASE` | Supply the at-rest encryption passphrase non-interactively (CI/scripts) instead of the tty prompt. |
 | `AGENTTY_KDF` | Set to `scrypt` to force the portable scrypt KDF instead of the default Argon2id for at-rest encryption. |
 | `AGENTTY_AIRGAP_SSH` | Extra flags injected into the ssh invocation for airgap (laptop side). |
-| `AGENTTY_CLIPBOARD_CMD` | Shell command that writes image bytes to stdout — used for Ctrl+V image paste over SSH. See [Clipboard & Images](/docs/clipboard). |
 | `AGENTTY_MCP_CONFIG` | Explicit path to an mcp.json, overriding the project/user lookup. |
-| `AGENTTY_MCP_ALLOW_PROJECT` | Blanket-trust a project-local .agentty/mcp.json so its stdio servers connect (gated off by default). Alternative to per-file [content-hash approval](/docs/plugins#config-scope). |
+| `AGENTTY_MCP_ALLOW_PROJECT` | Blanket-trust a project-local .agentty/mcp.json so its stdio servers connect (gated off by default). Alternative to per-file [content-hash approval](/docs/plugin-trust). |
 | `AGENTTY_DOCS_DIR` | Folder of documents to index for the search_docs [retrieval](/docs/retrieval) tool. Auto-discovers `./docs` then `./.agentty/knowledge` when unset. Even with no docs, `search_docs` still searches your installed **skills** and **learned memory**. |
-| `AGENTTY_EMBED_MODEL / AGENTTY_OLLAMA_HOST` | Embedding model (default `nomic-embed-text`) + Ollama host (`host:port`, default `127.0.0.1:11434`) for the dense half of the hybrid RAG pipeline. No Ollama → dense falls back to a local hash embedder and hybrid still runs. |
+| `AGENTTY_EMBED_MODEL / AGENTTY_OLLAMA_HOST` | Embedding model + Ollama host (`host:port`, default `127.0.0.1:11434`) for the meaning half of hybrid search. On Auto the model is `qwen3-embedding:0.6b` when pulled, else `nomic-embed-text`. No reachable embedder → search stays keyword-only (BM25) and says so in its result header. |
 | `AGENTTY_RAG_SKILLS / AGENTTY_RAG_MEMORY` | Fold installed skills / learned memory into the search_docs corpus. **On by default**; set `=0` to disable. |
 | `AGENTTY_RAG_MCP` | Fold connected MCP `resources/*` into the search_docs corpus. Off unless truthy **and** an MCP config is present. |
 | `AGENTTY_RAG_DENSE_WEIGHT / AGENTTY_RAG_BM25_WEIGHT` | Fusion weights for the dense (embedding) vs lexical (BM25) lists. Default `1.0` each. Fusion is **convex (TM2C2)** — it preserves score magnitude and, per rag-cpp's benchmarks, beats RRF on NDCG. |
@@ -52,10 +51,10 @@ variable agentty reads, grouped by subsystem — see
 | `AGENTTY_RAG_PROACTIVE_BYTES` | **Token frugality:** independent, tighter cap on the *unprompted* proactive `<retrieved-context>` block (spent without the user asking). Default `6144` ≈ 1.5k tokens; clamped 1 KiB – 32 KiB. |
 | `AGENTTY_RAG_MEASURE` | Set `=1` so `agentty rag-bench` also runs its queries through the real retrieval output path and reports bytes/estimated-tokens per query plus a machine-readable `MEASURE` line — diff two runs with a lever toggled to quantify its saving. Measurement only; **off by default**. |
 | `AGENTTY_RAG_EXPAND / AGENTTY_RAG_HYDE / AGENTTY_RAG_GEN_MODEL` | LLM-assisted recall: **multi-query / RAG-Fusion** (`_EXPAND`) and **HyDE** (`_HYDE`), both opt-in (`=1`), powered by a small **local** Ollama model (`_GEN_MODEL`, default `qwen2.5:0.5b`) on the same Ollama used for embeddings. If Ollama is unreachable they silently no-op and plain hybrid still runs; they are also skipped on the latency-sensitive proactive pre-turn path. |
-| `AGENTTY_RAG_PERSIST` | Cache the built docs index to `.agentty/rag_docs.ragdb` so a later session opens warm without re-walking + re-embedding. **On by default**; `=0` disables. |
-| `AGENTTY_RAG_LEARN` | The **learning loop**: fold each passage's Beta-smoothed win-rate (`.agentty/rag_feedback.tsv`) back into ranking as a bounded (±15%) nudge, so passages that repeatedly prove useful **in this workspace** edge ahead of near-tied ones. A `read` of a path retrieval just surfaced counts as a win; unseen paths are untouched (neutral). **On by default**; `=0` disables (delete the TSV to forget). |
-| `AGENTTY_RAG_TRACE` | Fold rag-cpp's per-stage trace into the retrieval `mode` string for debugging. **Off by default**; truthy enables. |
-| `AGENTTY_RAG_PROACTIVE / AGENTTY_RAG_PROACTIVE_MIN` | Pre-turn auto-retrieval that injects a `<retrieved-context>` block when a query looks knowledge-shaped. **Off by default** (explicit opt-in — the `search_docs` tool is usually more economical); `=1` enables for the session, or turn it on persistently via Ctrl+K → RAG. `_MIN` is the CRAG-calibrated confidence bar to inject (default `0.35`). |
+| `AGENTTY_RAG_PERSIST` | Keep indexes on disk (`<project>/.agentty/cache/`) so a later session opens warm and only changed files are re-indexed. **On by default**; `=0` disables. |
+| `AGENTTY_RAG_LEARN` | The **learning loop**: fold each passage's Beta-smoothed win-rate (`.agentty/rag_feedback.tsv`) back into ranking as a bounded (±15%) nudge, so passages that repeatedly prove useful **in this workspace** edge ahead of near-tied ones. A `read` of a path retrieval just surfaced counts as a win; unseen paths are untouched (neutral). **Off by default**; `=1` enables (delete the TSV to forget). |
+| `AGENTTY_RAG_TRACE` | Fold rag-cpp's per-stage trace into the retrieval `mode` string shown on the tool card. **On by default**; `=0` gives a one-line header. |
+| `AGENTTY_RAG_PROACTIVE / AGENTTY_RAG_PROACTIVE_MIN` | Pre-turn auto-retrieval that injects a `<retrieved-context>` block when a query looks knowledge-shaped. **Off by default** (explicit opt-in — the `search_docs` tool is usually more economical); `=1` enables for the session, or turn it on persistently in `/settings` → *Proactive retrieval (RAG)*. `_MIN` is the CRAG-calibrated confidence bar to inject (default `0.35`). |
 | `AGENTTY_RAG_PROACTIVE_BUDGET_MS` | Fast-path **hedge** for the proactive pre-turn retrieval. The submit thread waits at most this long for the funnel; if it lands, grounding is injected inline with zero added latency. If it overruns the submit thread never blocks — the turn enters its normal streaming state (status shows *retrieving context…*, the UI never feels hung) and the stream launch is HELD behind a background retrieval that injects the block **same-turn** the moment it lands. Grounding is always for the question just asked; it is never dropped or deferred to a later turn. Default `250`; `0` skips the inline hedge. |
 | `BM25_USE_STEMMER / BM25_HEADING_BOOST` | Lexical tuning. Porter stemming ("run/runs/running" match) is **on by default**; set `BM25_USE_STEMMER=0` to disable (e.g. a code-symbol corpus). `BM25_HEADING_BOOST` (default 3) is how many times a chunk's heading breadcrumb is folded into its BM25 tokens — heading matches out-score body matches; 1 disables the boost. |
 | `AGENTTY_LOG` | **The** diagnostic knob — one log, every subsystem. RUST_LOG-style filter: `trace`, `debug`, `wire=trace`, `warn,auth=debug`, `off`. Channels: `wire` (raw request/response bytes, untruncated, tagged by dialect), `auth`, `persist`, `tool`, `ui`, `rag`, `mcp`, `acp`, `smart`, `net`, `general`. **Release builds keep warnings + errors by default** (~2 lines per healthy session), so `agentty diagnostics` produces a useful bug report with no setup; non-release builds capture everything. When a model "ignores tools", sends empty tool arguments, or a turn fails in a way that looks like model quality, `AGENTTY_LOG=wire=trace` shows the actual bytes instead of leaving you to guess. The file holds your conversation (prompts, file contents, tool results); request headers are not logged, so API keys stay out of it. See **[Logging & diagnostics](/docs/logging)**. |
@@ -65,7 +64,7 @@ variable agentty reads, grouped by subsystem — see
 | `AGENTTY_SMART_NO_ORCHESTRATE` | Escape hatch: run the main turn on the selected model instead of the Strategic slot, and drop the delegation directive. |
 | `AGENTTY_SMART_NO_SUBAGENTS` | Escape hatch: resolve each `task` worker's model with the tier auto-router instead of by its role. |
 | `AGENTTY_NO_TRANSFORMS` | Set to 1 to drop the transform/aggregate/structured-data tool family (`extract`, `aggregate`, `replace`, `read_filter`, `json_query`) — trims ~5 KB of tool schema off every request for a minimal or latency-sensitive profile, **without** losing `grep`/`read`/`edit`. On (family present) by default. |
-| `AGENTTY_TRACE_TOOLS` | Older spelling of `agentty run --events jsonl`; `=1` selects the same stream. Prefer the flag — it appears in `--help`. Emits one JSON object per executed tool to **stderr** (`tool`, `ms`, `ok`, `err`, `args_sha`), so the stdout answer stays clean and a harness can capture both. |
+| `AGENTTY_TRACE_TOOLS` | Older spelling of `agentty run --events jsonl`; `=1` selects the same stream. Prefer the flag — it appears in `--help`. Emits JSON lines to **stderr** (turns, reasoning, answer text and one per tool call), so the stdout answer stays clean and a harness can capture both. See [agentty run](/docs/cli#agentty-run). |
 | `SSL_CERT_FILE / SSL_CERT_DIR / CURL_CA_BUNDLE` | Override the TLS root store agentty trusts (standard OpenSSL vars). |
 
 ### Smart Mode tuning
@@ -78,19 +77,100 @@ The Smart Mode *feature* toggles (which layers run) live in the `Ctrl+S` overlay
 | `AGENTTY_SMART_DEEP_MARGIN` | How far *into* a tier (score margin) a turn must sit to earn the extra **continuous effort** step — a genuinely hard Complex turn reaches +2 immediately instead of waiting for the session bias to drift. Lower ⇒ eager; higher ⇒ stays close to the discrete tier. Default `3`; range 1–8. |
 | `AGENTTY_SMART_BIAS_CLAMP` | Symmetric cap (±N steps) on the **session cascade bias** — how far this session's self-correction can drift effort from baseline. Default `2`; range 1–4. |
 
+### Web search
+
+`Ctrl+K → Settings → Web Search` edits these and saves them to `settings.json` under `"web_search"`. A variable wins over a saved value for that session only: it locks the matching row in the pane (naming the variable) and is never written to `settings.json`, so unsetting it restores what you saved.
+
+| Variable | Meaning |
+|----------|---------|
+| `AGENTTY_WEB_SEARCH` | `auto` (default), `on`, or `off`. `auto` advertises `web_search` and leaves the result count to the model, as agentty did before the Web Search pane. `on` applies your `AGENTTY_WEB_SEARCH_COUNT` and `_MAX`. `off` removes `web_search` from every request, from the tool list `agentty mcp-serve` offers to other MCP clients, and refuses any call to it (a replayed thread, a call injected by an ACP client). `0`/`false`/`no` mean `off`; `1`/`true`/`yes` mean `auto` (search available, the model picks the count). |
+| `AGENTTY_WEB_SEARCH_COUNT` | Results when the model does not say how many. Applies only in `on`. Default `10`; range 1–20. |
+| `AGENTTY_WEB_SEARCH_MAX` | Most results the model may ask for in one search; a larger request is clamped, and `0` or a negative count becomes `1`. Applies only in `on`. Default `20`; range 1–50. A search returns at most one result page from the service that answers, and each service caps it: 10 on Serply, 20 on Brave, Tavily, Serper and Perplexity, 30 on DuckDuckGo, 100 on Firecrawl and Exa. A larger request is cut to that cap. |
+| `AGENTTY_WEB_SEARCH_EXCLUDE` | Domains never to return, space- or comma-separated (`pinterest.com w3schools.com`). Pasted URLs and `www.` are reduced to the host. Sent as `-site:` operators to Brave, DuckDuckGo, Serper and Serply, and as the service's own domain filter to Tavily, Firecrawl, Exa and Perplexity, so an excluded site never comes back and its slot goes to another result. Up to 20 sites go in the filter; any beyond that are added to the query as `-site:`. |
+| `AGENTTY_WEB_SEARCH_PRIMARY`, `_SECONDARY`, `_FALLBACK` | Which service answers first, second and last; the first to succeed wins. A service id: `brave-free`, `ddg-free`, `tavily-free`, `firecrawl-free` (no account, card or key) or `brave-api`, `tavily-api`, `firecrawl-api`, `exa-api`, `serper-api`, `serply-api`, `perplexity-api` (need an API key). `_SECONDARY` and `_FALLBACK` also take `none`. Defaults: `brave-free`, `ddg-free`, `tavily-free`. |
+| `AGENTTY_WEB_SEARCH_LANGUAGE` | `auto` (default) or a two-letter code (`en`, `de`, `ja`, ...) sent to the services that take one: Tavily, Brave API, Serper, Perplexity. The others ignore it. |
+| `AGENTTY_WEB_SEARCH_KEY_<SERVICE>` | An API key, taken from the environment instead of the key store: `AGENTTY_WEB_SEARCH_KEY_EXA_API`, `_BRAVE_API`, `_TAVILY_API`, `_FIRECRAWL_API`, `_SERPER_API`, `_SERPLY_API`, `_PERPLEXITY_API`. Wins over a stored key and locks that row in the pane. Never written to disk. |
+
+#### Choosing the services
+
+The **Free** services need no account, card or key, but they are best effort: Brave Free and DuckDuckGo Free read a public results page, and Tavily Free and Firecrawl Free use the vendors' key-less tiers. Any of them can be blocked, rate-limited or withdrawn without notice. In particular, many networks are served a captcha by DuckDuckGo and Brave answers `429` after a burst of roughly ten searches. The report from a failed search names each service and why it did not answer (blocked, rate limited, quota used up, key refused, unreadable reply) rather than a bare error.
+
+The **API key** services are the vendors' documented interfaces and do not depend on a page layout. Paste a key into the row under the slot that uses it and press Enter. It is stored encrypted (the OS keystore when `AGENTTY_USE_KEYSTORE` is set, otherwise a machine-bound sealed file) and is never written to `settings.json`; the row then reads `✓ key saved` and stays locked until *Remove key* forgets it. A key from `AGENTTY_WEB_SEARCH_KEY_<SERVICE>` reads `● key from` the variable and is locked for as long as it is set. A keyed service chosen with no key is reported as such in the search result and the next slot is tried.
+
+Each service offers up to seven extra settings which appear under its slot, and none for a service that has none. Most are a list to pick from: freshness, region, safe search, spell correction, exact phrases, sort order, and so on. Two are typed: Brave API's *Goggle* takes the `https://` URL of a hosted Goggle (a rules file on GitHub, GitLab or a Gist, registered at [search.brave.com/goggles/create](https://search.brave.com/goggles/create)) that re-ranks Brave's results, and Firecrawl's *Location* takes a place such as `San Francisco,California,United States`. A typed value is saved when you leave the row, and only if it is one the service accepts; otherwise the row goes back to what was saved. Empty the row to clear it. Settings are saved per service in `settings.json` under `web_search.dials`, so a choice survives moving the service between slots. Some only take effect together with another: Tavily's *Country* applies with the General topic, its *Safe search* not with the fast depths, and *Language match* only when a language is set. Serply's *Country* defaults to United States: with no country, Serply answers from whichever region is free, and the results can change country from one search to the next.
+
+Kagi, Mojeek and Linkup are not offered yet: their request and response formats could not be verified against documentation or a real reply.
+
+### Paste
+
+How [[Ctrl+V]] and `agentty paste` read the clipboard. Three places set the same rows, saved to `settings.json` under `"paste"` (only rows moved off their default are written):
+
+- **Settings → Paste** in the app (`/settings`, then *Paste*). A change applies to the next paste.
+- **`agentty paste config`** in a shell: `agentty paste config set max_mb 64`, `… get terminal`, `… reset all`. With no arguments it lists every row, its value, and where that value comes from.
+- **A variable**, below. It wins over `settings.json` for that run only, locks its row in the pane (naming the variable), and is never written to disk.
+
+| Key | Variable | Default | Meaning |
+|-----|----------|---------|---------|
+| `forwards` | `AGENTTY_PASTE_FORWARDS` | `true` | Over ssh, read the laptop's clipboard through the forwarded agent (needs `agentty paste setup` on the laptop). |
+| `display` | `AGENTTY_PASTE_DISPLAY` | `true` | Read this machine's own clipboard (Wayland, X11, macOS pasteboard, Windows). |
+| `terminal` | `AGENTTY_PASTE_TERMINAL` | `auto` | Ask the terminal when nothing else answered. `auto` asks it what it supports (OSC 5522 for images, else OSC 52 for text); `osc5522` and `osc52` force one for terminals that misreport; `off` never asks. |
+| `server_display` | `AGENTTY_PASTE_SERVER_CLIPBOARD` | `false` | Over ssh, fall back to the *server's* own clipboard. Off because that isn't the clipboard you copied into. |
+| `decode_text` | `AGENTTY_PASTE_DECODE_TEXT` | `true` | Turn a pasted `richpaste:1:` line back into the image or file it carries. Off: it pastes as text. |
+| `max_mb` | `AGENTTY_PASTE_MAX_MB` | `32` | Largest paste read, in MB (1–1024). Bigger clipboard contents are refused. |
+| `inline_kb` | `AGENTTY_PASTE_INLINE_KB` | `256` | A copied text file up to this size (KB, 0–4096) goes into the message as its text. Bigger ones, and every binary file, are saved and their path is typed in. `0` always saves. |
+| `save_dir` | `AGENTTY_PASTE_SAVE_DIR` | (empty) | Where pasted files are saved. Empty: `~/.agentty/paste/pasted` (`$AGENTTY_HOME/paste/pasted`). |
+| `socket` | `AGENTTY_PASTE_SOCKET` | (empty) | Ask only this agent socket (a relay, a test) instead of finding the forwarded ones. |
+
+Booleans take `true`/`false`, `1`/`0`, `on`/`off`, `yes`/`no`. Numbers out of range are clamped; a `terminal` value that isn't one of the four is refused. The full guide, with every route and what to do when one fails: [Clipboard & Images](/docs/clipboard).
+
 ## On-disk paths
 
-Credentials live under XDG config; everything else lives under `~/.agentty`.
+agentty keeps everything in two places: `~/.agentty` for you, and
+`<project>/.agentty` for each repo. `agentty config` shows the real paths and
+sizes on your machine. The full map, with what every file is and how long it
+stays, is in [Storage](/docs/storage).
 
-- `~/.config/agentty/credentials.json` — Claude OAuth token or API key, mode `0600` (honours `$XDG_CONFIG_HOME`). Plaintext JSON by default; optionally sealed with AES-256-GCM (`AGENTTY_ENCRYPT_PASSPHRASE`) and/or stored in the OS keystore (`AGENTTY_USE_KEYSTORE`). See [Authentication](/docs/authentication) for the hardening options.
-- `~/.agentty/settings.json` — persisted provider, model, per-provider models, reasoning effort, favourite models, permission profile, auto-compaction depth, and in-app-pasted provider keys.
-- `~/.agentty/threads/<id>.json` — one JSON file per thread (flat, keyed by thread id).
-- `~/.agentty/memory.jsonl` — user-scope `remember` facts (cross-workspace); `<project>/.agentty/memory.jsonl` holds project-scope facts. Which file a fact lands in is chosen by [memory scope](#memory-scope), below.
-- `~/.agentty/skills/`, `~/.agents/skills/`, `~/.claude/skills/` — personal [Agent Skills](/docs/skills); the same three dirs under `<project>/` shadow them.
-- `~/.agentty/mcp.json` (your servers, trusted) and `<project>/.agentty/mcp.json` (repo servers — command-spawning ones need [per-server approval](/docs/plugin-trust) or `AGENTTY_MCP_ALLOW_PROJECT`) — [MCP servers](/docs/mcp) to connect. `AGENTTY_MCP_CONFIG` overrides both.
-- `~/.agentty/mcp_approvals.json` — content hashes of the project MCP servers you've approved (see [Plugin Trust](/docs/plugin-trust)); hooks use the sibling `hooks_approved.json`. A repo can't write to either, so it can't approve itself.
-- `<project>/.agentty/rag_docs.ragdb` — the persisted [retrieval](/docs/retrieval) index (hybrid + dense vectors), so a later session opens warm without re-walking + re-embedding the docs folder. Rebuilt automatically when the corpus changes; delete to force a cold rebuild. Disable with `AGENTTY_RAG_PERSIST=0`.
-- `<project>/.agentty/rag_feedback.tsv` — the [retrieval](/docs/retrieval) learning loop's per-passage use/win counts (human-inspectable TSV). Delete to forget.
+```
+~/.agentty/                       ($AGENTTY_HOME)
+  settings.json  mcp.json  hooks.json  skills/  AGENTS.md   hand-edited config
+  threads/     conversations, 0700           $AGENTTY_THREADS_DIR
+  credentials/ sign-ins and keys, 0700       $AGENTTY_CREDENTIALS_DIR
+  state/       approval hashes               $AGENTTY_STATE_DIR
+  cache/       refetchable, safe to delete   $AGENTTY_CACHE_DIR
+  logs/        rotates at 32 MB              $AGENTTY_LOGS_DIR
+  memory.jsonl
+
+<project>/.agentty/               ($AGENTTY_PROJECT_DIR)
+  cache/   search indexes, rebuildable       $AGENTTY_RAG_DIR
+  state/   search feedback                   $AGENTTY_PROJECT_STATE_DIR
+  memory.jsonl  mcp.json  skills/
+```
+
+Every directory moves on its own with its variable. Storage is set by
+environment only; nothing in the app changes it. Relative paths are relative
+to the root, never your current folder. Empty means unset. If a folder can't
+be made you get one warning and the default.
+
+Threads are the only thing that grows without limit. To expire old ones:
+
+```sh
+export AGENTTY_THREADS_KEEP_DAYS=90
+```
+
+`agentty config move threads /mnt/big/threads` moves a folder's data and
+prints the `export` line to add (refuses while agentty runs, verifies the
+copy before removing anything).
+`agentty config doctor` checks permissions and overrides.
+`agentty config clean` lists files older versions left behind, and
+`--yes` deletes them.
+
+Credentials are plaintext JSON by default, optionally sealed with AES-256-GCM
+(`AGENTTY_ENCRYPT_PASSPHRASE`) or kept in the OS keystore
+(`AGENTTY_USE_KEYSTORE`). See [Authentication](/docs/authentication).
+
+A project `mcp.json` that starts processes only runs after you approve its
+exact bytes ([Plugin Trust](/docs/plugin-trust)). Approvals live in your
+`state/`, so a repo can't approve itself.
 
 ## Memory scope
 
@@ -104,11 +184,13 @@ Both files are plain JSONL you can inspect or hand-edit. Project scope is only o
 
 ## CLAUDE.md guidance
 
-On the Claude backend, agentty appends up to three user-authored guidance files to the system prompt (each capped at 64 KiB, mtime-cached):
+agentty appends up to three user-authored guidance files to the system prompt (each capped at 64 KiB, mtime-cached). The paths match Claude Code, so an existing setup works as-is:
 
-- `~/CLAUDE.md` — user tier (every workspace).
-- `<project>/CLAUDE.md` — project tier.
+- `~/.claude/CLAUDE.md` — user tier, every workspace (`$CLAUDE_CONFIG_DIR` if set). `~/CLAUDE.md` is still read when that file doesn't exist.
+- `<project>/CLAUDE.md` and `<project>/.claude/CLAUDE.md` — project tier; when both exist they're joined, `./CLAUDE.md` first.
 - `<project>/CLAUDE.local.md` — local tier (gitignore it for personal notes).
+
+Moving over from Claude Code or Codex? [Coming from Codex or Claude Code](/docs/switching) covers your instructions, skills, MCP servers and past conversations in one place.
 
 ## AGENTS.md guidance
 
@@ -118,10 +200,11 @@ agentty resolves AGENTS.md in three tiers (lowest precedence → highest):
 
 ### Global scope (~/.agentty/AGENTS.md)
 
-Not part of the published spec (which is project-scoped only), but a pragmatic extension that major tools like Codex (`~/.codex/AGENTS.md`) and OpenCode (`~/.config/opencode/AGENTS.md`) implement. agentty checks two candidates in priority order — the first non-empty file wins:
+Not part of the published spec (which is project-scoped only), but a pragmatic extension that major tools like Codex (`~/.codex/AGENTS.md`) and OpenCode (`~/.config/opencode/AGENTS.md`) implement. agentty checks three candidates in priority order — the first non-empty file wins:
 
 1. `~/.agentty/AGENTS.md` — agentty-specific global guidance (highest priority).
-2. `~/.agents/AGENTS.md` — shared global guidance for any agent tool (fallback).
+2. `~/.agents/AGENTS.md` — shared global guidance for any agent tool.
+3. `~/.codex/AGENTS.md` — Codex's global file (`$CODEX_HOME/AGENTS.md` if set), so Codex users don't need to copy it.
 
 When present, the content is injected as an `<agents-md-global>` block **before** the project-level block, so project guidance overrides global. Capped at 64 KiB.
 
@@ -146,7 +229,7 @@ The walk starts from the agent's **cwd** (`project_root()`), not from the direct
 When AGENTS.md files are present, agentty injects them as separate blocks in the system prompt (low → high precedence):
 
 ```
-<agents-md-global>    ← ~/.agentty/AGENTS.md or ~/.agents/AGENTS.md (optional)
+<agents-md-global>    ← ~/.agentty, ~/.agents or ~/.codex AGENTS.md (optional)
 <agents-md>           ← <workspace_root>/AGENTS.md (project root)
 <agents-md-package>   ← nearest nested AGENTS.md (monorepo walk, optional)
 ```
