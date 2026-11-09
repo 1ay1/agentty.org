@@ -26,7 +26,7 @@ export function EditThisPage({ path, repo = "agentty.org" }: { path: string; rep
         target="_blank"
         rel="noopener noreferrer"
       >
-        ✎ Edit this page on GitHub
+        edit this page on github
       </a>
     </div>
   );
