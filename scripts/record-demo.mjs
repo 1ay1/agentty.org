@@ -5,6 +5,9 @@
 // which the home page's ReplayTerminal plays.
 //
 //   node scripts/record-demo.mjs [out.json]      (needs bwrap + python3)
+//   DEMO_THEME="Flexoki Light" node scripts/record-demo.mjs
+//     records the same session in agentty's light theme → demo/session-light.json
+//     and lib/demo-screen-light.json (the site shows whichever matches its theme)
 //   AGENTTY_BIN=/path/to/agentty overrides the binary.
 //
 // Output: { cols, rows, frames: [[delay_ms, utf8_text], ...] }
@@ -17,7 +20,9 @@ import { createRequire } from "node:module";
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { spawn: ptySpawn } = createRequire(path.join(ROOT, "deploy/live/package.json"))("node-pty");
 
-const OUT = process.argv[2] || path.join(ROOT, "demo/session.json");
+const LIGHT = /light/i.test(process.env.DEMO_THEME || "");
+const OUT = process.argv[2] || path.join(ROOT, LIGHT ? "demo/session-light.json" : "demo/session.json");
+const SCREEN = process.argv[3] || path.join(ROOT, LIGHT ? "lib/demo-screen-light.json" : "lib/demo-screen.json");
 // The binary: AGENTTY_BIN, else the LATEST GitHub release (so the demo always
 // shows the current UI), downloaded once into the temp dir.
 async function latestRelease() {
@@ -109,7 +114,7 @@ git("commit", "-q", "-m", "initial import");
 const THEME = process.env.DEMO_THEME || "Flexoki Dark";
 // the terminal's own default colours for that scheme: agentty asks for them
 // (OSC 10/11) and the replay paints its background/foreground with them
-const TERM_COLORS = { fg: "#cecdc3", bg: "#100f0f" };
+const TERM_COLORS = /light/i.test(THEME) ? { fg: "#100f0f", bg: "#fffcf0" } : { fg: "#cecdc3", bg: "#100f0f" };
 fs.mkdirSync(path.join(HOME, ".agentty"), { recursive: true });
 fs.writeFileSync(path.join(HOME, ".agentty/settings.json"), JSON.stringify({ ui: { theme: THEME } }, null, 2));
 
@@ -315,4 +320,4 @@ if (leaks) process.exit(1);
 
 // pre-render the bytes into the row diffs the site actually ships
 const { execFileSync } = await import("node:child_process");
-execFileSync(process.execPath, [path.join(ROOT, "scripts/build-demo-screen.mjs"), OUT], { stdio: "inherit" });
+execFileSync(process.execPath, [path.join(ROOT, "scripts/build-demo-screen.mjs"), OUT, SCREEN], { stdio: "inherit" });

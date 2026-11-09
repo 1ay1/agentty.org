@@ -535,7 +535,14 @@ td .win { color: var(--text); }
 .home-license a:hover { color: var(--text); }   /* its own line under the links */
 
 /* ── demo terminal (ReplayTerminal) ───────────────────────────────────── */
-.replay { position: relative; border: 1px solid var(--border); background: #100f0f; contain: layout style; isolation: isolate; }
+.replay { position: relative; border: 1px solid var(--border); background: var(--replay-bg); contain: layout style; isolation: isolate;
+  /* agentty's own Flexoki Dark / Flexoki Light terminal colours, per site theme */
+  --replay-bg: #100f0f; --replay-thumb: #403e3c; --replay-thumb-hover: #575653; }
+html[data-theme="light"] .replay { --replay-bg: #fffcf0; --replay-thumb: #cecdc3; --replay-thumb-hover: #b7b5ac; }
+/* before the player loads, the opening frame that matches the theme shows */
+.replay-grid[data-for]:not([data-live]) { display: none; }
+html:not([data-theme="light"]) .replay-grid[data-for="dark"]:not([data-live]),
+html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { display: block; }
 .replay-screen { padding: 16px 6px 16px 18px; overflow: hidden; container-type: inline-size; }
 /* --cols × --rows cells. JetBrains Mono's advance is 0.6em, so the cell width
    sets the font size; the row height snaps to device pixels (no seams). */
@@ -560,13 +567,13 @@ td .win { color: var(--text); }
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: #403e3c transparent;
+  scrollbar-color: var(--replay-thumb) transparent;
   contain: strict;
   outline: none;
 }
 .replay-grid::-webkit-scrollbar { width: var(--sb); }
-.replay-grid::-webkit-scrollbar-thumb { background: #403e3c; border: 3px solid #100f0f; background-clip: padding-box; }
-.replay-grid::-webkit-scrollbar-thumb:hover { background: #575653; background-clip: padding-box; }
+.replay-grid::-webkit-scrollbar-thumb { background: var(--replay-thumb); border: 3px solid var(--replay-bg); background-clip: padding-box; }
+.replay-grid::-webkit-scrollbar-thumb:hover { background: var(--replay-thumb-hover); background-clip: padding-box; }
 /* below the terminal, on the caption line — never over agentty's own UI */
 .replay-again {
   position: absolute; right: 0; top: calc(100% + 8px); padding: 0; cursor: pointer;

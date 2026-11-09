@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
-import { className, styleRule, type Frame, type Screen, type Seg } from "@/lib/replay";
+import { PREFIX, className, styleRule, type DemoTheme, type Frame, type Screen, type Seg } from "@/lib/replay";
 
 /**
  * ReplayTerminal — plays a REAL recorded agentty session as plain DOM.
@@ -26,21 +26,35 @@ import { className, styleRule, type Frame, type Screen, type Seg } from "@/lib/r
  *   - plays once, then stays on the finished session (a "replay" button
  *     appears); pauses off-screen / in background tabs; reduced-motion: the
  *     finished session, painted once
+ *   - follows the site theme: the session was recorded in agentty's Flexoki
+ *     Dark and Flexoki Light themes (frame for frame the same run); switching
+ *     the site theme swaps recordings and repaints at the same moment
  */
+
+type Opening = { rows: ReactNode; fg?: string; bg?: string };
+const LOADERS: Record<DemoTheme, () => Promise<{ default: unknown }>> = {
+  dark: () => import("@/lib/demo-screen.json"),
+  light: () => import("@/lib/demo-screen-light.json"),
+};
+const siteTheme = (): DemoTheme => (document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark");
 
 type Cell = { el: HTMLSpanElement; text: Text; c: number; t: string; w: number; gen: number };
 
 export function ReplayTerminal({
-  cols, rows, fg, bg, children,
-}: { cols: number; rows: number; fg?: string; bg?: string; children?: ReactNode }) {
+  cols, rows, dark, light,
+}: { cols: number; rows: number; dark: Opening; light: Opening }) {
   const boxRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const box = boxRef.current, grid = gridRef.current;
-    if (!box || !grid) return;
+    const box = boxRef.current;
+    if (!box) return;
+    let grid = box.querySelector<HTMLDivElement>(`.replay-grid[data-for="${siteTheme()}"]`)!;
 
     let data: Screen | null = null;
+    let theme: DemoTheme = siteTheme();
+    const screens: Partial<Record<DemoTheme, Screen>> = {};
+    const names: Partial<Record<DemoTheme, string[]>> = {};
+    let switching = 0;
     let classNames: string[] = [];
     let rowEls: HTMLElement[] = [];
     let cells: Map<number, Cell>[] = [];
@@ -50,7 +64,7 @@ export function ReplayTerminal({
     let disposed = false, loading = false, onScreen = false, started = false;
     let raf = 0, i = 0, t0 = 0, pausedAt = 0, ended = false, follow = true;
     let due: Float64Array = new Float64Array(0);
-    let sheet: CSSStyleSheet | null = null, styleEl: HTMLStyleElement | null = null;
+    const sheets: CSSStyleSheet[] = [], styleEls: HTMLStyleElement[] = [];
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // ── write one row: reconcile segments into its pooled spans ────────────
@@ -97,8 +111,6 @@ export function ReplayTerminal({
     const onScroll = () => {                  // reader scrolled up: stop following until back at the bottom
       follow = grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 4;
     };
-    grid.addEventListener("scroll", onScroll, { passive: true });
-
     const replayBtn = box.querySelector<HTMLButtonElement>(".replay-again");
     const finish = () => { ended = true; if (replayBtn) replayBtn.hidden = false; };
     const replay = () => {
@@ -140,30 +152,78 @@ export function ReplayTerminal({
       raf = requestAnimationFrame(loop);
     };
 
-    const load = async () => {
-      loading = true;
-      const mod = await import("@/lib/demo-screen.json");
-      if (disposed) return;
-      data = (mod.default ?? mod) as unknown as Screen;
+    // fetch one theme's recording and install its styles (once per theme)
+    const fetchScreen = async (t: DemoTheme): Promise<Screen> => {
+      if (screens[t]) return screens[t]!;
+      const mod = await LOADERS[t]();
+      const scr = ((mod as { default?: unknown }).default ?? mod) as Screen;
+      const p = PREFIX[t];
+      const css = scr.styles.map((st, n) => styleRule(n, st, p)).join("");
+      if ("adoptedStyleSheets" in document && "replaceSync" in CSSStyleSheet.prototype) {
+        const sh = new CSSStyleSheet();
+        sh.replaceSync(css);
+        document.adoptedStyleSheets = [...document.adoptedStyleSheets, sh];
+        sheets.push(sh);
+      } else {
+        const el = document.createElement("style");
+        el.textContent = css;
+        document.head.append(el);
+        styleEls.push(el);
+      }
+      names[t] = scr.classes.map((c) => className(c, p));
+      return (screens[t] = scr);
+    };
+    const use = (t: DemoTheme) => {
+      theme = t;
+      data = screens[t]!;
+      classNames = names[t]!;
       due = new Float64Array(data.frames.length);
       for (let n = 1, acc = 0; n < data.frames.length; n++) due[n] = acc += data.frames[n][0];
-      classNames = data.classes.map(className);
+      const o = t === "light" ? light : dark;
+      grid.style.color = o.fg ?? "";
+      grid.style.background = o.bg ?? "";
+      box.dataset.theme = t;
+    };
 
-      // every recorded style as a class, in one stylesheet
-      const css = data.styles.map((s, n) => styleRule(n, s)).join("");
-      if ("adoptedStyleSheets" in document && "replaceSync" in CSSStyleSheet.prototype) {
-        sheet = new CSSStyleSheet();
-        sheet.replaceSync(css);
-        document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-      } else {
-        styleEl = document.createElement("style");
-        styleEl.textContent = css;
-        document.head.append(styleEl);
+    // the site theme changed: swap recordings and repaint the same moment
+    const switchTo = async (t: DemoTheme) => {
+      const token = ++switching;
+      await fetchScreen(t);
+      if (disposed || token !== switching || t === theme) return;
+      const at = ended ? Infinity : i;               // frames already shown
+      const top = grid.scrollTop;
+      use(t);
+      for (let y = rowEls.length - 1; y >= rows; y--) rowEls[y].remove();
+      rowEls.length = rows; cells.length = rows;
+      for (let y = 0; y < rows; y++) { cells[y].forEach((c) => c.el.remove()); cells[y].clear(); }
+      pending = new Array(data!.lines ?? rows).fill(null); pendingRows = [];
+      const n = Math.min(at, data!.frames.length);
+      for (let k = 0; k < n; k++) queue(data!.frames[k]);
+      const keep = follow;
+      flush();
+      if (!keep) { grid.scrollTop = top; follow = false; }
+      if (started && !ended) {                       // carry on from this frame
+        i = n;
+        const now = performance.now();
+        t0 = now - (due[Math.max(0, n - 1)] * 1000) / data!.fps;
+        if (pausedAt) pausedAt = now;
       }
+    };
+
+    const load = async () => {
+      loading = true;
+      await fetchScreen(theme);
+      if (disposed) return;
+      // the other theme's opening frame is no longer needed: this grid is
+      // live, and on a theme switch it is repainted from the other recording
+      box.querySelectorAll<HTMLDivElement>(".replay-grid").forEach((g) => { if (g !== grid) g.remove(); });
+      grid.dataset.live = "";
+      grid.addEventListener("scroll", onScroll, { passive: true });
+      use(theme);
 
       // adopt the server-rendered rows and spans as the live pool
       rowEls = Array.from(grid.children) as HTMLElement[];
-      pending = new Array(data.lines ?? rows).fill(null);
+      pending = new Array(data!.lines ?? rows).fill(null);
       cells = rowEls.map((row, y) => {
         const pool = new Map<number, Cell>();
         const first = data!.frames[0][1].find((r) => r[0] === y)?.[1] ?? [];
@@ -178,9 +238,11 @@ export function ReplayTerminal({
       });
 
       if (reduce) {                        // the finished session, painted once
-        for (const f of data.frames) queue(f);
+        for (const f of data!.frames) queue(f);
         flush();
-        return finish();
+        finish();
+        if (siteTheme() !== theme) void switchTo(siteTheme());
+        return;
       }
       i = 1;
       started = true;
@@ -199,25 +261,38 @@ export function ReplayTerminal({
     const onVis = () => (document.hidden ? pause() : resume());
     document.addEventListener("visibilitychange", onVis);
 
+    // the site theme toggle: before the player loads, CSS already shows the
+    // matching opening frame; after, swap recordings
+    const mo = new MutationObserver(() => {
+      const t = siteTheme();
+      if (!data) { grid = box.querySelector<HTMLDivElement>(`.replay-grid[data-for="${t}"]`)!; theme = t; return; }
+      void switchTo(t);
+    });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
     return () => {
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
       io.disconnect();
+      mo.disconnect();
       grid.removeEventListener("scroll", onScroll);
       replayBtn?.removeEventListener("click", replay);
       document.removeEventListener("visibilitychange", onVis);
-      if (sheet) document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== sheet);
-      styleEl?.remove();
+      if (sheets.length) document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => !sheets.includes(s));
+      styleEls.forEach((el) => el.remove());
     };
   }, [rows]);
 
-  const vars = { "--cols": cols, "--rows": rows, color: fg, background: bg } as CSSProperties;
+  const vars = (o: Opening) => ({ "--cols": cols, "--rows": rows, color: o.fg, background: o.bg }) as CSSProperties;
 
   return (
     <div className="replay" ref={boxRef}>
       <div className="replay-screen">
-        <div className="replay-grid" ref={gridRef} style={vars} aria-hidden="true" tabIndex={-1}>
-          {children}
+        <div className="replay-grid" data-for="dark" style={vars(dark)} aria-hidden="true" tabIndex={-1}>
+          {dark.rows}
+        </div>
+        <div className="replay-grid" data-for="light" style={vars(light)} aria-hidden="true" tabIndex={-1}>
+          {light.rows}
         </div>
         <button type="button" className="replay-again" hidden>replay ↻</button>
       </div>

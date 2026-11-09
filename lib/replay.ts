@@ -17,10 +17,16 @@ export type Screen = {
   frames: Frame[];
 };
 
-export const className = ([s, g]: [number, string]) => (g ? `s${s} g g${g}` : `s${s}`);
+// The demo is recorded twice, in agentty's Flexoki Dark and Flexoki Light
+// themes; each recording's styles get their own class prefix so both
+// stylesheets can live on the page at once.
+export type DemoTheme = "dark" | "light";
+export const PREFIX: Record<DemoTheme, string> = { dark: "s", light: "l" };
+
+export const className = ([s, g]: [number, string], p = "s") => (g ? `${p}${s} g g${g}` : `${p}${s}`);
 
 // one CSS rule per recorded style; flags: 1 bold, 2 italic, 4 underline, 8 strike
-export function styleRule(i: number, [fg, bg, f]: Style): string {
+export function styleRule(i: number, [fg, bg, f]: Style, p = "s"): string {
   let d = "";
   if (fg) d += `color:${fg};`;
   if (bg) d += `background:${bg};`;
@@ -28,7 +34,7 @@ export function styleRule(i: number, [fg, bg, f]: Style): string {
   if (f & 2) d += "font-style:italic;";
   const deco = `${f & 4 ? "underline " : ""}${f & 8 ? "line-through" : ""}`.trim();
   if (deco) d += `text-decoration:${deco};`;
-  return d ? `.replay-grid .s${i}{${d}}` : "";
+  return d ? `.replay-grid .${p}${i}{${d}}` : "";
 }
 
 // ── glyphs drawn by CSS ────────────────────────────────────────────────────
