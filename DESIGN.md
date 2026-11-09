@@ -32,8 +32,8 @@ or an animation to work, it doesn't belong.
 - Flat colours: ink in three shades (`--text`, `--text-dim`, `--text-faint`)
   and **one accent**, spent rarely. It means "agentty / this / the current
   one": the brand mark, the `$` prompt, agentty's own bar, the nav's `>`,
-  the selected item. Links are ink with a faint underline; they turn magenta
-  only on hover.
+  the selected item. Links are ink with a magenta-tinted underline; the
+  text itself turns magenta only on hover.
 - Selection and keyboard focus are inverse video, like a terminal.
 - No cards, shadows, rounded corners or gradients. Hairlines only where
   data needs separating (tables, the nav).
