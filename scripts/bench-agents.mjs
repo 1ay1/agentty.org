@@ -32,7 +32,7 @@ const NODE = execFileSync("which", ["node"], { encoding: "utf8" }).trim();
 const READY = {
   agentty: /1–6 choose/, claude: /Choose the text style/, codex: /Press enter to continue/,
   gemini: /3\. Don't trust/, opencode: /ctrl\+p commands/, aider: /\(Y\)es\/\(N\)o/,
-  jcode: /Esc to skip onboarding/,
+  jcode: /Esc to skip onboarding|Log in to get started/,
 };
 
 const TOOLS = [
