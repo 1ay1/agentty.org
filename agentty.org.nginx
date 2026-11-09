@@ -6,6 +6,15 @@ log_format agentty_detailed '$remote_addr - $remote_user [$time_local] '
                             '"$http_referer" "$http_user_agent" '
                             'rt=$request_time host=$host';
 
+# The terminal edition: command-line HTTP clients (curl, wget, HTTPie…) get
+# each page as 80-column ANSI text from /t/<path>/index.ansi instead of HTML.
+# Browsers never match. Cloudflare doesn't cache extensionless pages, so the
+# edge never mixes the two (keep it that way: no "cache everything" rule).
+map $http_user_agent $agentty_term {
+    default                                                              0;
+    "~*^(curl|wget|httpie|xh|fetch|aria2|libfetch|lynx|w3m|links)\b"     1;
+}
+
 server {
     listen 80;
     listen [::]:80;
@@ -99,8 +108,16 @@ server {
     # .html internally, but the *request* URI has no extension, so a
     # `~ \.html$` location would never match them.
     location / {
+        # curl agentty.org/docs/sandboxing → /t/docs/sandboxing/index.ansi.
+        # Only extensionless page paths: /install.sh, /robots.txt, /md/*.md
+        # and friends are untouched.
+        if ($agentty_term) {
+            rewrite ^/?$ /t/index.ansi last;
+            rewrite ^/((?:[^./]+/)*[^./]+)/?$ /t/$1/index.ansi last;
+        }
         try_files $uri $uri/ $uri.html $uri/index.html =404;
         add_header Cache-Control "no-cache" always;
+        add_header Vary "User-Agent" always;
         # Re-assert the security headers: defining add_header inside a location
         # replaces (does not inherit) the server-level set in nginx.
         add_header X-Frame-Options "SAMEORIGIN" always;
@@ -125,6 +142,25 @@ server {
     location = /install.ps1 {
         default_type text/plain;
         add_header Cache-Control "no-cache" always;
+    }
+
+    # The terminal edition's pages (see the map above). A page with no
+    # terminal edition answers 404 with the terminal 404, not the HTML one.
+    location /t/ {
+        default_type "text/plain";
+        charset utf-8;
+        try_files $uri =404;
+        error_page 404 /t/404/index.ansi;
+        add_header Cache-Control "no-cache" always;
+        add_header Vary "User-Agent" always;
+        add_header X-Content-Type-Options "nosniff" always;
+    }
+
+    # curl -fsSL https://agentty.org/bench | sh — measure the agents on your machine.
+    location = /bench {
+        default_type "text/plain; charset=utf-8";
+        add_header Cache-Control "no-cache" always;
+        add_header X-Content-Type-Options "nosniff" always;
     }
 
     # Next.js generates the social-share cards as extensionless routes;
