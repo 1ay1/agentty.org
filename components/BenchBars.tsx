@@ -11,7 +11,7 @@ export const METRICS: Metric[] = [
   { key: "ready", label: "launch → ready to type", unit: "ms", value: (t) => t.readyMs.median, fmt: (v) => (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`) },
   { key: "rss", label: "memory while idle", unit: "MB", value: (t) => t.idleRssMB, fmt: (v) => `${Math.round(v)} MB` },
   { key: "disk", label: "on disk, with runtime", unit: "MB", value: (t) => t.diskMB, fmt: (v) => `${Math.round(v)} MB` },
-  { key: "startup", label: "`--version` startup", unit: "ms", value: (t) => t.startupMs.median, fmt: (v) => (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${v < 10 ? v.toFixed(1) : Math.round(v)} ms`) },
+  { key: "startup", label: "--version startup", unit: "ms", value: (t) => t.startupMs.median, fmt: (v) => (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${v < 10 ? v.toFixed(1) : Math.round(v)} ms`) },
 ];
 
 export function BenchBars({ metrics = ["ready"] }: { metrics?: string[] }) {
@@ -31,7 +31,7 @@ export function BenchBars({ metrics = ["ready"] }: { metrics?: string[] }) {
                   <li key={t.id} className={t.id === "agentty" ? "is-us" : undefined}>
                     <span className="bench-name">{t.name}</span>
                     <span className="bench-track">
-                      <span className="bench-bar" style={{ width: `${Math.max(0.6, (v / max) * 100).toFixed(2)}%` }} />
+                      <span className="bench-bar" style={{ width: `calc((100% - 15ch) * ${Math.max(0.006, v / max).toFixed(4)})` }} />
                       <span className="bench-val">
                         {m.fmt(v)}
                         {t.id !== "agentty" && ratio >= 1.15 && <span className="bench-x">{ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)}×</span>}
