@@ -7,12 +7,12 @@ import { site } from "@/lib/site";
 const URL = `${site.url}/benchmarks/`;
 const TITLE = "Agent harness benchmarks: startup, memory, disk";
 const DESCRIPTION =
-  "Measured, not claimed: launch time, idle memory, disk footprint and startup of agentty, Claude Code, Codex CLI, Gemini CLI, opencode and Aider on one machine.";
+  "Measured, not claimed: launch time, idle memory, disk footprint and startup of agentty, Claude Code, Codex CLI, Gemini CLI, opencode, jcode and Aider on one machine.";
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESCRIPTION,
-  keywords: ["agent harness benchmark", "claude code startup time", "codex cli memory", "gemini cli slow", "opencode memory", "coding agent benchmark"],
+  keywords: ["agent harness benchmark", "claude code startup time", "codex cli memory", "gemini cli slow", "opencode memory", "jcode benchmark", "coding agent benchmark"],
   alternates: { canonical: "/benchmarks/" },
   openGraph: { type: "article", title: TITLE, description: DESCRIPTION, url: URL },
 };
@@ -82,10 +82,11 @@ export default function Benchmarks() {
         <h2 id="method">Method</h2>
         <ul>
           <li><strong>Ready to type:</strong> launch the interactive UI in a real pseudo-terminal and time until its first prompt is fully on screen, read from the rendered terminal (not raw output). Each tool first completes its one-time setup, so this is the launch a returning user sees. 10 timed launches.</li>
-          <li><strong>Idle memory:</strong> resident memory of the whole process tree, 2 s after the prompt appears.</li>
+          <li><strong>Idle memory:</strong> resident memory of the whole process tree, 2 s after the prompt appears. jcode runs its UI as a client of a background server that it starts on first launch and leaves running; that server is counted in its memory, and it is already running for the timed launches, as it would be for a returning user.</li>
           <li><strong>Disk:</strong> everything the tool needs, as installed by its official method, including the Node.js runtime when it needs one. Aider&apos;s figure includes the Python 3.12 its installer sets up.</li>
           <li><strong><code>--version</code> startup:</strong> process start to exit, 3 warm-ups then 30 timed runs.</li>
           <li><strong>Fairness:</strong> a fresh, empty home directory per tool; no accounts, keys or network needed; runs interleaved round-robin so background load on the machine lands on every tool equally. Network access doesn&apos;t change the results.</li>
+          <li><strong>Close results:</strong> agentty and jcode launch within the same range (see the brackets in the table); treat that as a tie, not a win.</li>
           <li><strong>Not measured:</strong> how well each agent solves tasks. That depends mostly on the model, and every harness here can use strong ones.</li>
         </ul>
 

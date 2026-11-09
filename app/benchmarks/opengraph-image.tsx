@@ -11,6 +11,6 @@ export default function Image() {
   return ogCard({
     section: "benchmarks",
     title: "Agent harness benchmarks",
-    meta: `agentty is ready to type in ${Math.round(a.readyMs.median)} ms using ${Math.round(a.idleRssMB)} MB, measured against Claude Code, Codex CLI, Gemini CLI, opencode and Aider.`,
+    meta: `agentty is ready to type in ${Math.round(a.readyMs.median)} ms using ${Math.round(a.idleRssMB)} MB, measured against Claude Code, Codex CLI, Gemini CLI, opencode, jcode and Aider.`,
   });
 }
