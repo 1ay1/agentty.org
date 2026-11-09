@@ -5,14 +5,19 @@ import { CopyRow } from "@/components/CopyRow";
 import { ReplayDemo } from "@/components/ReplayDemo";
 import { BenchBars } from "@/components/BenchBars";
 import { AgenttyLogo } from "@/components/AgenttyLogo";
+import bench from "@/lib/bench.generated.json";
+
+const us = bench.tools.find((t) => t.id === "agentty")!;
 
 export default function Home() {
   return (
     <div className="home">
       <header className="home-head">
         <div className="home-logo"><AgenttyLogo /></div>
-        <h1>Blazing-fast <Link href="/agent-harness/">agent harness</Link> for your terminal.</h1>
-        <p>One small binary, any model.</p>
+        <h1>An <Link href="/agent-harness/">agent harness</Link> for your terminal.</h1>
+        <p>
+          Ready to type in {Math.round(us.readyMs.median)} ms, {Math.round(us.idleRssMB)} MB idle. One small binary, any model.
+        </p>
       </header>
 
       <figure className="home-demo">

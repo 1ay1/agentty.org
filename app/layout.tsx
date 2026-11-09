@@ -4,6 +4,8 @@ import { JetBrains_Mono } from "next/font/google";
 import "./site.css";
 import { SiteNav } from "@/components/SiteNav";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
+import { StatusLine } from "@/components/StatusLine";
+import { Shortcuts } from "@/components/Shortcuts";
 import { site } from "@/lib/site";
 import { seoDescription } from "@/lib/seo";
 import { stats } from "@/lib/stats";
@@ -190,7 +192,9 @@ export default function RootLayout({
         <a className="skip" href="#main">Skip to content</a>
         <SiteNav />
         <main id="main">{children}</main>
+        <StatusLine />
         <CommandPaletteLazy />
+        <Shortcuts />
       </body>
     </html>
   );

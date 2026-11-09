@@ -9,7 +9,7 @@ export const contentType = "image/png";
 export default function OpengraphImage() {
   return ogCard({
     section: "agent harness",
-    title: "Blazing-fast agent harness for your terminal.",
+    title: "An agent harness for your terminal.",
     meta: `Use the Claude, ChatGPT or Copilot plan you already pay for, or any model. One ${stats.sizeMB} binary, sandboxed by default.`,
   });
 }

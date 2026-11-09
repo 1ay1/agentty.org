@@ -12,8 +12,7 @@ export function ogCard({ section, title, meta }: { section: string; title: strin
       <div
         style={{
           width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between",
-          padding: "72px 80px", backgroundColor: "#100f0f", fontFamily: "monospace",
-          borderLeft: "14px solid #ce5d97",
+          padding: "72px 80px", backgroundColor: "#100f0f", fontFamily: "monospace"
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "18px", fontSize: "30px", fontWeight: 700 }}>

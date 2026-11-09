@@ -132,7 +132,7 @@ export function getAdjacent(slug: string): { next?: PostMeta; prev?: PostMeta } 
   return { prev: all[i - 1], next: all[i + 1] };
 }
 
+// Dates are shown as written: ISO, 2026-11-09.
 export function formatDate(iso: string): string {
-  const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  return iso.slice(0, 10);
 }

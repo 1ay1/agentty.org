@@ -234,7 +234,7 @@ export default function DevTerminal() {
           { t: "  agentty ", cls: "bmag b" },
           { t: "v0.9.1", cls: "dim" },
           { t: "   ·   ", cls: "dim" },
-          { t: "a blazing-fast agent harness for your terminal", cls: "white" },
+          { t: "an agent harness for your terminal", cls: "white" },
         ],
       },
       {

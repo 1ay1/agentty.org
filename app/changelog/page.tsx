@@ -36,21 +36,48 @@ function loadChangelog(): string {
   // Drop the top-level "# Changelog" heading + intro line; the page supplies its
   // own <h1>, so we render from the first version section down.
   md = md.replace(/^#\s+Changelog\s*\n/, "").replace(/^All notable changes[^\n]*\n/m, "");
+  // drop an empty [Unreleased] section; headings read "v0.9.51 · 2026-11-08"
+  md = md.replace(/^## \[Unreleased\]\s*\n(?=## )/m, "");
+  md = md.replace(/^## \[([^\]]+)\]\s*-\s*(\d{4}-\d\d-\d\d)\s*$/gm, "## v$1 · $2");
   return md.trim();
 }
 
+// `git log --oneline` for releases: version, date, and the first change's title.
+type Entry = { version: string; date: string; id: string; title: string };
+function logEntries(md: string): Entry[] {
+  return md.split(/^(?=## v)/m).flatMap((sec) => {
+    const h = sec.match(/^## v(\S+) · (\d{4}-\d\d-\d\d)/);
+    if (!h) return [];
+    const first = sec.match(/^- \*\*(.+?)\*\*/m)?.[1] ?? "";
+    const title = first.replace(/`/g, "").replace(/\.$/, "");
+    const id = `v${h[1]}-${h[2]}`.toLowerCase().replace(/[^\w\s-]/g, "");
+    return [{ version: h[1], date: h[2], id, title }];
+  });
+}
+
 export default function ChangelogPage() {
-  const html = markdownToHtml(applyTokens(loadChangelog()));
+  const md = applyTokens(loadChangelog());
+  const html = markdownToHtml(md);
+  const log = logEntries(md);
   return (
     <div className="page changelog-page">
       <h1>Changelog</h1>
       <p className="lead">
-        Every agentty release — added, changed, and fixed. Sourced live from{" "}
+        Every agentty release: added, changed, and fixed. Sourced live from{" "}
         <a href={`${site.github}/blob/master/CHANGELOG.md`} target="_blank" rel="noopener noreferrer">
           CHANGELOG.md
         </a>{" "}
         in the repo.
       </p>
+      <ol className="gitlog" aria-label="Releases">
+        {log.map((e) => (
+          <li key={e.version}>
+            <a href={`#${e.id}`}>v{e.version}</a>
+            <time dateTime={e.date}>{e.date}</time>
+            <span>{e.title}</span>
+          </li>
+        ))}
+      </ol>
       <DocBody html={html} />
     </div>
   );

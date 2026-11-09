@@ -110,7 +110,7 @@ export function SiteNav() {
           aria-controls={MENU_ID}
           onClick={() => setOpen((o) => !o)}
         >
-          {open ? "✕" : "☰"}
+          {open ? "close" : "menu"}
         </button>
       </div>
 
@@ -146,8 +146,7 @@ export function SiteNav() {
                 openPalette();
               }}
             >
-              <span className="mobile-util-ico" aria-hidden="true">⌘</span>
-              Search
+              Search <kbd>/</kbd>
             </button>
             <div className="mobile-util mobile-util-theme">
               <span>Theme</span>
