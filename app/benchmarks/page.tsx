@@ -102,7 +102,7 @@ export default function Benchmarks() {
 
         <h2 id="reproduce">Reproduce it</h2>
         <p>
-          The script is <a href={`${site.github.replace("/agentty", "/agentty.org")}/blob/master/scripts/bench-agents.mjs`}>scripts/bench-agents.mjs</a>.
+          The script is <a href={`${site.siteRepo}/blob/master/scripts/bench-agents.mjs`}>scripts/bench-agents.mjs</a>.
           Install each tool by its official method, then run it; it writes the JSON this page is built from.
         </p>
         <div className="codeblock">

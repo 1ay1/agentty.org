@@ -8,7 +8,7 @@ import { DocBody } from "@/components/DocBody";
 
 // The changelog is rendered straight from the agentty repo's CHANGELOG.md,
 // synced into content/changelog.md on every deploy (scripts/sync-changelog.mjs).
-// Zero hand-authoring — edit CHANGELOG.md in 1ay1/agentty and it appears here.
+// Zero hand-authoring — edit CHANGELOG.md in agentty-org/agentty and it appears here.
 
 export const metadata: Metadata = {
   title: { absolute: "Changelog · agentty — every release, added, changed, fixed" },

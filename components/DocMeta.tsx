@@ -17,7 +17,7 @@ export function EditThisPage({ path, repo = "agentty.org" }: { path: string; rep
   // site repo ("agentty.org"). Both edit on the master branch.
   const base =
     repo === "agentty"
-      ? "https://github.com/1ay1/agentty"
+      ? "https://github.com/agentty-org/agentty"
       : "https://github.com/1ay1/agentty.org";
   return (
     <div className="edit-page">

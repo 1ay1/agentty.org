@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dirname, "..", "lib", "release.generated.ts");
-const REPO = process.env.AGENTTY_REPO || "1ay1/agentty";
+const REPO = process.env.AGENTTY_REPO || "agentty-org/agentty";
 const API = `https://api.github.com/repos/${REPO}/releases/latest`;
 
 // The version, straight from git refs. No API, no token, no rate limit, ~0.5s.

@@ -13,7 +13,7 @@ const ROOT = join(__dirname, "..");
 const OUT = join(ROOT, "content", "changelog.md");
 
 const REF = process.env.AGENTTY_DOCS_REF || "master";
-const REPO = "1ay1/agentty";
+const REPO = "agentty-org/agentty";
 const RAW = `https://raw.githubusercontent.com/${REPO}/${REF}/CHANGELOG.md`;
 
 function localSource() {

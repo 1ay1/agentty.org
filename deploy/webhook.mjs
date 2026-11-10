@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Minimal, zero-dependency GitHub webhook listener for agentty.org auto-deploy.
 // Listens on 127.0.0.1:$PORT (nginx proxies /_deploy-hook to it). On a verified
-// `push` event to master of either 1ay1/agentty or 1ay1/agentty.org, it kicks
+// `push` event to master of agentty-org/agentty or 1ay1/agentty.org, it kicks
 // autodeploy.sh. HMAC-SHA256 verified against $WEBHOOK_SECRET — unsigned or
 // mismatched requests are rejected.
 //
@@ -20,7 +20,10 @@ const AUTODEPLOY =
   process.env.AUTODEPLOY ||
   "/home/ayush/projects/agentpp-site/deploy/autodeploy.sh";
 
-const WATCHED = new Set(["1ay1/agentty", "1ay1/agentty.org"]);
+// agentty moved to the agentty-org organisation; GitHub reports the new name
+// in payloads. The old name stays for any hook still configured on it.
+const AGENTTY_REPOS = new Set(["agentty-org/agentty", "1ay1/agentty"]);
+const WATCHED = new Set([...AGENTTY_REPOS, "1ay1/agentty.org"]);
 
 function log(...a) {
   console.log(`[${new Date().toISOString()}]`, ...a);
@@ -128,7 +131,7 @@ const server = createServer((req, res) => {
       // For the agentty repo, only redeploy when docs/website changed — a code
       // push shouldn't rebuild the site. (The site refetches version/sizes on
       // the release-published path anyway.)
-      if (repo === "1ay1/agentty") {
+      if (AGENTTY_REPOS.has(repo)) {
         const files = new Set(
           (payload.commits || []).flatMap((c) => [
             ...(c.added || []),

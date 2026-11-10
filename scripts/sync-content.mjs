@@ -37,7 +37,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 
 const REF = process.env.AGENTTY_DOCS_REF || "master";
-const REPO = "1ay1/agentty";
+const REPO = "agentty-org/agentty";
 const BASE_PATH = "docs/website/content";
 const RAW = `https://raw.githubusercontent.com/${REPO}/${REF}/${BASE_PATH}`;
 const API = `https://api.github.com/repos/${REPO}/contents/${BASE_PATH}`;

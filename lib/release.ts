@@ -7,7 +7,7 @@ import { latestRelease } from "./release.generated";
 const fallback = {
   version: "0.2.8",
   tag: "v0.2.8",
-  htmlUrl: "https://github.com/1ay1/agentty/releases/latest",
+  htmlUrl: "https://github.com/agentty-org/agentty/releases/latest",
 } as const;
 
 export const release = {

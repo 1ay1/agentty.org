@@ -21,7 +21,7 @@ const ROOT = join(__dirname, "..");
 const PUBLIC = join(ROOT, "public");
 
 const REF = process.env.AGENTTY_DOCS_REF || "master";
-const REPO = "1ay1/agentty";
+const REPO = "agentty-org/agentty";
 // What the agentty repo publishes. A new file there needs a line here, so a
 // stray file can never land on the site by accident.
 const FILES = ["paste.html"];

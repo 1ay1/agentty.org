@@ -13,7 +13,7 @@ const fallback = {
   stars: 19,
   forks: 1,
   openIssues: 0,
-  htmlUrl: "https://github.com/1ay1/agentty",
+  htmlUrl: "https://github.com/agentty-org/agentty",
 } as const;
 
 export const repo = {

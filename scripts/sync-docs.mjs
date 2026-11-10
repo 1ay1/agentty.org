@@ -32,7 +32,7 @@ const OUT_DIR = join(ROOT, "content", "docs");
 const NAV_OUT = join(ROOT, "lib", "docs-nav.generated.ts");
 
 const REF = process.env.AGENTTY_DOCS_REF || "master";
-const REPO = "1ay1/agentty";
+const REPO = "agentty-org/agentty";
 const RAW = `https://raw.githubusercontent.com/${REPO}/${REF}/docs/website`;
 const API = `https://api.github.com/repos/${REPO}/contents/docs/website?ref=${REF}`;
 

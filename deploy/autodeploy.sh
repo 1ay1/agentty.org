@@ -20,7 +20,7 @@ BRANCH="master"
 # The CONTENT repo: docs/website lives here, and the sync scripts pull it from
 # GitHub (never a local checkout). We poll its HEAD so the timer can skip the
 # build when nothing has changed.
-CONTENT_REPO="${CONTENT_REPO:-1ay1/agentty}"
+CONTENT_REPO="${CONTENT_REPO:-agentty-org/agentty}"
 CONTENT_REF="${AGENTTY_DOCS_REF:-master}"
 
 # Where the last successfully-built pair of SHAs is recorded.
