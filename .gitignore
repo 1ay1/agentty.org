@@ -14,3 +14,8 @@ deploy/.env
 # live backend deps (native, rebuilt on deploy)
 deploy/live/node_modules/
 .next-dev
+
+# raw PTY captures of the recordings (re-made by every recording run; the
+# site only serves the rendered lib/demo-screen*.json and public/clips/)
+demo/session*.json
+demo/clips/

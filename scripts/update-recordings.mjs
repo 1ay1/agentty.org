@@ -20,6 +20,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { agenttyBin, versionOf } from "./agentty-bin.mjs";
 import { checkScreen } from "./check-demo.mjs";
+import { sameLook } from "./recording-look.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const force = process.argv.includes("--force");
@@ -49,10 +50,11 @@ if (force || home.agentty !== VERSION) {
       ok = false;
       report.push(`home (${theme}): recording failed: ${String(e.stderr || e.message).trim().split("\n").slice(-2).join(" ")}`);
     }
-    out.push([raw, `demo/session${sfx}.json`], [scr, `lib/demo-screen${sfx}.json`]);
+    out.push([scr, `lib/demo-screen${sfx}.json`]);
   }
   if (ok) {
-    for (const [from, to] of out) fs.copyFileSync(from, rel(to));
+    const unchanged = out.every(([from, to]) => sameLook(from, rel(to)));
+    if (!unchanged) for (const [from, to] of out) fs.copyFileSync(from, rel(to));
     fs.writeFileSync(rel("demo/recordings.json"), JSON.stringify({ agentty: VERSION, recorded: new Date().toISOString().slice(0, 10) }, null, 2) + "\n");
     console.log(`home session: recorded with agentty ${VERSION}`);
   } else console.log(`home session: kept the ${home.agentty ?? "previous"} recording`);
@@ -68,11 +70,11 @@ try {
 
 // ── publish ─────────────────────────────────────────────────────────────────
 const git = (...a) => execFileSync("git", ["-C", ROOT, ...a], { encoding: "utf8" }).trim();
-const changed = git("status", "--porcelain", "--", "demo", "lib/demo-screen.json", "lib/demo-screen-light.json", "public/clips");
+const changed = git("status", "--porcelain", "--", "demo/recordings.json", "lib/demo-screen.json", "lib/demo-screen-light.json", "public/clips");
 if (report.length) console.log(`\nproblems:\n  ${report.join("\n  ")}`);
 if (!changed) { console.log("\nnothing changed"); process.exit(report.length ? 2 : 0); }
 if (push) {
-  git("add", "--", "demo", "lib/demo-screen.json", "lib/demo-screen-light.json", "public/clips");
+  git("add", "--", "demo/recordings.json", "lib/demo-screen.json", "lib/demo-screen-light.json", "public/clips");
   const n = Object.values(readJson("public/clips/manifest.json", { clips: {} }).clips).filter((c) => c.version === VERSION).length;
   git("commit", "-q", "-m", `recordings: agentty ${VERSION} (home session${report.length ? ", partial" : ""}, ${n} clips)`);
   git("push", "-q", "origin", "HEAD:master");

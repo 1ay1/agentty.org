@@ -204,6 +204,8 @@ for (let k = 0; k < snaps.length; k++) {
 }
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify({ fps: FPS, cols: rec.cols, rows: rec.rows, lines, fg: FG, bg: BG, styles, classes, frames }));
+// named moments of a clip (record-demo marks), in ms from the replay start
+const marks = rec.marks ? Object.fromEntries(Object.entries(rec.marks).map(([k, v]) => [k, Math.max(0, Math.round(v - (rec.startMs || 0)))])) : undefined;
+fs.writeFileSync(OUT, JSON.stringify({ fps: FPS, cols: rec.cols, rows: rec.rows, lines, fg: FG, bg: BG, styles, classes, frames, ...(marks ? { marks } : {}) }));
 const total = Math.round(frames.reduce((a, f) => a + f[0], 0) * FRAME_MS);
 console.log(`frames ${rec.frames.length} -> ${frames.length} @${FPS}fps (${dropped} layout spikes dropped), ${lines} lines, styles ${styles.length}, ${total} ms, ${fs.statSync(OUT).size} bytes -> ${path.relative(ROOT, OUT)}`);
