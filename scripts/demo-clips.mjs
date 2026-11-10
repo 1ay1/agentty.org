@@ -129,7 +129,7 @@ export const CLIPS = {
   },
   "thread-list": {
     title: "Thread list", on: [{ keys: ["Ctrl+J"] },
-      { keys: ["↑", "↓", "Enter", "Tab", "S-Tab", "Home", "End", "PgUp", "PgDn", "Ctrl+R", "Ctrl+D", "Ctrl+N", "Esc", "←", "→", "Shift+↑", "Shift+↓", "Shift+←", "Shift+→"], context: ["Thread list", "Managing threads"] }],
+      { keys: ["↑", "↓", "Enter", "Tab", "S-Tab", "Home", "End", "PgUp", "PgDn", "Ctrl+R", "Ctrl+D", "Ctrl+N", "Esc", "←", "→", "Shift+↑", "Shift+↓", "Shift+←", "Shift+→"], context: ["Thread list", "Managing threads", "Where it's saved"] }],
     ...SIZE, steps: ANSWER("Done."),
     keys: [{ wait: 300 }, ...say("explain the token cache", 60), { key: C("n") }, { wait: 500 }, ...say("why are the tests slow", 60),
       { key: C("n") }, { wait: 500 }, ...say("add a readme section", 60), { key: C("j") }, { wait: 1500, mark: "list" },
@@ -177,7 +177,7 @@ export const CLIPS = {
     expect: [{ at: "three", has: "then update the loader" }, { at: "three", has: "then run the tests" }],
   },
   editing: {
-    title: "Editing like readline", on: [{ keys: ["Ctrl+W", "Alt+D", "Ctrl+U", "Alt+K", "Ctrl+Z", "Ctrl+Y", "Ctrl+Y / Ctrl+Shift+Z", "Backspace", "Ctrl+←", "Ctrl+→", "Home", "End"], context: "Composer" }],
+    title: "Editing like readline", on: [{ keys: ["Ctrl+W", "Alt+D", "Ctrl+U", "Alt+K", "Ctrl+Z", "Ctrl+Y", "Ctrl+Shift+Z", "Backspace", "Ctrl+←", "Ctrl+→", "Home", "End"], context: "Composer" }],
     ...SIZE,
     keys: [{ wait: 400 }, { type: "make resolve use the token cache quickly", cps: 30 }, { wait: 500 }, { key: C("w") }, { wait: 700, mark: "word" },
       { key: C("z") }, { wait: 800, mark: "undo" }, { key: C("u") }, { wait: 800, mark: "killed" }, { key: C("z") }, { wait: 1200 }],
@@ -214,6 +214,19 @@ Object.assign(CLIPS, {
     expect: [{ at: "picker", has: /turn|checkpoint/i }],
   },
 });
+
+// Documented keys a scripted recording can't show truthfully, and why. The
+// coverage report lists them apart from real gaps.
+export const NOT_CLIPPED = {
+  c: "copies a real OAuth device code during sign-in",
+  o: "re-opens the browser during a real OAuth sign-in",
+  u: "copies a real OAuth sign-in URL",
+  a: "plugins panel: needs live MCP servers",
+  p: "plugins panel: needs live MCP servers",
+  d: "plugins panel: needs live MCP servers",
+  "Ctrl+X": "Settings → Sandbox list editor (a candidate for a clip)",
+  "Ctrl+U": "global Ctrl+U expands a retrieved-context card, which needs a retrieval index",
+};
 
 // Keys too generic to deserve a clip on their own (they're explained by the
 // feature they sit next to); the coverage report doesn't count them as gaps.

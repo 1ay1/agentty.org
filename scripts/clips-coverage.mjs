@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CLIPS, GENERIC, clipFor } from "./demo-clips.mjs";
+import { CLIPS, GENERIC, NOT_CLIPPED, clipFor } from "./demo-clips.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DOCS = path.join(ROOT, "content/docs");
@@ -39,8 +39,12 @@ for (const f of fs.readdirSync(DOCS).filter((f) => f.endsWith(".md")).sort()) {
 }
 
 console.log(`\n${covered}/${keys} key mentions show a clip (generic keys like Enter and arrows not counted) (${Math.round((covered / keys) * 100)}%), ${Object.keys(CLIPS).length} clips defined`);
-console.log(`\nkeys without a clip (by how often the docs mention them):`);
-for (const [k, pages] of [...missing].sort((a, b) => b[1].size - a[1].size)) console.log(`  ${k.padEnd(18)} ${[...pages].join(", ")}`);
+const gaps = [...missing].filter(([k]) => !NOT_CLIPPED[k]).sort((a, b) => b[1].size - a[1].size);
+const known = [...missing].filter(([k]) => NOT_CLIPPED[k]);
+console.log(gaps.length ? `\nkeys without a clip (by how often the docs mention them):` : `\nno gaps: every documented key that can be recorded has a clip`);
+for (const [k, pages] of gaps) console.log(`  ${k.padEnd(18)} ${[...pages].join(", ")}`);
+if (known.length) console.log(`\nnot recordable with a scripted model:`);
+for (const [k, pages] of known) console.log(`  ${k.padEnd(18)} ${NOT_CLIPPED[k]} (${[...pages].join(", ")})`);
 const unused = Object.keys(CLIPS).filter((id) => !used.has(id));
 if (unused.length) console.log(`\nclips no page shows: ${unused.join(", ")}`);
 const agentty = manifest.agentty;
