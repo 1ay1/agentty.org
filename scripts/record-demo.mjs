@@ -82,6 +82,8 @@ def fetch_remote(user_id):
     return f"tok-{user_id}"
 `);
 W("tests/__init__.py", "");
+W("config.json", JSON.stringify({ service: "auth", cache: { backend: "memory", ttl_seconds: 300 }, remote: { url: "https://tokens.internal", timeout_ms: 800 } }, null, 2) + "\n");
+W("README.md", `# auth\n\nResolves a user's auth token. Tokens come from the remote token service\n(\`net.remote.fetch_remote\`); \`auth.token_cache.TokenCache\` keeps them in memory.\n\n    python3 -m unittest\n`);
 W(".gitignore", "__pycache__/\n");
 W("tests/test_handler.py", `import unittest
 
@@ -106,8 +108,15 @@ const git = (...a) => git0("git", ["-C", work, ...a], { stdio: "ignore" });
 git("init", "-q", "-b", "main");
 git("config", "user.name", "dev");
 git("config", "user.email", "dev@example.com");
+// a short, believable history for git_log, landed before the working state
+const history = [
+  ["net: fetch_remote stub with a call counter", ["net"]],
+  ["auth: TokenCache, an in-memory token store", ["auth/token_cache.py", "auth/__init__.py"]],
+  ["auth: resolve() returns the user's token", ["auth/handler.py"]],
+];
+for (const [msg, paths] of history) { git("add", ...paths); git("commit", "-q", "-m", msg); }
 git("add", "-A");
-git("commit", "-q", "-m", "initial import");
+git("commit", "-q", "-m", "tests: resolve() hits the network once per user");
 
 // agentty's own settings (what the Appearance → Scheme picker writes): the
 // demo renders in the Flexoki Dark theme; everything else is agentty's default.
@@ -137,44 +146,70 @@ class TokenCacheTest(unittest.TestCase):
         cache = TokenCache()
         cache.store(1, "tok-1")
         self.assertEqual(cache.lookup(1), "tok-1")
+        self.assertEqual(len(cache), 1)
 
     def test_miss_returns_none(self):
         self.assertIsNone(TokenCache().lookup(99))
 `;
 
+const PY_CHECK = "python3 -c \"from auth.handler import resolve; from net import remote; [resolve(7) for _ in range(3)]; print('network calls:', remote.CALLS)\"";
+const SUBAGENT_PROMPT = "Find every call to fetch_remote in this repo and report it as file:line.";
+
 const STEPS = [
-  { say: "I'll plan this, then reproduce the failure.",
-    tools: [["todo", TODOS(0)]] },
-  { tools: [["test", { command: "python3 -m unittest" }]] },
-  { say: "Three lookups, three network calls. Mapping the project:",
+  { say: "I'll plan this, map the repo, then reproduce the failure.",
+    tools: [["todo", TODOS(0)], ["repo_map", { focus: "resolve token cache", display_description: "Map the repo" }]] },
+  { tools: [
+      ["test", { command: "python3 -m unittest" }],
+      ["git_log", { count: 5, oneline: true, display_description: "Recent history" }],
+    ] },
+  { say: "Three lookups, three network calls. Where does caching live?",
     tools: [
-      ["list_dir", { recursive: true, display_description: "Project layout" }],
+      ["search_code", { query: "where are auth tokens cached", k: 3 }],
       ["grep", { pattern: "TokenCache" }],
+      ["glob", { pattern: "**/*.py" }],
       ["find_definition", { symbol: "resolve" }],
+      ["json_query", { path: "config.json", query: ".cache" }],
     ] },
   { tools: [
       ["read", { path: "auth/handler.py" }],
       ["outline", { path: "auth/token_cache.py" }],
+      ["read_filter", { path: "net/remote.py", pattern: "CALLS|def ", context: 0 }],
     ] },
-  { say: "`resolve` never consults the cache. I'll check it first and only fall back to `fetch_remote` on a miss.",
+  { say: "Before changing `resolve`, a subagent checks who else calls `fetch_remote`.",
+    tools: [["task", { agent_type: "explorer", prompt: SUBAGENT_PROMPT, display_description: "Find fetch_remote callers" }]] },
+  { say: "Only `resolve` does. Making it cache-first:",
     tools: [["edit", { path: "auth/handler.py", display_description: "Resolve through TokenCache", edits: [
       { old_text: `from net.remote import fetch_remote\n`, new_text: `from auth.token_cache import TokenCache\nfrom net.remote import fetch_remote\n\n_cache = TokenCache()\n` },
       { old_text: `    return fetch_remote(user_id)\n`,
         new_text: `    token = _cache.lookup(user_id)\n    if token is None:\n        token = fetch_remote(user_id)\n        _cache.store(user_id, token)\n    return token\n` },
     ] }]] },
-  { say: "And a regression test for the cache itself.",
-    tools: [["write", { file_path: "tests/test_cache.py", content: TEST_CACHE, display_description: "Add TokenCache tests" }]] },
+  { say: "The cache gets a size, and a regression test.",
+    tools: [
+      ["apply_patch", { path: "auth/token_cache.py", display_description: "TokenCache.__len__", patch:
+        "@@ -11,2 +11,5 @@\n     def store(self, user_id, token):\n         self._tokens[user_id] = token\n+\n+    def __len__(self):\n+        return len(self._tokens)\n" }],
+      ["write", { file_path: "tests/test_cache.py", content: TEST_CACHE, display_description: "Add TokenCache tests" }],
+    ] },
   { tools: [
       ["test", { command: "python3 -m unittest" }],
-      ["git_diff", { display_description: "Review the change" }],
+      ["diagnostics", { command: "python3 -m py_compile auth/handler.py auth/token_cache.py", display_description: "Compile check" }],
+      ["shell", { command: PY_CHECK, display_description: "Count network calls" }],
     ] },
-  { say: "All green. Checking what changed, and noting the invariant for next time.",
-    tools: [
-      ["git_status", { display_description: "Working tree" }],
+  { say: "All green, and one network call for three lookups. Reviewing:",
+    tools: [["git_diff", { display_description: "Review the change" }], ["git_status", { display_description: "Working tree" }]] },
+  { tools: [
       ["todo", TODOS(5)],
       ["remember", { text: "auth: resolve() must stay cache-first via auth/token_cache.TokenCache", tags: ["auth"] }],
     ] },
-  { final: "Fixed — ready to commit.\n\n- **auth/handler.py** — `resolve()` checks `TokenCache` first, calls `fetch_remote` only on a miss\n- **tests/test_cache.py** — new regression tests for the cache\n- 4/4 tests pass; three lookups of one user now make **one** network call" },
+  { final: "Fixed, ready to commit.\n\n- **auth/handler.py** — `resolve()` checks `TokenCache` first, calls `fetch_remote` only on a miss\n- **auth/token_cache.py** — `len(cache)`\n- **tests/test_cache.py** — regression tests for the cache\n- 4/4 tests pass; three lookups of one user now make **one** network call" },
+];
+
+// the explorer subagent's own conversation (its first user message is the task prompt)
+const SUB_STEPS = [
+  { tools: [
+      ["search_structural", { pattern: "fetch_remote($$$)" }],
+      ["aggregate", { pattern: "fetch_remote", by: "file" }],
+    ] },
+  { final: "One call site: `auth/handler.py:6` in `resolve()`. `net/remote.py` only defines it; the tests reach it through `resolve`." },
 ];
 
 function chunk(delta, finish = null) {
@@ -201,7 +236,10 @@ const done = new Promise((r) => (finished = r));
 async function respond(res, messages) {
   const lastUser = messages.map((m) => m.role).lastIndexOf("user");
   const turn = messages.slice(lastUser + 1).filter((m) => m.role === "assistant").length;
-  const step = STEPS[Math.min(turn, STEPS.length - 1)];
+  const text = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((p) => p.text || "").join("") : "");
+  const sub = messages.some((m) => m.role === "user" && text(m.content).includes(SUBAGENT_PROMPT));
+  const script = sub ? SUB_STEPS : STEPS;
+  const step = script[Math.min(turn, script.length - 1)];
   const toolResults = messages.filter((m) => m.role === "tool").length;
   await sleep(MODEL_TTFT_MS);
   send(res, chunk({ role: "assistant", content: "" }));
@@ -209,7 +247,7 @@ async function respond(res, messages) {
   if (step.final) {
     await streamText(res, step.final);
     send(res, chunk({}, "stop"));
-    setTimeout(finished, 2500);
+    if (step === STEPS[STEPS.length - 1]) setTimeout(finished, 2500);
   } else {
     // a batch of calls, each with its own index; arguments stream in so the
     // cards fill live
@@ -243,6 +281,8 @@ const srv = http.createServer((req, res) => {
     req.on("data", (c) => (body += c));
     req.on("end", async () => {
       const b = JSON.parse(body);
+      // DEMO_DUMP_TOOLS=file: write the tool schemas agentty offers the model
+      if (process.env.DEMO_DUMP_TOOLS && b.tools?.length) fs.writeFileSync(process.env.DEMO_DUMP_TOOLS, JSON.stringify(b.tools, null, 1));
       res.writeHead(200, { "content-type": "text/event-stream" });
       if (!b.tools || !b.tools.length) {          // side request: thread title
         send(res, chunk({ role: "assistant", content: "Cache-first token resolve" }));

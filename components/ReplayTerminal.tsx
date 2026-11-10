@@ -204,14 +204,17 @@ export function ReplayTerminal({
       const token = ++switching;
       await fetchScreen(t);
       if (disposed || token !== switching || t === theme) return;
-      const at = ended ? Infinity : i;               // frames already shown
+      // where we are, in recorded time (the two recordings can differ by a
+      // few frames, so match by time, not by frame number)
+      const at = ended ? Infinity : i > 0 ? due[i - 1] : -1;
       const top = grid.scrollTop;
       use(t);
       for (let y = rowEls.length - 1; y >= rows; y--) rowEls[y].remove();
       rowEls.length = rows; cells.length = rows;
       for (let y = 0; y < rows; y++) { cells[y].forEach((c) => c.el.remove()); cells[y].clear(); }
       pending = new Array(data!.lines ?? rows).fill(null); pendingRows = [];
-      const n = Math.min(at, data!.frames.length);
+      let n = 0;
+      while (n < data!.frames.length && (n === 0 || due[n] <= at)) n++;
       for (let k = 0; k < n; k++) queue(data!.frames[k]);
       const keep = follow;
       flush();
@@ -312,10 +315,12 @@ export function ReplayTerminal({
         <button type="button" className="replay-again" hidden>replay ↻</button>
       </div>
       <p className="sr-only">
-        Recorded agentty session: it plans the work, runs the failing tests, maps the project with
-        parallel list, grep and find-definition calls, reads and outlines the code, edits resolve()
-        to use the token cache, writes a regression test, re-runs the tests (all pass), reviews the
-        diff and git status, and saves a memory.
+        Recorded agentty session: it plans the work and maps the repo, runs the failing tests and
+        reads the git history, searches the code by meaning, by text, by file pattern and by symbol,
+        queries the config, reads, outlines and filters the source, sends a subagent to find every
+        caller, edits resolve() to use the token cache, patches the cache and writes a regression
+        test, re-runs the tests, compiles and checks the network calls (all pass), reviews the diff
+        and git status, and saves a memory.
       </p>
     </div>
   );
