@@ -21,7 +21,7 @@ import container from "markdown-it-container";
 import { highlight } from "./highlight";
 import { slash } from "./url";
 import captured from "./captured.generated.json";
-import { clips, clipForKey } from "./clips";
+import { clips, clipFor } from "./clips";
 
 // ```run blocks: the command, then its real output from the binary, captured
 // at build by scripts/capture-output.mjs. The copy button copies the command.
@@ -56,7 +56,7 @@ const CALLOUTS: Record<string, [string, string]> = {
   warn: ["warn", "Warning"], warning: ["warn", "Warning"], caution: ["warn", "Caution"], danger: ["warn", "Danger"],
 };
 
-type Env = { ids: Map<string, number>; headings: MdHeading[] };
+type Env = { ids: Map<string, number>; headings: MdHeading[]; sections?: string[] };
 
 function build(): MD {
   const md = new MarkdownIt({ html: false, linkify: false, typographer: false });
@@ -75,8 +75,11 @@ function build(): MD {
     return true;
   });
   // a key with a recorded clip shows the real agentty doing it on hover
-  md.renderer.rules.kbd = (tokens, i) => {
-    const clip = clipForKey(tokens[i].content);
+  // which clip depends on where the key is mentioned: Ctrl+R reviews diffs in
+  // the main view but renames a thread in the thread list (scripts/demo-clips.mjs)
+  md.renderer.rules.kbd = (tokens, i, _o, envAny) => {
+    const env = envAny as Env;
+    const clip = clipFor(tokens[i].content, env.sections ?? []);
     return clip
       ? `<kbd class="clip-ref" data-clip="${clip}" tabindex="0">${esc(tokens[i].content)}</kbd>`
       : `<kbd>${esc(tokens[i].content)}</kbd>`;
@@ -129,6 +132,8 @@ function build(): MD {
     env.ids.set(base, n + 1);
     const id = n ? `${base}-${n}` : base;
     env.headings.push({ id, text: plain.trim(), level });
+    // the section path a key is mentioned under ([h2, h3, …])
+    env.sections = [...(env.sections ?? []).slice(0, Math.max(0, level - 2)), plain.trim()];
     (tokens[i] as unknown as { _id: string })._id = id;
     return `<h${level} id="${id}">`;
   };
@@ -147,7 +152,11 @@ function build(): MD {
     // [the command palette](clip:command-palette): hover shows the clip
     if (href.startsWith("clip:")) {
       const id = href.slice(5);
-      if (!clips[id]) throw new Error(`markdown: unknown clip "${id}" (scripts/demo-clips.mjs)`);
+      // not recorded (yet): just the words
+      if (!clips[id]) {
+        for (let j = i + 1; j < tokens.length; j++) if (tokens[j].type === "link_close") { tokens[j].tag = "span"; break; }
+        return "<span>";
+      }
       for (let j = i + 1; j < tokens.length; j++) if (tokens[j].type === "link_close") { tokens[j].tag = "span"; break; }
       return `<span class="clip-ref" data-clip="${id}" tabindex="0" role="button">`;
     }

@@ -91,8 +91,8 @@ the real output, labelled `output from v0.9.51, captured at build`.
 Hover (or tap, or focus) a key like `Ctrl+K`, or a phrase with a dotted
 magenta underline, and a small window plays a few seconds of the real
 agentty doing it. Clips are recorded from the binary in a PTY with a scripted
-model (scripts/demo-clips.mjs, `node scripts/record-clips.mjs`), in both
-themes, and load only when asked for. In markdown: any `[[key]]` with a clip
+model, in both themes, load only when asked for, and re-record themselves
+when agentty changes (RECORDINGS.md). In markdown: any `[[key]]` with a clip
 lights up by itself; `[text](clip:<id>)` marks a phrase. Raw markdown and the
 terminal edition show plain text.
 

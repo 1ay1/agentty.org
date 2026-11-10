@@ -230,12 +230,14 @@ async function streamText(res, text) {
 let callSeq = 0;
 let finished;                                   // resolves once the final answer has streamed
 const done = new Promise((r) => (finished = r));
+let answered = 0;                               // final answers streamed so far (clips send several messages)
+const answersReach = async (n, ms) => { const end = Date.now() + ms; while (answered < n && Date.now() < end) await sleep(50); };
 async function respond(res, messages) {
   const lastUser = messages.map((m) => m.role).lastIndexOf("user");
   const turn = messages.slice(lastUser + 1).filter((m) => m.role === "assistant").length;
   const text = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((p) => p.text || "").join("") : "");
   const sub = messages.some((m) => m.role === "user" && text(m.content).includes(SUBAGENT_PROMPT));
-  const script = sub ? SUB_STEPS : CLIP?.steps ?? STEPS;
+  const script = sub ? SUB_STEPS : CLIP ? CLIP.steps ?? [{ final: "Done." }] : STEPS;
   const step = script[Math.min(turn, script.length - 1)];
   const toolResults = messages.filter((m) => m.role === "tool").length;
   await sleep(MODEL_TTFT_MS);
@@ -244,7 +246,7 @@ async function respond(res, messages) {
   if (step.final) {
     await streamText(res, step.final);
     send(res, chunk({}, "stop"));
-    if (step === (CLIP?.steps ?? STEPS).at(-1)) setTimeout(finished, CLIP ? 300 : 2500);
+    if (step === script.at(-1) && !sub) setTimeout(() => { answered++; finished(); }, CLIP ? 300 : 2500);
   } else {
     // a batch of calls, each with its own index; arguments stream in so the
     // cards fill live
@@ -282,7 +284,12 @@ const srv = http.createServer((req, res) => {
       if (process.env.DEMO_DUMP_TOOLS && b.tools?.length) fs.writeFileSync(process.env.DEMO_DUMP_TOOLS, JSON.stringify(b.tools, null, 1));
       res.writeHead(200, { "content-type": "text/event-stream" });
       if (!b.tools || !b.tools.length) {          // side request: thread title
-        send(res, chunk({ role: "assistant", content: "Cache-first token resolve" }));
+        // a clip's thread is titled from the message its script typed into it
+        const seen = JSON.stringify(b.messages);
+        const typed = CLIP ? CLIP.keys.filter((k) => k.type && k.type.length > 6 && seen.includes(k.type)).map((k) => k.type) : [];
+        const pick = typed.sort((x, y) => seen.lastIndexOf(y) - seen.lastIndexOf(x))[0] ?? "";
+        const title = CLIP ? pick.replace(/[^\w\s]/g, " ").trim().replace(/^\w/, (c) => c.toUpperCase()) || "New thread" : "Cache-first token resolve";
+        send(res, chunk({ role: "assistant", content: title }));
         send(res, chunk({}, "stop"));
         res.write("data: [DONE]\n\n");
         return res.end();
@@ -298,6 +305,7 @@ await new Promise((r) => srv.listen(11434, "::", r)); // dual-stack: localhost �
 
 // ── run the real binary in a PTY and record ─────────────────────────────────
 const frames = [];
+const MARKS = {};
 const t0 = Date.now();
 let last = t0;
 const env = { ...process.env, HOME: "/home/dev", USER: "dev", TERM: "xterm-256color", COLORTERM: "truecolor", AGENTTY_PROFILE: "write",
@@ -319,6 +327,8 @@ const answerQueries = (p, d) => {
   // like a real terminal configured with the scheme: report default fg/bg
   if (d.includes("\x1b]10;?")) p.write(`\x1b]10;${osc(TERM_COLORS.fg)}\x1b\\`);
   if (d.includes("\x1b]11;?")) p.write(`\x1b]11;${osc(TERM_COLORS.bg)}\x1b\\`);
+  // a clip that needs Ctrl+Tab / Shift+Enter answers the kitty keyboard query
+  if (CLIP?.kitty && d.includes("\x1b[?u")) p.write("\x1b[?0u");
 };
 pty.onData((d) => { answerQueries(pty, d); const now = Date.now(); frames.push([now - last, d]); last = now; });
 
@@ -330,11 +340,15 @@ if (CLIP) {
   // a clip: its own key script. { type } types at a steady cadence (one key per
   // 30fps tick), { key } sends raw bytes, { wait } pauses, { done } waits for
   // the scripted model to finish its answer
+  let waited = 0;
   for (const a of CLIP.keys) {
-    if (a.wait) await sleep(a.wait);
+    // a mark names the settled screen of its pause: taken ¾ of the way in, so
+    // it never races the next key
+    if (a.wait && a.mark) { await sleep(a.wait * 0.75); MARKS[a.mark] = Date.now() - t0; await sleep(a.wait * 0.25); }
+    else { if (a.wait) await sleep(a.wait); if (a.mark) MARKS[a.mark] = Date.now() - t0; }
     if (a.type) for (const ch of a.type) { pty.write(ch); await sleep(1000 / (a.cps ?? 30)); }
     if (a.key) pty.write(a.key);
-    if (a.done) await Promise.race([done, sleep(30000)]);
+    if (a.done) await answersReach(++waited, 30000);
   }
 } else {
   const prompt = "test_handler is failing — make resolve() use the token cache and add a test";
@@ -351,16 +365,17 @@ srv.close();
 
 // merge sub-8ms bursts and cap idle gaps: smaller file, tighter pacing
 const compact = [];
+let carry = 0;   // time of chunks merged into the previous one: kept, so the timeline stays true
 for (const [d, s] of frames) {
-  const dd = Math.min(d, 1200);
-  if (compact.length && dd < 8) compact[compact.length - 1][1] += s;
-  else compact.push([dd, s]);
+  const dd = CLIP ? d : Math.min(d, 1200);   // clips keep real time (their `expect` marks are wall time)
+  if (compact.length && dd < 8) { compact[compact.length - 1][1] += s; carry += dd; }
+  else { compact.push([dd + carry, s]); carry = 0; }
 }
 const all = frames.map((f) => f[1]).join("");
 const leaks = all.includes(os.homedir()) || all.includes(SCRATCH);
 if (!leaks) {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify({ cols: COLS, rows: ROWS, startMs, theme: { name: THEME, ...TERM_COLORS }, frames: compact }));
+  fs.writeFileSync(OUT, JSON.stringify({ cols: COLS, rows: ROWS, startMs, marks: MARKS, theme: { name: THEME, ...TERM_COLORS }, frames: compact }));
 }
 console.log(`frames=${compact.length} bytes=${Buffer.byteLength(all)} host-path-leak=${leaks}${leaks ? " (NOT written)" : ""}`);
 if (!CLIP) console.log("handler.py after:\n" + fs.readFileSync(path.join(work, "auth/handler.py"), "utf8"));

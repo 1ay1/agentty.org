@@ -51,6 +51,19 @@ function triggerDeploy(reason) {
   }, 3000);
 }
 
+// A new agentty release also re-records the demos (deploy/recordings.sh). It
+// takes minutes and pushes its own commit when done; start it after the
+// release assets have had a moment to land.
+const RECORDINGS = process.env.RECORDINGS || "/home/ayush/projects/agentpp-site/deploy/recordings.sh";
+function triggerRecordings(reason) {
+  setTimeout(() => {
+    log(`launching recordings (${reason})`);
+    const child = spawn("bash", [RECORDINGS], { detached: true, stdio: "ignore" });
+    child.on("error", (e) => log("recordings spawn error:", e.message));
+    child.unref();
+  }, 60000);
+}
+
 function verify(sigHeader, body) {
   if (!sigHeader) return false;
   const expected = "sha256=" + createHmac("sha256", SECRET).update(body).digest("hex");
@@ -157,6 +170,7 @@ const server = createServer((req, res) => {
       }
       log(`release ${action} on ${payload.repository?.full_name} → deploy (refresh version/sizes)`);
       triggerDeploy(`release ${action}`);
+      if (action === "published" || action === "released") triggerRecordings(`release ${action}`);
       res.writeHead(202);
       return res.end("deploy queued\n");
     }

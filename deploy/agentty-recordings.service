@@ -1,0 +1,11 @@
+[Unit]
+Description=agentty.org recordings: re-record the home demo and docs clips when agentty changes
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ayush
+Nice=10
+TimeoutStartSec=90min
+ExecStart=/usr/bin/bash /home/ayush/projects/agentpp-site/deploy/recordings.sh

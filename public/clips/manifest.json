@@ -1,0 +1,101 @@
+{
+  "clips": {
+    "command-palette": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "model-picker": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "provider-picker": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "todo-plan": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "inspect-outputs": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "smart-mode": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "thread-list": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "slash-commands": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "file-mention": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "composer-expand": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "multiline": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "queue": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "diff-review": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "fork": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "rewind": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "run-code": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "profiles": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "permission-prompt": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "new-thread": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "symbol-picker": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "editing": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "history": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "model-swap": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    },
+    "thread-cycle": {
+      "version": "0.9.51",
+      "recorded": "2026-11-10"
+    }
+  },
+  "agentty": "0.9.51"
+}
