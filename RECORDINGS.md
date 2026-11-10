@@ -1,8 +1,9 @@
 # Recordings
 
-Everything that shows agentty moving on agentty.org is a real recording of
-the real binary: the session on the home page, and the clips in the docs
-(hover a key like `Ctrl+K`, or a phrase with a dotted underline). They're
+Everything that shows agentty moving is a real recording of the real binary:
+the session on the home page, the clips in the docs (hover a key like
+`Ctrl+K`, or a phrase with a dotted underline), and the README's GIF
+(https://agentty.org/agentty.gif, the home session filmed off the live page). They're
 recorded in a PTY with a scripted model, in both of agentty's themes, and
 they stay current by themselves.
 
@@ -21,6 +22,12 @@ Nothing broken is published:
   finished, none half-drawn or duplicated),
 - every clip must pass its own `expect` checks (text that has to be on
   screen at a named moment).
+
+A recording that shows the same UI as the published one (timings and
+spinners aside) keeps the published file, so a release that didn't change
+the UI adds nothing to git. The raw PTY captures are never committed. The
+GIF lives in `/var/www/agentty-media`, outside git and the deploy, and is
+re-filmed (`scripts/render-gif.mjs`) once a new home session is live.
 
 A recording that fails keeps its last good version and is listed in the log
 (`/tmp/agentty-recordings.log`). Usually that means agentty's UI changed and

@@ -155,6 +155,16 @@ server {
         add_header Content-Security-Policy "default-src 'none'; connect-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'" always;
     }
 
+    # The README's picture of agentty: the home demo filmed by
+    # deploy/recordings.sh. Lives outside the site build (and git), so the
+    # deploy's rsync --delete never removes it and it never bloats the repo.
+    location = /agentty.gif {
+        root /var/www/agentty-media;
+        add_header Cache-Control "public, max-age=3600" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Access-Control-Allow-Origin "*" always;
+    }
+
     # The one-line installer advertised on the site & social cards.
     # Serve the raw shell script with a sane content-type and no caching
     # so `curl -fsSL https://agentty.org/install.sh | sh` always gets latest.
