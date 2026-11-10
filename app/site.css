@@ -593,7 +593,8 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
   overflow-x: hidden;
   overflow-y: auto;
   overflow-anchor: none;
-  overscroll-behavior: contain;
+  /* at its top or bottom, the wheel / swipe carries on to the page */
+  overscroll-behavior-y: auto;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--replay-thumb) transparent;
