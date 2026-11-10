@@ -139,9 +139,10 @@ export const CLIPS = {
   "thread-cycle": {
     title: "Quick-cycle threads", on: [{ keys: ["Alt+←/→", "Ctrl+←/→", "Alt+←", "Alt+→"] }], ...SIZE, steps: ANSWER("Done."),
     keys: [{ wait: 300 }, ...say("explain the token cache", 60), { key: C("n") }, { wait: 500 }, ...say("why are the tests slow", 60),
-      // agentty 0.9.51: the cycle keys use the thread list as last loaded (the
-      // first press only loads it); opening the list once loads both threads
-      { key: C("j") }, { wait: 900 }, { key: KEY.esc }, { wait: 700 }, { key: KEY.altLeft }, { wait: 1600, mark: "older" }, { key: KEY.altRight }, { wait: 1600 }],
+      // no Ctrl+J first: since agentty fdfdefbb, Alt+←/→ see threads made this
+      // session (0.9.51 said "no other threads yet"; that recording stays until
+      // a release passes these checks)
+      { wait: 800 }, { key: KEY.altLeft }, { wait: 1600, mark: "older" }, { key: KEY.altRight }, { wait: 1600 }],
     expect: [{ at: "older", has: "explain the token cache" }, { at: "end", has: "why are the tests slow" }],
   },
 
