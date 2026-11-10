@@ -21,8 +21,14 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { spawn: ptySpawn } = createRequire(path.join(ROOT, "deploy/live/package.json"))("node-pty");
 
 const LIGHT = /light/i.test(process.env.DEMO_THEME || "");
-const OUT = process.argv[2] || path.join(ROOT, LIGHT ? "demo/session-light.json" : "demo/session.json");
-const SCREEN = process.argv[3] || path.join(ROOT, LIGHT ? "lib/demo-screen-light.json" : "lib/demo-screen.json");
+// DEMO_CLIP=<id>: record one short clip from scripts/demo-clips.mjs instead
+// of the home page session (the docs show these on hover)
+const CLIP_ID = process.env.DEMO_CLIP || "";
+const CLIP = CLIP_ID ? (await import("./demo-clips.mjs")).CLIPS[CLIP_ID] : null;
+if (CLIP_ID && !CLIP) throw new Error(`no clip "${CLIP_ID}" in scripts/demo-clips.mjs`);
+const sfx = LIGHT ? "-light" : "";
+const OUT = process.argv[2] || path.join(ROOT, CLIP ? `demo/clips/${CLIP_ID}${sfx}.json` : `demo/session${sfx}.json`);
+const SCREEN = process.argv[3] || path.join(ROOT, CLIP ? `public/clips/${CLIP_ID}${sfx}.json` : `lib/demo-screen${sfx}.json`);
 // The binary: AGENTTY_BIN, else the LATEST GitHub release (so the demo always
 // shows the current UI), downloaded once into the temp dir.
 async function latestRelease() {
@@ -41,7 +47,7 @@ async function latestRelease() {
 }
 const AGENTTY_BIN = process.env.AGENTTY_BIN || await latestRelease();
 const MODEL = "qwen3-coder:30b";
-const COLS = 96, ROWS = 32;
+const COLS = CLIP?.cols ?? 96, ROWS = CLIP?.rows ?? 32;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ── a tiny, real Python project for agentty to work on ──────────────────────────
@@ -229,7 +235,7 @@ async function respond(res, messages) {
   const turn = messages.slice(lastUser + 1).filter((m) => m.role === "assistant").length;
   const text = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((p) => p.text || "").join("") : "");
   const sub = messages.some((m) => m.role === "user" && text(m.content).includes(SUBAGENT_PROMPT));
-  const script = sub ? SUB_STEPS : STEPS;
+  const script = sub ? SUB_STEPS : CLIP?.steps ?? STEPS;
   const step = script[Math.min(turn, script.length - 1)];
   const toolResults = messages.filter((m) => m.role === "tool").length;
   await sleep(MODEL_TTFT_MS);
@@ -238,7 +244,7 @@ async function respond(res, messages) {
   if (step.final) {
     await streamText(res, step.final);
     send(res, chunk({}, "stop"));
-    if (step === STEPS[STEPS.length - 1]) setTimeout(finished, 2500);
+    if (step === (CLIP?.steps ?? STEPS).at(-1)) setTimeout(finished, CLIP ? 300 : 2500);
   } else {
     // a batch of calls, each with its own index; arguments stream in so the
     // cards fill live
@@ -265,7 +271,7 @@ const srv = http.createServer((req, res) => {
   }
   if (req.method === "GET" && url.includes("models")) {
     res.writeHead(200, { "content-type": "application/json" });
-    return res.end(JSON.stringify({ object: "list", data: [{ id: MODEL, object: "model" }] }));
+    return res.end(JSON.stringify({ object: "list", data: (CLIP?.models ?? [MODEL]).map((id) => ({ id, object: "model" })) }));
   }
   if (req.method === "POST" && url.startsWith("/v1/chat/completions")) {
     let body = "";
@@ -320,13 +326,25 @@ await sleep(900);
 // replay opens on the settled welcome screen and goes straight into typing:
 // no dead air before the first keystroke
 const startMs = Math.max(0, Date.now() - t0 - 1000 / 30);
-const prompt = "test_handler is failing — make resolve() use the token cache and add a test";
-// one keystroke per 30fps tick: agentty redraws on every key, so a steady
-// cadence gives the replay an even frame rate while typing
-for (const ch of prompt) { pty.write(ch); await sleep(1000 / 30); }
-await sleep(1000 / 30);
-pty.write("\r");
-await Promise.race([done, sleep(Number(process.env.RUN_MS || 60000))]);
+if (CLIP) {
+  // a clip: its own key script. { type } types at a steady cadence (one key per
+  // 30fps tick), { key } sends raw bytes, { wait } pauses, { done } waits for
+  // the scripted model to finish its answer
+  for (const a of CLIP.keys) {
+    if (a.wait) await sleep(a.wait);
+    if (a.type) for (const ch of a.type) { pty.write(ch); await sleep(1000 / (a.cps ?? 30)); }
+    if (a.key) pty.write(a.key);
+    if (a.done) await Promise.race([done, sleep(30000)]);
+  }
+} else {
+  const prompt = "test_handler is failing — make resolve() use the token cache and add a test";
+  // one keystroke per 30fps tick: agentty redraws on every key, so a steady
+  // cadence gives the replay an even frame rate while typing
+  for (const ch of prompt) { pty.write(ch); await sleep(1000 / 30); }
+  await sleep(1000 / 30);
+  pty.write("\r");
+  await Promise.race([done, sleep(Number(process.env.RUN_MS || 60000))]);
+}
 
 pty.kill();
 srv.close();
@@ -345,7 +363,7 @@ if (!leaks) {
   fs.writeFileSync(OUT, JSON.stringify({ cols: COLS, rows: ROWS, startMs, theme: { name: THEME, ...TERM_COLORS }, frames: compact }));
 }
 console.log(`frames=${compact.length} bytes=${Buffer.byteLength(all)} host-path-leak=${leaks}${leaks ? " (NOT written)" : ""}`);
-console.log("handler.py after:\n" + fs.readFileSync(path.join(work, "auth/handler.py"), "utf8"));
+if (!CLIP) console.log("handler.py after:\n" + fs.readFileSync(path.join(work, "auth/handler.py"), "utf8"));
 fs.rmSync(SCRATCH, { recursive: true, force: true });
 if (leaks) process.exit(1);
 

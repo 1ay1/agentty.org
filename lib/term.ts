@@ -183,7 +183,8 @@ function inline(children: Token[] | null, base: Style = {}, ticks = true): Seg[]
       case "em_open": stack.push({ ...top(), i: true }); break;
       case "s_open": stack.push({ ...top(), d: true }); break;
       case "link_open": {
-        const href = absUrl(String(t.attrGet("href") ?? ""));
+        const raw = String(t.attrGet("href") ?? "");
+        const href = raw.startsWith("clip:") ? "" : absUrl(raw);
         stack.push(href ? { ...top(), u: true, href } : { ...top() });
         break;
       }

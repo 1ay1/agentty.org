@@ -73,7 +73,8 @@ function loadDoc(filename: string): Doc {
     html: md.html,
     headings: md.headings.filter((h) => h.level === 2 || h.level === 3),
     file: filename,
-    source: `# ${data.title || slug}\n\n${desc ? desc + "\n\n" : ""}${content.replace(/^\s*#\s+.*\n/, "").trim()}\n`,
+    // raw markdown for copy-page / LLMs: clip links are a web-only effect, keep their text
+    source: `# ${data.title || slug}\n\n${desc ? desc + "\n\n" : ""}${content.replace(/^\s*#\s+.*\n/, "").trim().replace(/\[([^\]]+)\]\(clip:[a-z0-9-]+\)/g, "$1")}\n`,
   };
 }
 

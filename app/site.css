@@ -563,11 +563,32 @@ td .bench-range { display: block; }
 .home-license a { color: var(--text-faint); }
 .home-license a:hover { color: var(--text); }   /* its own line under the links */
 
+/* ── clips: hover a key or a dotted phrase in the docs ─────────────────── */
+/* the trigger: keys keep their key look plus a dotted accent underline; a
+   phrase gets the same dotted line, so "this one moves" reads at a glance */
+.clip-ref { cursor: help; text-decoration: underline dotted var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+kbd.clip-ref { text-underline-offset: 5px; }
+.clip-ref:hover, .clip-ref:focus-visible { color: var(--accent); outline: none; }
+.clip-peek {
+  position: fixed; z-index: 250; width: 560px; max-width: calc(100vw - 16px);
+  background: var(--replay-bg, var(--bg)); border: 1px solid var(--border);
+  box-shadow: 0 10px 40px -12px color-mix(in srgb, #000 55%, transparent);
+  pointer-events: auto;
+}
+.clip-peek-head { display: flex; gap: 6px; align-items: baseline; padding: 6px 12px 0; font-size: var(--fs-xs); color: var(--text-faint); font-weight: 700; }
+.clip-peek-mark { color: var(--accent); }
+.clip-peek-title { font-weight: 400; }
+.clip-peek-term { border: 0; }
+.clip-peek .replay-screen { padding: 8px 10px 10px 12px; }
+.clip-peek .replay-grid { --sb: 0px; overflow: hidden; }
+.clip-peek[data-loading] .replay-grid { min-height: 8em; }
+@media (prefers-reduced-motion: reduce) { .clip-peek { box-shadow: none; } }
+
 /* ── demo terminal (ReplayTerminal) ───────────────────────────────────── */
 .replay { position: relative; border: 1px solid var(--border); background: var(--replay-bg); contain: layout style; isolation: isolate;
   /* agentty's own Flexoki Dark / Flexoki Light terminal colours, per site theme */
   --replay-bg: #100f0f; --replay-thumb: #403e3c; --replay-thumb-hover: #575653; }
-html[data-theme="light"] .replay { --replay-bg: #fffcf0; --replay-thumb: #cecdc3; --replay-thumb-hover: #b7b5ac; }
+html[data-theme="light"] .replay, html[data-theme="light"] .clip-peek { --replay-bg: #fffcf0; --replay-thumb: #cecdc3; --replay-thumb-hover: #b7b5ac; }
 /* before the player loads, the opening frame that matches the theme shows */
 .replay-grid[data-for]:not([data-live]) { display: none; }
 html:not([data-theme="light"]) .replay-grid[data-for="dark"]:not([data-live]),

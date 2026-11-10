@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { ReleaseTable } from "./ReleaseTable";
 import { BenchBars } from "./BenchBars";
 import { DocEnhance } from "./DocEnhance";
+import { ClipPeek } from "./ClipPeek";
 
 // Server component: the docs HTML is complete at build time — highlighted code,
 // copy buttons, heading anchors, and directive blocks (the release table is
@@ -26,6 +27,7 @@ export function DocBody({ html }: { html: string }) {
         ),
       )}
       <DocEnhance />
+      {/<[^>]+data-clip=/.test(html) && <ClipPeek />}
     </div>
   );
 }

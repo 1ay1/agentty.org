@@ -86,6 +86,16 @@ A ```` ```run ```` block holds one `agentty …` command. At build,
 scripts/capture-output.mjs runs it against the real binary and the docs show
 the real output, labelled `output from v0.9.51, captured at build`.
 
+## Clips: the docs show the real program
+
+Hover (or tap, or focus) a key like `Ctrl+K`, or a phrase with a dotted
+magenta underline, and a small window plays a few seconds of the real
+agentty doing it. Clips are recorded from the binary in a PTY with a scripted
+model (scripts/demo-clips.mjs, `node scripts/record-clips.mjs`), in both
+themes, and load only when asked for. In markdown: any `[[key]]` with a clip
+lights up by itself; `[text](clip:<id>)` marks a phrase. Raw markdown and the
+terminal edition show plain text.
+
 ## Not this
 
 No fake `ls -la` listings, typing animations, ASCII-art borders or other
