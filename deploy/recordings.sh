@@ -34,7 +34,7 @@ git -C "$WORK" clean -qfd
 # playwright-core); install any the site has gained since they were installed
 [ -e "$WORK/node_modules" ] || ln -s "$SITE/node_modules" "$WORK/node_modules"
 [ -e "$WORK/deploy/live/node_modules" ] || ln -s "$SITE/deploy/live/node_modules" "$WORK/deploy/live/node_modules"
-if ! (cd "$WORK" && node -e 'for (const d of Object.keys({...require("./package.json").dependencies, ...require("./package.json").devDependencies})) require.resolve(d + "/package.json")' 2>/dev/null); then
+if ! (cd "$WORK" && node -e 'const fs = require("fs"), p = require("./package.json"); for (const d of Object.keys({ ...p.dependencies, ...p.devDependencies })) if (!fs.existsSync("node_modules/" + d)) process.exit(1)'); then
   echo "[$(ts)] recordings: installing new site dependencies" | tee -a "$LOG"
   (cd "$SITE" && git checkout -q origin/master -- package.json package-lock.json 2>/dev/null; npm install --no-audit --no-fund >>"$LOG" 2>&1)
 fi
