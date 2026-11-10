@@ -160,20 +160,15 @@ const STEPS = [
     tools: [["todo", TODOS(0)], ["repo_map", { focus: "resolve token cache", display_description: "Map the repo" }]] },
   { tools: [
       ["test", { command: "python3 -m unittest" }],
-      ["git_log", { count: 5, oneline: true, display_description: "Recent history" }],
+      ["git_log", { count: 4, oneline: true, display_description: "Recent history" }],
     ] },
   { say: "Three lookups, three network calls. Where does caching live?",
-    tools: [
-      ["search_code", { query: "where are auth tokens cached", k: 3 }],
-      ["grep", { pattern: "TokenCache" }],
-      ["glob", { pattern: "**/*.py" }],
-      ["find_definition", { symbol: "resolve" }],
-      ["json_query", { path: "config.json", query: ".cache" }],
-    ] },
+    tools: [["search_code", { query: "where are auth tokens cached", k: 2 }], ["grep", { pattern: "class TokenCache" }]] },
+  { tools: [["glob", { pattern: "auth/*.py" }], ["find_definition", { symbol: "resolve" }]] },
+  { tools: [["read", { path: "auth/handler.py" }], ["outline", { path: "auth/token_cache.py" }]] },
   { tools: [
-      ["read", { path: "auth/handler.py" }],
-      ["outline", { path: "auth/token_cache.py" }],
-      ["read_filter", { path: "net/remote.py", pattern: "CALLS|def ", context: 0 }],
+      ["read_filter", { path: "net/remote.py", pattern: "CALLS", context: 0 }],
+      ["json_query", { path: "config.json", query: ".cache" }],
     ] },
   { say: "Before changing `resolve`, a subagent checks who else calls `fetch_remote`.",
     tools: [["task", { agent_type: "explorer", prompt: SUBAGENT_PROMPT, display_description: "Find fetch_remote callers" }]] },
@@ -183,23 +178,19 @@ const STEPS = [
       { old_text: `    return fetch_remote(user_id)\n`,
         new_text: `    token = _cache.lookup(user_id)\n    if token is None:\n        token = fetch_remote(user_id)\n        _cache.store(user_id, token)\n    return token\n` },
     ] }]] },
-  { say: "The cache gets a size, and a regression test.",
-    tools: [
-      ["apply_patch", { path: "auth/token_cache.py", display_description: "TokenCache.__len__", patch:
-        "@@ -11,2 +11,5 @@\n     def store(self, user_id, token):\n         self._tokens[user_id] = token\n+\n+    def __len__(self):\n+        return len(self._tokens)\n" }],
-      ["write", { file_path: "tests/test_cache.py", content: TEST_CACHE, display_description: "Add TokenCache tests" }],
-    ] },
+  { say: "The cache gets a size, then a regression test.",
+    tools: [["apply_patch", { path: "auth/token_cache.py", display_description: "TokenCache.__len__", patch:
+      "@@ -11,2 +11,5 @@\n     def store(self, user_id, token):\n         self._tokens[user_id] = token\n+\n+    def __len__(self):\n+        return len(self._tokens)\n" }]] },
+  { tools: [["write", { file_path: "tests/test_cache.py", content: TEST_CACHE, display_description: "Add TokenCache tests" }]] },
   { tools: [
       ["test", { command: "python3 -m unittest" }],
       ["diagnostics", { command: "python3 -m py_compile auth/handler.py auth/token_cache.py", display_description: "Compile check" }],
-      ["shell", { command: PY_CHECK, display_description: "Count network calls" }],
     ] },
+  { tools: [["shell", { command: PY_CHECK, display_description: "Count network calls" }]] },
   { say: "All green, and one network call for three lookups. Reviewing:",
-    tools: [["git_diff", { display_description: "Review the change" }], ["git_status", { display_description: "Working tree" }]] },
-  { tools: [
-      ["todo", TODOS(5)],
-      ["remember", { text: "auth: resolve() must stay cache-first via auth/token_cache.TokenCache", tags: ["auth"] }],
-    ] },
+    tools: [["git_diff", { path: "auth/handler.py", display_description: "Review the change" }]] },
+  { tools: [["git_status", { display_description: "Working tree" }], ["todo", TODOS(5)]] },
+  { tools: [["remember", { text: "auth: resolve() must stay cache-first via auth/token_cache.TokenCache", tags: ["auth"] }]] },
   { final: "Fixed, ready to commit.\n\n- **auth/handler.py** — `resolve()` checks `TokenCache` first, calls `fetch_remote` only on a miss\n- **auth/token_cache.py** — `len(cache)`\n- **tests/test_cache.py** — regression tests for the cache\n- 4/4 tests pass; three lookups of one user now make **one** network call" },
 ];
 
