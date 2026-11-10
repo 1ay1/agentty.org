@@ -315,7 +315,7 @@ export function ReplayTerminal({
         <button type="button" className="replay-again" hidden>replay ↻</button>
       </div>
       <p className="sr-only">
-        Recorded agentty session: it plans the work and maps the repo, runs the failing tests and
+        Recorded agentty session: it reasons about the failing test, plans the work and maps the repo, runs the failing tests and
         reads the git history, searches the code by meaning, by text, by file pattern and by symbol,
         queries the config, reads, outlines and filters the source, sends a subagent to find every
         caller, edits resolve() to use the token cache, patches the cache and writes a regression

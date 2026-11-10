@@ -162,7 +162,8 @@ const PY_CHECK = "python3 -c \"from auth.handler import resolve; from net import
 const SUBAGENT_PROMPT = "Find every call to fetch_remote in this repo and report it as file:line.";
 
 const STEPS = [
-  { say: "I'll plan this, map the repo, then reproduce the failure.",
+  { think: "The test says three lookups should cost one network call. So resolve() isn't caching. Before guessing at a fix I want the failure on screen and a map of where tokens live.",
+    say: "I'll plan this, map the repo, then reproduce the failure.",
     tools: [["todo", TODOS(0)], ["repo_map", { focus: "resolve token cache", display_description: "Map the repo" }]] },
   { tools: [
       ["test", { command: "python3 -m unittest" }],
@@ -176,7 +177,8 @@ const STEPS = [
       ["read_filter", { path: "net/remote.py", pattern: "CALLS", context: 0 }],
       ["json_query", { path: "config.json", query: ".cache" }],
     ] },
-  { say: "Before changing `resolve`, a subagent checks who else calls `fetch_remote`.",
+  { think: "TokenCache already exists and resolve() never touches it, so the fix is small. But if anything else calls fetch_remote directly, a cache in resolve() won't cover it. Worth a quick check by someone else while I keep the context lean.",
+    say: "Before changing `resolve`, a subagent checks who else calls `fetch_remote`.",
     tools: [["task", { agent_type: "explorer", prompt: SUBAGENT_PROMPT, display_description: "Find fetch_remote callers" }]] },
   { say: "Only `resolve` does. Making it cache-first:",
     tools: [["edit", { path: "auth/handler.py", display_description: "Resolve through TokenCache", edits: [
@@ -222,9 +224,9 @@ const send = (res, o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
 const MODEL_TTFT_MS = Number(process.env.DEMO_TTFT_MS ?? 700);
 const MODEL_CHARS_PER_S = Number(process.env.DEMO_CHARS_PER_S ?? 320);
 const charDelay = (n) => sleep((n * 1000) / MODEL_CHARS_PER_S);
-async function streamText(res, text) {
+async function streamText(res, text, field = "content") {
   const parts = text.match(/\S+\s*|\s+/g) || [];
-  for (const p of parts) { send(res, chunk({ content: p })); await charDelay(p.length); }
+  for (const p of parts) { send(res, chunk({ [field]: p })); await charDelay(p.length); }
 }
 
 let callSeq = 0;
@@ -242,6 +244,9 @@ async function respond(res, messages) {
   const toolResults = messages.filter((m) => m.role === "tool").length;
   await sleep(MODEL_TTFT_MS);
   send(res, chunk({ role: "assistant", content: "" }));
+  // the model's reasoning, streamed the way reasoning models send it on the
+  // OpenAI wire (DeepSeek / vLLM / Ollama: reasoning_content beside content)
+  if (step.think) await streamText(res, step.think, "reasoning_content");
   if (step.say) await streamText(res, step.say + "\n");
   if (step.final) {
     await streamText(res, step.final);
