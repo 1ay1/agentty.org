@@ -123,7 +123,10 @@ the reader's own machine and draws the same bars.
 less's keys, Tab through the OSC 8 links, Enter follows one, `a` starts the
 real agentty. `ssh ssh.agentty.org docs/sandboxing` prints one page, like curl.
 
-"try it live" on the home page and `a` over SSH run the real binary against
+"try it live" runs the terminal on the server (deploy/live/screen.mjs,
+xterm-headless, like mosh) and sends the browser only changed rows as styled
+text; the page draws them as HTML in the terminal font (no emulator, no VT
+parsing on the phone). "try it live" and `a` over SSH run the real binary against
 a mock model, each session in bubblewrap: read-only root, empty /home and
 /tmp, no network (a bridge reaches only the mock's unix socket), its own pid
 namespace, a throwaway workdir.

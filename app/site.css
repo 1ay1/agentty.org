@@ -758,7 +758,7 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
   background: none; border: 0; color: var(--text-dim); font: inherit; font-size: var(--fs-sm);
 }
 .replay-again:hover { color: var(--accent); }
-/* "try it live": xterm takes the replay's exact box */
+/* "try it live": the server's terminal, drawn as rows in the replay's exact box */
 /* its font: JetBrains Mono with every glyph agentty draws, one cell wide
    (scripts/gen-term-font.py). Fetched only when a live session starts. */
 @font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-400.woff2) format("woff2"); font-weight: 400; font-style: normal; font-display: block; }
@@ -766,9 +766,22 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 @font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-400i.woff2) format("woff2"); font-weight: 400; font-style: italic; font-display: block; }
 @font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-700i.woff2) format("woff2"); font-weight: 700; font-style: italic; font-display: block; }
 .live-inline { position: absolute; inset: 0; z-index: 2; background: var(--replay-bg); padding: 10px 6px 10px 12px; }
-.live-inline .xterm { height: 100%; }
-.live-host { width: 100%; height: 100%; overflow: hidden; }
-.live-inline .xterm-viewport { background: transparent !important; }
+/* the grid: one div per row, spans placed by column (like the replay), in
+   the terminal font so every glyph is one 0.6em cell. Layout containment on
+   each row means repainting a row never lays out any other. */
+.lv { position: relative; font-family: "agentty term", var(--mono); line-height: var(--lh, 1.32em); white-space: pre;
+  font-kerning: none; font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0;
+  color: var(--lv-fg); width: calc(var(--cols, 80) * .6em); }
+.lv > div { position: relative; height: var(--lh, 1.32em); contain: layout style size; }   /* no paint clip: glyph edges must meet */
+.lv > div > span { position: absolute; top: 0; height: 100%; }
+html:not([data-theme="light"]) .live-inline { --lv-fg: #cecdc3; }
+html[data-theme="light"] .live-inline { --lv-fg: #100f0f; }
+.lv-cursor { position: absolute; left: 0; top: 0; width: .6em; height: 1.32em; background: var(--lv-fg); opacity: .75;
+  pointer-events: none; will-change: transform; font-family: "agentty term", var(--mono); }
+/* the keyboard's target: invisible, in place, 16px so iOS doesn't zoom */
+.lv-input { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0;
+  resize: none; font-size: 16px; caret-color: transparent; }
+.live-inline { touch-action: pan-x pinch-zoom; cursor: text; }
 .replay[data-live-on] .replay-again { display: none; }
 .live-try { background: none; border: 0; padding: 0; margin-left: 12px; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: 3px; }
 .live-try:hover { color: var(--accent-hover); }
@@ -870,8 +883,6 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
   /* a live agentty needs rows: the box grows while it runs */
   .replay[data-live-on] { min-height: min(720px, calc(100svh - var(--nav-h) - 72px)); }
   .live-inline { padding: 6px 4px 6px 6px; }
-  /* xterm's hidden input: 16px or iOS zooms the page when the keyboard opens */
-  .live-inline .xterm-helper-textarea { font-size: 16px !important; }
   /* the version stamp gets its own line; no leading separator there */
   .doc-version::before { content: none; }
   .doc-stamp { row-gap: 6px; }
