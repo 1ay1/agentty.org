@@ -20,15 +20,26 @@ declare global { interface Window { Terminal?: any; FitAddon?: any } }
 
 const V = "/vendor/xterm/";
 const SCRIPTS = [V + "xterm.js", V + "addon-fit.js"];
+// the terminal's own font (scripts/gen-term-font.py): every glyph agentty
+// draws, one cell wide. Without it 31 of agentty's 35 symbols came from
+// whatever system font had them, each its own width: broken lines, slow paints
+const TERM_FONT = '"agentty term"';
+const FONT_FILES = [V + "agentty-term-400.woff2", V + "agentty-term-700.woff2"];
+const loadFont = () =>
+  Promise.race([
+    Promise.all(["400", "700"].map((w) => document.fonts?.load(`${w} 12px ${TERM_FONT}`, "─█⠋✦"))).catch(() => {}),
+    new Promise((r) => setTimeout(r, 2500)),           // never hang the demo on a font
+  ]);
 const MIN_COLS = 54;          // ~10.5px on a phone; agentty lays its screen out at this width
 const MAX_FONT = 13;
 const LINE = 1;
 
 const hint = (rel: "prefetch" | "preload") => {
-  for (const href of [...SCRIPTS, V + "xterm.css"]) {
+  for (const href of [...SCRIPTS, V + "xterm.css", ...FONT_FILES]) {
     if (document.querySelector(`link[href="${href}"][rel="${rel}"]`)) continue;
     const l = Object.assign(document.createElement("link"), { rel, href });
-    if (rel === "preload") l.as = href.endsWith(".css") ? "style" : "script";
+    if (rel === "preload") l.as = href.endsWith(".css") ? "style" : href.endsWith(".woff2") ? "font" : "script";
+    if (href.endsWith(".woff2")) l.crossOrigin = "anonymous";
     document.head.appendChild(l);
   }
 };
@@ -56,9 +67,8 @@ const FLEXOKI = {
     brightBlack: "#b7b5ac", brightRed: "#d14d41", brightGreen: "#879a39", brightYellow: "#d0a215", brightBlue: "#4385be", brightMagenta: "#ce5d97", brightCyan: "#3aa99f", brightWhite: "#100f0f" },
 };
 
-// the font's real advance, in em (measured once: canvas text metrics use the
-// same font the terminal will, already loaded by the page). Height too: at
-// line height 1 xterm's row is the font's ascent + descent, not its size
+// the font's real advance and line height, in em, measured once it has
+// loaded (at line height 1 xterm's row is ascent + descent, not the font size)
 let advance = 0, tall = 0;
 function cellEm(family: string) {
   if (advance) return advance;
@@ -131,29 +141,34 @@ export function LiveTakeover() {
     setState("connecting");
     const end = (msg: string) => { if (!disposed) { setState("ended"); setNote(msg); } };
 
-    const family = getComputedStyle(document.body).fontFamily;
-    const size = fit(el, family);
+    const family = `${TERM_FONT}, ${getComputedStyle(document.body).fontFamily}`;
     const pending: (string | Uint8Array)[] = [];
     const scripts = loadAll();
-    const font = document.fonts?.ready ?? Promise.resolve();
-
-    // connect now, in parallel with xterm loading; buffer until the terminal exists
-    ws = new WebSocket(`${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/live/ws?cols=${size.cols}&rows=${size.rows}`);
-    ws.binaryType = "arraybuffer";
-    const timer = window.setTimeout(() => { if (ws?.readyState !== WebSocket.OPEN) { ws?.close(); end("the live demo isn't reachable right now"); } }, 8000);
-    ws.onopen = () => window.clearTimeout(timer);
-    ws.onmessage = (m) => {
-      if (typeof m.data === "string" && m.data.startsWith("{\"t\":")) {
-        try { const j = JSON.parse(m.data); if (j.t === "err" || j.t === "end") return end(j.m || "session ended"); } catch {}
-      }
-      const d = typeof m.data === "string" ? m.data : new Uint8Array(m.data);
-      if (term) term.write(d); else pending.push(d);
-    };
-    ws.onclose = () => end("session ended");
-    ws.onerror = () => end("the live demo isn't reachable right now");
+    let size = { fontSize: 12, cols: 80, rows: 24 };
+    let timer = 0;
 
     (async () => {
-      try { await Promise.all([scripts, font]); } catch { return end("couldn't load the terminal"); }
+      // the font first (preloaded on touch, so usually instant): the size is
+      // measured from it, and agentty starts at exactly that size
+      await loadFont();
+      if (disposed) return;
+      size = fit(el, family);
+      // connect while xterm finishes loading; bytes wait in `pending`
+      ws = new WebSocket(`${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/live/ws?cols=${size.cols}&rows=${size.rows}`);
+      ws.binaryType = "arraybuffer";
+      timer = window.setTimeout(() => { if (ws?.readyState !== WebSocket.OPEN) { ws?.close(); end("the live demo isn't reachable right now"); } }, 8000);
+      ws.onopen = () => window.clearTimeout(timer);
+      ws.onmessage = (m) => {
+        if (typeof m.data === "string" && m.data.startsWith("{\"t\":")) {
+          try { const j = JSON.parse(m.data); if (j.t === "err" || j.t === "end") return end(j.m || "session ended"); } catch {}
+        }
+        const d = typeof m.data === "string" ? m.data : new Uint8Array(m.data);
+        if (term) term.write(d); else pending.push(d);
+      };
+      ws.onclose = () => end("session ended");
+      ws.onerror = () => end("the live demo isn't reachable right now");
+
+      try { await scripts; } catch { return end("couldn't load the terminal"); }
       if (disposed) return;
       const light = document.documentElement.getAttribute("data-theme") === "light";
       term = new window.Terminal!({
@@ -214,7 +229,7 @@ export function LiveTakeover() {
         type="button"
         className="live-try"
         onPointerEnter={() => hint("preload")}
-        onPointerDown={() => { hint("preload"); void loadAll().catch(() => {}); }}
+        onPointerDown={() => { hint("preload"); void loadAll().catch(() => {}); void loadFont(); }}
         onFocus={() => hint("preload")}
         onClick={() => setOn(true)}
       >
