@@ -208,11 +208,13 @@ if (process.env.LIVE_SSH_PORT) {
 // ---- helpers -------------------------------------------------------------
 function seedWorkspace(dir) {
   try {
-    // agentty's own settings for the demo: motion off. The welcome screen's
-    // animation otherwise streams ~30 KB/s of redraws at an idle visitor,
-    // which is the lag a phone feels; everything else is agentty's default.
+    // agentty's own settings for the demo: its defaults (full motion), unless
+    // LIVE_MOTION says otherwise (0 full, 1 reduced, 2 off). Output is
+    // frame-batched and the replay pauses underneath, so full motion costs a
+    // phone ~4 long tasks in 6 s (measured, 4x CPU throttle).
+    const motion = Number(process.env.LIVE_MOTION ?? 0);
     fs.mkdirSync(path.join(dir, ".agentty"), { recursive: true, mode: 0o700 });
-    fs.writeFileSync(path.join(dir, ".agentty", "settings.json"), JSON.stringify({ ui: { motion: 2 } }) + "\n");
+    fs.writeFileSync(path.join(dir, ".agentty", "settings.json"), JSON.stringify({ ui: { motion } }) + "\n");
   } catch {}
   try {
     fs.writeFileSync(path.join(dir, "README.md"),

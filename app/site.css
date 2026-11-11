@@ -860,7 +860,7 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
   /* tap targets */
   .live-try, .bench-race button { padding: 6px 0; }
   /* a live agentty needs rows: the box grows while it runs */
-  .replay[data-live-on] { min-height: min(400px, 52svh); }
+  .replay[data-live-on] { min-height: min(720px, calc(100svh - var(--nav-h) - 72px)); }
   .live-inline { padding: 6px 4px 6px 6px; }
   /* xterm's hidden input: 16px or iOS zooms the page when the keyboard opens */
   .live-inline .xterm-helper-textarea { font-size: 16px !important; }

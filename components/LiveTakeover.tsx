@@ -111,6 +111,15 @@ export function LiveTakeover() {
     el.className = "live-inline";
     replay.dataset.liveOn = "";                  // the box takes its live size first
     replay.appendChild(el);
+    // on a phone the box is now most of the screen: put all of it in view
+    // (after layout, instantly: a smooth scroll gets cancelled by the caption
+    // re-rendering under it)
+    const toView = () => {
+      if (!matchMedia("(max-width: 720px)").matches) return;
+      const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-h")) || 52;
+      window.scrollTo({ top: replay.getBoundingClientRect().top + scrollY - nav - 8, behavior: "instant" as ScrollBehavior });
+    };
+    requestAnimationFrame(toView);
     setState("connecting");
     const end = (msg: string) => { if (!disposed) { setState("ended"); setNote(msg); } };
 
@@ -159,6 +168,7 @@ export function LiveTakeover() {
       for (const d of pending.splice(0)) term.write(d);
       (window as any).__agenttyLive = term;          // for poking at it from devtools
       setState("live");
+      requestAnimationFrame(toView);
       if (!matchMedia("(hover: none)").matches) term.focus();
       const resize = () => {
         try { fitter.fit(); } catch {}
