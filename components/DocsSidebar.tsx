@@ -14,16 +14,17 @@ export function DocsSidebar() {
   const currentTitle =
     docsNav.flatMap((s) => s.items).find((i) => norm(i.href) === current)?.title ?? "Documentation";
 
-  // close the phone menu on navigation; keep the active page in view in the
-  // (independently scrolling) desktop sidebar
+  // close the phone menu on navigation. The desktop sidebar never moves under
+  // the reader: it scrolls only when the active page would be out of sight
+  // (arriving from search, a link, or a fresh load), never after a click in it
   useEffect(() => {
     setOpen(false);
     const a = asideRef.current?.querySelector<HTMLElement>("a.active");
     const box = asideRef.current;
-    if (a && box && box.scrollHeight > box.clientHeight) {
-      const top = a.offsetTop - box.clientHeight / 3;
-      box.scrollTop = Math.max(0, top);
-    }
+    if (!a || !box || box.scrollHeight <= box.clientHeight) return;
+    const top = a.offsetTop, bottom = top + a.offsetHeight;
+    if (top >= box.scrollTop && bottom <= box.scrollTop + box.clientHeight) return;
+    box.scrollTop = Math.max(0, top - box.clientHeight / 3);
   }, [current]);
 
   return (

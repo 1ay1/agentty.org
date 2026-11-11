@@ -69,11 +69,12 @@ or an animation to work, it doesn't belong.
   of agentty's welcome screen), the replayed demo (the program itself), the
   header's `▌` (agentty's cursor). The benchmark bars are static. No smooth
   scroll, no scroll effects. Hover changes colour or underline only.
-- Page changes: the nav and docs sidebar hold still and the content
-  cross-fades in 160 ms (View Transitions). Reduced motion: none of it.
+- Page changes are instant and still: the new page replaces the old in one
+  frame, the nav and docs sidebar never move, and the sidebar scrolls only
+  when the active page would be out of sight. No cross-fade, no slide.
 - Speed is part of the look: static pages, almost no JavaScript.
-  Hovering a link fetches it (speculation rules, router prefetch), so a
-  click lands on a warm page.
+  Hovering a link fetches it (Next's router prefetch, a few KB), so a
+  click lands on a page that's already here.
 
 ## Terminal touches
 

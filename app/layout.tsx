@@ -5,7 +5,7 @@ import "./site.css";
 import { SiteNav } from "@/components/SiteNav";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { Shortcuts } from "@/components/Shortcuts";
-import { ViewTransitions } from "@/components/ViewTransitions";
+import { Prefetch } from "@/components/Prefetch";
 import { StatusLine } from "@/components/StatusLine";
 import { site } from "@/lib/site";
 import { seoDescription } from "@/lib/seo";
@@ -176,16 +176,6 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {/* Before the app hydrates (and in browsers that load pages whole),
-            hovering a page link fetches it, so the click lands on a warm page. */}
-        <script
-          type="speculationrules"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              prefetch: [{ where: { and: [{ href_matches: "/*/" }, { not: { href_matches: "/md/*" } }] }, eagerness: "moderate" }],
-            }),
-          }}
-        />
         {/* Self-hosted Umami analytics — first-party, privacy-friendly, no
             cookies, served from our own subdomain so ad-blockers that target
             third-party trackers leave it alone. */}
@@ -202,7 +192,7 @@ export default function RootLayout({
         <main id="main">{children}</main>
         <CommandPaletteLazy />
         <Shortcuts />
-        <ViewTransitions />
+        <Prefetch />
         <StatusLine />
       </body>
     </html>
