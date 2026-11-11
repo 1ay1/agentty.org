@@ -41,11 +41,11 @@ export function InstallPicker() {
             </span>
           );
         })}
-        {" · x86_64 & aarch64 · "}
+        {" "}<span className="nobr">· x86_64 &amp; aarch64</span>{" "}
         {win ? (
-          <a href="/docs/installation/#windows">more ways on Windows</a>
+          <span className="nobr">· <a href="/docs/installation/#windows">more ways on Windows</a></span>
         ) : (
-          "same line updates it"
+          <span className="nobr">· same line updates it</span>
         )}
       </span>
     </>

@@ -38,7 +38,7 @@ export function CopyRow({ cmd, prompt = "$" }: { cmd: string; prompt?: string })
   return (
     <div className="copyrow">
       <span className="copyrow-caret" aria-hidden="true">{prompt}</span>
-      <code>{show(cmd)}</code>
+      <code style={{ "--chars": [...cmd].length } as React.CSSProperties}>{show(cmd)}</code>
       <button className="copybtn" onClick={copy} aria-label="Copy install command">
         {copied ? "copied" : "copy"}
       </button>

@@ -145,7 +145,10 @@ function build(): MD {
   md.renderer.rules.code_inline = (tokens, i) => {
     const t = tokens[i].content;
     const kind = codeKind(t);
-    return `<code${kind ? ` class="c-${kind}"` : ""}>${esc(t)}</code>`;
+    // a short chip (`cargo build`) never splits across lines; a long one
+    // (a path, a flag list) may, rather than push the line off a phone
+    const cls = [kind && `c-${kind}`, t.length <= 24 && "nw"].filter(Boolean).join(" ");
+    return `<code${cls ? ` class="${cls}"` : ""}>${esc(t)}</code>`;
   };
 
   // callouts
@@ -284,7 +287,14 @@ export function renderMarkdown(src: string, ids: Map<string, number> = new Map()
       `<label class="sn-ref" for="sn-${n}" id="sn-ref-${n}">${n}</label><input type="checkbox" class="sn-toggle" id="sn-${n}" aria-label="Note ${n}" />` +
       `<span class="sn" role="note"><span class="sn-n">${n}</span> ${md!.renderInline(notes[Number(n) - 1] ?? "")}</span>`,
     );
-  return { html, headings: env.headings };
+  // no widows: a paragraph's (or list item's) last word never sits alone on
+  // its line; it is tied to the word before it with a no-break space. Text
+  // only: the space must be between two plain words just before </p> / </li>
+  const tied = html
+    .replace(/([^\s<>]) ([^\s<>]{1,14})(<\/(?:p|li)>)/g, "$1\u00a0$2$3")
+    // …and when the last thing is a short code chip: tie it to the word before
+    .replace(/([^\s<>]) (<code[^>]*>[^<]{1,16}<\/code>[^\s<]{0,3})(<\/(?:p|li)>)/g, "$1\u00a0$2$3");
+  return { html: tied, headings: env.headings };
 }
 
 // Footnote definitions (`[^id]: text`, one line) are lifted out; each first

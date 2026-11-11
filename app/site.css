@@ -72,7 +72,7 @@ html[data-theme="light"] {
 *, *::before, *::after { box-sizing: border-box; }
 /* wide screens get a margin wide enough to hang `##`, `$` and `note` into */
 @media (min-width: 721px) { :root, html[data-theme] { --gutter: 40px; } }
-html { scroll-padding-top: calc(var(--nav-h) + 16px); -webkit-text-size-adjust: 100%; }
+html { scroll-padding-top: calc(var(--nav-h) + 16px); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }   /* iOS never enlarges text itself */
 body {
   hanging-punctuation: first allow-end;
   margin: 0;
@@ -182,6 +182,10 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
   overflow-wrap: break-word;   /* "read/edit/write/list_dir" is one word: on a phone it breaks rather than widen the page */
 }
 .doc-body p, .doc-body li { text-wrap: pretty; }
+/* no lone last word, no ragged short lines: prose wraps evenly site-wide,
+   short single lines (taglines, captions, meta) balance */
+:where(main) :is(p, li, dd, td) { text-wrap: pretty; }
+:where(main) :is(figcaption, .home-head p, .install-meta, .post-meta, .bench-note, .doc-version) { text-wrap: balance; }
 .doc-body :is(h2, h3, h4) { text-wrap: balance; }
 .doc-chunk { display: contents; }
 .doc-body p, .doc-body ul, .doc-body ol { margin: 0 0 var(--line); }
@@ -242,6 +246,7 @@ h4 > .anchor::before { content: "####"; }
 .doc-body kbd { border: 1px solid var(--border); border-bottom-width: 2px; background: none; }
 /* long paths/URLs in running text may break; keys and table cells never do */
 :where(.doc-body p, .doc-body li, .note) > code { overflow-wrap: anywhere; }
+:where(.doc-body, .note, .lead) code.nw { white-space: nowrap; overflow-wrap: normal; }
 .doc-body kbd { white-space: nowrap; }
 td code, td kbd { white-space: nowrap; overflow-wrap: normal; }
 /* chips never break, so a column is never squeezed below its widest chip;
@@ -317,11 +322,20 @@ td .win { color: var(--text); }
 .copyrow code { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; white-space: nowrap; color: var(--text); scrollbar-width: none; }
 .copyrow code::-webkit-scrollbar { display: none; }
 @media (max-width: 560px) {
-  .copyrow code { white-space: normal; overflow-wrap: break-word; }
-  .copyrow { align-items: baseline; }
-  /* "| sh" never strands on its own line: the pipe stays with what it pipes into */
+  /* phones: "copy" moves up onto the label's line, so the command has the
+     band's full width, and the command is sized to fill exactly ONE line
+     (12.5px where it fits, never under 10px). Only a 320px phone is too
+     narrow for that; there it breaks after a "/", with "| sh" kept whole. */
+  .copyrow { position: relative; align-items: baseline; container-type: inline-size; }
+  .copyrow code, .home-facts .copyrow code {   /* beats .home-facts code { font: inherit } */
+    font-size: clamp(10px, calc((100cqi - 44px) / (var(--chars, 46) * .6)), var(--fs-read-code));   /* 44px: the band's padding + the $ column + slack */
+    white-space: normal; overflow-wrap: break-word;
+  }
   .copyrow code .nobr { white-space: nowrap; }
+  /* on the home page the label line is right above: copy sits there */
+  .home-install .copybtn { position: absolute; right: 0; bottom: 100%; margin: 0 0 4px; padding: 4px 0; }
 }
+.nobr { white-space: nowrap; }
 .copyrow-caret { flex: none; width: var(--hang); margin-left: calc(var(--hang) * -1); color: var(--accent); }
 @media (max-width: 720px) { .copyrow-caret { width: 2ch; margin-left: 0; } }
 .copybtn {
@@ -756,14 +770,14 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 @media (max-width: 720px) {
   /* phones read closer to the eye: one step down across the board */
   :root, html[data-theme] {
-    --fs-xs: 10.5px; --fs-sm: 11.5px; --fs-base: 12.5px;
-    --fs-read: 13px; --fs-read-code: 12px; --fs-h2: 15px; --fs-h3: 13.5px; --fs-lead: 13.5px;
+    --fs-xs: 10px; --fs-sm: 11px; --fs-base: 12px;
+    --fs-read: 12.5px; --fs-read-code: 11.5px; --fs-h2: 14px; --fs-h3: 13px; --fs-lead: 13px;
   }
   .nav-links, .nav-cta { display: none; }
   .nav-toggle { display: inline-flex; }
-  .page h1, .docs-main h1, .post-head h1 { font-size: 18px; }
-  .home h1 { font-size: 18px; }
-  .doc-body { --fs-read: 13px; --fs-h2: 15px; --fs-h3: 13.5px; }
+  .page h1, .docs-main h1, .post-head h1 { font-size: 17px; }
+  .home h1 { font-size: 17px; }
+  .doc-body { --fs-read: 12.5px; --fs-h2: 14px; --fs-h3: 13px; }
   .lead { font-size: var(--fs-lead); }
   .cmdk-input { font-size: 16px; }   /* <16px makes iOS zoom on focus */
   .doc-body { line-height: 1.7; }

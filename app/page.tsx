@@ -16,7 +16,8 @@ export default function Home() {
         <div className="home-logo"><AgenttyLogo /></div>
         <h1>An <Link href="/agent-harness/">agent harness</Link> for your terminal.</h1>
         <p>
-          Ready to type in {Math.round(us.readyMs.median)} ms, {Math.round(us.idleRssMB)} MB idle. One small binary, any model.
+          <span className="nobr">Ready to type in {Math.round(us.readyMs.median)} ms, {Math.round(us.idleRssMB)} MB idle.</span>{" "}
+          <span className="nobr">One small binary, any model.</span>
         </p>
       </header>
 

@@ -22,7 +22,7 @@ or an animation to work, it doesn't belong.
   page read at 14 px, ~77 columns (the column is still --measure wide); code
   and tables at 13 px; the nav, sidebars and labels stay small. Headings step up: page
   title 22, `##` 17, `###` 15, with more space above a heading than below it.
-  Phones go a step down: prose 13, code 12, title 18, `##` 15, `###` 13.5.
+  Phones go a step down: prose 12.5, code 11.5, title 17, `##` 14, `###` 13.
   The opening paragraph (`.lead`) is a size up. Long `>` asides stay upright;
   only a one-line quote is italic.
 - **Rows.** Every vertical space is a multiple of `--line`, one text row,
