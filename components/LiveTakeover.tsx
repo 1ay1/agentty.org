@@ -20,7 +20,7 @@ declare global { interface Window { Terminal?: any; FitAddon?: any } }
 
 const V = "/vendor/xterm/";
 const SCRIPTS = [V + "xterm.js", V + "addon-fit.js"];
-const MIN_COLS = 72;          // agentty's layout is drawn for a real terminal; below this it wraps
+const MIN_COLS = 64;          // agentty lays out well from here; fewer columns and it wraps
 const MAX_FONT = 13;
 const LINE = 1;
 const CELL_W = 0.6;           // JetBrains Mono's advance, in em
