@@ -2,14 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Replays a time benchmark in real time: when the chart scrolls into view,
-// every bar grows from zero on one shared clock, so each tool's bar stops at
-// its measured time (agentty at 47 ms, the slowest after five seconds).
+// Replays a time benchmark: when the chart scrolls into view, every bar grows
+// from zero on one shared clock, so each tool's bar stops at its measured
+// time. The clock runs at a fixed speed-up (the slowest tool lands in
+// RACE_MS; real time made the reader wait five seconds), the SAME speed-up
+// for every bar, so the race is still exactly proportional and the readout
+// still counts the real measured milliseconds.
 // The bars' widths are already proportional to their times, so a single
 // clock means one speed for every bar: CSS does the drawing
-// (animation-duration = the row's --ms), and this component only arms it,
-// runs the clock readout, and offers a replay. Without JS, or with reduced
-// motion, the chart is the static one.
+// (animation-duration = the row's --ms / --race-k), and this component only
+// arms it, runs the clock readout, and offers a replay. Without JS, or with
+// reduced motion, the chart is the static one.
+const RACE_MS = 1600;
 export function BenchRace() {
   const ref = useRef<HTMLSpanElement>(null);
   const clock = useRef<HTMLSpanElement>(null);
@@ -18,7 +22,9 @@ export function BenchRace() {
   useEffect(() => {
     const fig = ref.current?.closest<HTMLElement>("figure[data-race-ms]");
     if (!fig || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const total = Number(fig.dataset.raceMs) + 150;
+    const real = Number(fig.dataset.raceMs);
+    const k = Math.max(1, real / RACE_MS);            // measured ms per shown ms
+    fig.style.setProperty("--race-k", String(k));
     let raf = 0, shown = -1;
     // the readout is one text node written directly, 20 times a second: no
     // React render per frame (that was most of a phone's CPU during the race)
@@ -37,10 +43,10 @@ export function BenchRace() {
       fig.dataset.race = "on";
       const t0 = performance.now();
       const tick = (now: number) => {
-        const e = now - t0;
-        show(Math.min(e, total));
-        if (e < total) raf = requestAnimationFrame(tick);
-        else { shown = -1; show(total); fig.dataset.race = "done"; }
+        const e = (now - t0) * k;                      // in measured milliseconds
+        show(Math.min(e, real));
+        if (e < real + 100 * k) raf = requestAnimationFrame(tick);
+        else { shown = -1; show(real); fig.dataset.race = "done"; }
       };
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
@@ -59,7 +65,7 @@ export function BenchRace() {
     <span ref={ref} className="bench-race">
       <span ref={clock} className="bench-clock" hidden />
       <button type="button" onClick={() => setRuns((r) => r + 1)} aria-label="Replay the launch race in real time">
-        replay
+        ↻ replay
       </button>
     </span>
   );
