@@ -20,6 +20,7 @@ import http from "node:http";
 const PORT = Number(process.env.LIVE_PORT || 8790);
 const AGENTTY_BIN = process.env.AGENTTY_BIN || "agentty";
 const MAX_SESSIONS = Number(process.env.LIVE_MAX_SESSIONS || 12);
+const MAX_PER_IP = Number(process.env.LIVE_MAX_PER_IP || 2);
 const SESSION_MS = Number(process.env.LIVE_SESSION_MS || 10 * 60 * 1000); // 10 min
 const IDLE_MS = Number(process.env.LIVE_IDLE_MS || 3 * 60 * 1000);        // 3 min
 
@@ -29,6 +30,13 @@ await new Promise((r) => mock.listen(0, "127.0.0.1", r));
 const mockPort = mock.address().port;
 const OLLAMA_HOST = `localhost:${mockPort}`;
 console.log(`[live] mock ollama on ${OLLAMA_HOST}`);
+// …and on a unix socket, which is the only thing the sandboxed sessions can
+// reach (bridge.mjs forwards their loopback :11434 to it).
+const SOCK_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "agentty-live-mock-"));
+const MOCK_SOCK = path.join(SOCK_DIR, "mock.sock");
+const mockUnix = createMockOllama();
+await new Promise((r) => mockUnix.listen(MOCK_SOCK, r));
+const BRIDGE = new URL("./bridge.mjs", import.meta.url).pathname;
 
 // ---- 2. WebSocket + tiny health HTTP -------------------------------------
 const httpServer = http.createServer((req, res) => {
@@ -40,73 +48,88 @@ const httpServer = http.createServer((req, res) => {
   res.end("WebSocket only");
 });
 
+// Every session runs inside bubblewrap: the whole filesystem read-only, /home
+// and /tmp replaced by empty tmpfs (so nothing of the host user's — keys,
+// credentials, other sessions — is visible), its own pid/ipc/uts namespaces,
+// and only its throwaway workdir writable. agentty can run commands (Ctrl+G
+// runs a reply's code block; MCP servers and hooks are config), so the
+// process is treated as hostile. LIVE_SANDBOX=0 turns this off for local dev.
+const BWRAP = process.env.LIVE_SANDBOX === "0" ? null : ["/usr/bin/bwrap", "/bin/bwrap"].find((p) => fs.existsSync(p)) ?? null;
+if (!BWRAP && process.env.LIVE_SANDBOX !== "0") {
+  console.error("[live] bubblewrap not found; refusing to start without a sandbox (LIVE_SANDBOX=0 to override)");
+  process.exit(1);
+}
+const BIN_REAL = fs.realpathSync(AGENTTY_BIN.includes("/") ? AGENTTY_BIN : path.join("/usr/bin", AGENTTY_BIN));
+const NODE = process.execPath;
+function sandboxed(work, args) {
+  if (!BWRAP) return { file: BIN_REAL, args, ollama: OLLAMA_HOST, cwd: work, home: work };
+  return { file: BWRAP, cwd: "/", home: "/home/demo", ollama: "127.0.0.1:11434", args: [
+    "--ro-bind", "/", "/",
+    "--tmpfs", "/home", "--tmpfs", "/tmp", "--tmpfs", "/root", "--tmpfs", "/opt",
+    "--dev", "/dev", "--proc", "/proc",
+    "--ro-bind", BIN_REAL, "/opt/agentty/agentty",
+    "--ro-bind", BRIDGE, "/opt/agentty/bridge.mjs",
+    "--ro-bind", MOCK_SOCK, "/opt/agentty/mock.sock",
+    "--bind", work, "/home/demo",
+    "--chdir", "/home/demo",
+    "--setenv", "HOME", "/home/demo",
+    "--unshare-net", "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-cgroup-try",
+    "--die-with-parent",
+    "--", NODE, "/opt/agentty/bridge.mjs", "/opt/agentty/mock.sock", "/opt/agentty/agentty", ...args,
+  ] };
+}
+
 const wss = new WebSocketServer({ server: httpServer, path: "/live/ws" });
 const sessions = new Set();
 
-wss.on("connection", (ws, req) => {
-  if (sessions.size >= MAX_SESSIONS) {
-    try { ws.send(JSON.stringify({ t: "err", m: "Live demo is at capacity — try again in a minute." })); } catch {}
-    ws.close();
-    return;
-  }
+// One sandboxed agentty, whoever asked for it (a browser over WebSocket, or
+// someone over SSH). `io` is the transport: send(bytes) and close(reason).
+// Returns the session ({ write, resize, end }) or a string saying why not.
+export function startSession(ip, cols, rows, io) {
+  const mine = [...sessions].filter((s) => s.ip === ip).length;
+  if (sessions.size >= MAX_SESSIONS || mine >= MAX_PER_IP) return "Live demo is at capacity — try again in a minute.";
 
   // throwaway sandbox workdir so agentty's filesystem tools have somewhere
   // harmless to point at.
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "agentty-live-"));
   seedWorkspace(work);
 
+  const run = sandboxed(work, ["--provider", "ollama", "-m", "agentty-demo:latest"]);
+  // a clean environment: nothing of the service's own (keys, tokens, paths)
   const env = {
-    ...process.env,
-    HOME: work,                       // isolate creds/threads to the temp dir
-    AGENTTY_OLLAMA_HOST: OLLAMA_HOST, // point the real binary at the mock
+    PATH: "/usr/local/bin:/usr/bin:/bin",
+    LANG: process.env.LANG || "C.UTF-8",
+    HOME: run.home,                     // isolate creds/threads to the workdir
+    AGENTTY_OLLAMA_HOST: run.ollama,    // point the real binary at the mock
     TERM: "xterm-256color",
     COLORTERM: "truecolor",
-    NO_COLOR: "",
     AGENTTY_PROFILE: "ask",
   };
 
   let pty;
   try {
-    pty = ptySpawn(AGENTTY_BIN, ["--provider", "ollama", "-m", "agentty-demo:latest"], {
+    pty = ptySpawn(run.file, run.args, {
       name: "xterm-256color",
-      cols: 100,
-      rows: 30,
-      cwd: work,
+      cols: Math.max(20, cols | 0 || 100),
+      rows: Math.max(6, rows | 0 || 30),
+      cwd: run.cwd,
       env,
     });
   } catch (e) {
-    try { ws.send(JSON.stringify({ t: "err", m: "Could not start agentty: " + e.message })); } catch {}
-    ws.close();
     cleanupDir(work);
-    return;
+    return "Could not start agentty: " + e.message;
   }
 
-  const sess = { ws, pty, work, lastActivity: Date.now() };
+  const sess = { pty, work, ip, lastActivity: Date.now() };
   sessions.add(sess);
-  console.log(`[live] session up (${sessions.size} active) → ${work}`);
+  console.log(`[live] session up (${sessions.size} active, ${io.kind}) → ${work}`);
 
   pty.onData((d) => {
     sess.lastActivity = Date.now();
-    if (ws.readyState === ws.OPEN) ws.send(d);
+    io.send(d);
   });
 
   pty.onExit(() => end("agentty exited"));
-
-  ws.on("message", (raw) => {
-    sess.lastActivity = Date.now();
-    // control frames are JSON ({resize}); everything else is raw keystrokes
-    const s = raw.toString();
-    if (s.startsWith("\x00json:")) {
-      try {
-        const msg = JSON.parse(s.slice(6));
-        if (msg.t === "resize" && msg.cols && msg.rows) {
-          pty.resize(Math.max(20, msg.cols | 0), Math.max(6, msg.rows | 0));
-        }
-      } catch {}
-      return;
-    }
-    pty.write(s);
-  });
 
   const hardTimer = setTimeout(() => end("session time limit reached"), SESSION_MS);
   const idleTimer = setInterval(() => {
@@ -118,20 +141,59 @@ wss.on("connection", (ws, req) => {
     sessions.delete(sess);
     clearTimeout(hardTimer);
     clearInterval(idleTimer);
-    try { ws.send(JSON.stringify({ t: "end", m: reason })); } catch {}
     try { pty.kill(); } catch {}
-    try { ws.close(); } catch {}
+    try { io.close(reason); } catch {}
     cleanupDir(work);
     console.log(`[live] session down (${sessions.size} active): ${reason}`);
   }
 
-  ws.on("close", () => end("client disconnected"));
-  ws.on("error", () => end("socket error"));
+  return {
+    write: (s) => { sess.lastActivity = Date.now(); pty.write(s); },
+    resize: (c, r) => { try { pty.resize(Math.max(20, c | 0), Math.max(6, r | 0)); } catch {} },
+    end,
+  };
+}
+
+wss.on("connection", (ws, req) => {
+  const ip = String(req.headers["x-real-ip"] || req.socket.remoteAddress || "");
+  const s = startSession(ip, 100, 30, {
+    kind: "web",
+    send: (d) => { if (ws.readyState === ws.OPEN) ws.send(d); },
+    close: (reason) => {
+      try { ws.send(JSON.stringify({ t: "end", m: reason })); } catch {}
+      try { ws.close(); } catch {}
+    },
+  });
+  if (typeof s === "string") {
+    try { ws.send(JSON.stringify({ t: "err", m: s })); } catch {}
+    ws.close();
+    return;
+  }
+  ws.on("message", (raw) => {
+    // control frames are JSON ({resize}); everything else is raw keystrokes
+    const str = raw.toString();
+    if (str.startsWith("\x00json:")) {
+      try {
+        const msg = JSON.parse(str.slice(6));
+        if (msg.t === "resize" && msg.cols && msg.rows) s.resize(msg.cols, msg.rows);
+      } catch {}
+      return;
+    }
+    s.write(str);
+  });
+  ws.on("close", () => s.end("client disconnected"));
+  ws.on("error", () => s.end("socket error"));
 });
 
 httpServer.listen(PORT, "127.0.0.1", () => {
   console.log(`[live] ws server on 127.0.0.1:${PORT} (path /live/ws)`);
 });
+
+// ---- 3. ssh agentty.org (optional) ---------------------------------------
+if (process.env.LIVE_SSH_PORT) {
+  const { startSsh } = await import("./ssh.mjs");
+  startSsh({ port: Number(process.env.LIVE_SSH_PORT), startSession });
+}
 
 // ---- helpers -------------------------------------------------------------
 function seedWorkspace(dir) {
@@ -152,6 +214,7 @@ function cleanupDir(dir) {
 for (const sig of ["SIGINT", "SIGTERM"]) {
   process.on(sig, () => {
     for (const s of sessions) { try { s.pty.kill(); } catch {} cleanupDir(s.work); }
+    cleanupDir(SOCK_DIR);
     process.exit(0);
   });
 }

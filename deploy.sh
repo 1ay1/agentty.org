@@ -43,6 +43,9 @@ echo "==> Syncing static pages from the agentty repo (agentty.org/paste)"
 # images-as-text page) into public/. Same never-fails contract.
 node scripts/sync-static.mjs || echo "   (static sync skipped; using committed public/)"
 
+echo "==> Syncing agentty's colour schemes (the site's theme picker)"
+node scripts/gen-themes.mjs || echo "   (themes sync skipped; using committed public/themes.json)"
+
 echo "==> Measuring the real agentty binary (size + cold-start)"
 # Regenerates lib/stats.generated.ts so the site's numbers always match the
 # binary that's actually installed. Never fails the deploy if the binary is
@@ -113,9 +116,10 @@ echo "==> Notifying IndexNow (Bing/DuckDuckGo/Yandex) of the current sitemap"
 node scripts/submit-indexnow.mjs || echo "   (IndexNow submission skipped)"
 
 echo "==> Syncing the live agentty backend service"
-# node deps for the live PTY/mock-model server (node-pty is native; only
-# rebuilds when missing).
-if [ ! -f "$PROJECT/deploy/live/node_modules/node-pty/build/Release/pty.node" ]; then
+# node deps for the live PTY/mock-model/ssh server (node-pty is native; only
+# reinstalls when a dependency is missing).
+if [ ! -f "$PROJECT/deploy/live/node_modules/node-pty/build/Release/pty.node" ] \
+   || [ ! -d "$PROJECT/deploy/live/node_modules/ssh2" ]; then
   ( cd "$PROJECT/deploy/live" && npm install --no-audit --no-fund && npm rebuild node-pty )
 fi
 sudo cp "$PROJECT/deploy/agentty-live.service" /etc/systemd/system/agentty-live.service
