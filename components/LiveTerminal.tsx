@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
  *
  * Connects to the live backend WebSocket (deploy/live/server.mjs), which
  * spawns agentty in a PTY pointed at a mock Ollama model. We render the raw
- * PTY byte stream with xterm.js (loaded from CDN so the static site needs no
+ * PTY byte stream with xterm.js (self-hosted under /vendor/xterm so the static site needs no
  * bundler changes) and forward keystrokes + resizes back.
  *
  * If the backend is unreachable, `onUnavailable` fires and the caller shows
@@ -21,9 +21,9 @@ declare global {
   }
 }
 
-const XTERM_JS = "https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js";
-const XTERM_CSS = "https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css";
-const FIT_JS = "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js";
+const XTERM_JS = "/vendor/xterm/xterm.js";
+const XTERM_CSS = "/vendor/xterm/xterm.css";
+const FIT_JS = "/vendor/xterm/addon-fit.js";
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {

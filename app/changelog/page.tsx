@@ -42,8 +42,14 @@ function loadChangelog(): string {
   return md.trim();
 }
 
-// `git log --oneline` for releases: version, date, and the first change's title.
-type Entry = { version: string; date: string; id: string; title: string };
+// `git log --graph --oneline --decorate` for releases: the graph rail, the
+// tag, the date, the first change's title, and how many entries each
+// section has (+added ~changed !fixed), coloured the way git colours them.
+type Entry = { version: string; date: string; id: string; title: string; added: number; changed: number; fixed: number };
+const count = (sec: string, kind: string) => {
+  const m = sec.match(new RegExp(`^### ${kind}\\s*\\n([\\s\\S]*?)(?=^### |(?![\\s\\S]))`, "m"));
+  return m ? (m[1].match(/^[-*] /gm) ?? []).length : 0;
+};
 function logEntries(md: string): Entry[] {
   return md.split(/^(?=## v)/m).flatMap((sec) => {
     const h = sec.match(/^## v(\S+) · (\d{4}-\d\d-\d\d)/);
@@ -52,7 +58,7 @@ function logEntries(md: string): Entry[] {
     const first = bullet.match(/^\*\*(.+?)\*\*/)?.[1] ?? bullet;
     const title = first.replace(/\*\*|`|\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[.:]$/, "");
     const id = `v${h[1]}-${h[2]}`.toLowerCase().replace(/[^\w\s-]/g, "");
-    return [{ version: h[1], date: h[2], id, title }];
+    return [{ version: h[1], date: h[2], id, title, added: count(sec, "Added"), changed: count(sec, "Changed"), fixed: count(sec, "Fixed") }];
   });
 }
 
@@ -71,11 +77,19 @@ export default function ChangelogPage() {
         in the repo.
       </p>
       <ol className="gitlog" aria-label="Releases">
-        {log.map((e) => (
+        {log.map((e, i) => (
           <li key={e.version}>
-            <a href={`#${e.id}`}>v{e.version}</a>
+            <span className="gl-graph" aria-hidden="true">*</span>
+            <a href={`#${e.id}`}>
+              <span className="gl-deco">({i === 0 && <><span className="gl-head">HEAD</span>, </>}tag: </span>v{e.version}<span className="gl-deco">)</span>
+            </a>
             <time dateTime={e.date}>{e.date}</time>
-            <span>{e.title}</span>
+            <span className="gl-title">{e.title}</span>
+            <span className="gl-stat" aria-label={`${e.added} added, ${e.changed} changed, ${e.fixed} fixed`}>
+              {e.added > 0 && <span className="gl-add">+{e.added}</span>}
+              {e.changed > 0 && <span className="gl-chg">~{e.changed}</span>}
+              {e.fixed > 0 && <span className="gl-fix">!{e.fixed}</span>}
+            </span>
           </li>
         ))}
       </ol>

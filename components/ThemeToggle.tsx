@@ -18,9 +18,12 @@ export function ThemeToggle() {
   const toggle = () => {
     const now = (document.documentElement.getAttribute("data-theme") as Theme) || "dark";
     const next: Theme = now === "dark" ? "light" : "dark";
+    document.documentElement.style.cssText = "";        // back to the site's own palette
     document.documentElement.setAttribute("data-theme", next);
     try {
       localStorage.setItem("theme", next);
+      localStorage.removeItem("scheme");
+      localStorage.removeItem("scheme-css");
     } catch {}
     setTheme(next);
   };

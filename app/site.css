@@ -178,6 +178,7 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
   --line: calc(var(--fs-read) * 1.7);
   --hang: calc(var(--fs-read-code) * 1.2);
   color: var(--text-dim); font-size: var(--fs-read); line-height: var(--line); hyphens: manual;
+  overflow-wrap: break-word;   /* "read/edit/write/list_dir" is one word: on a phone it breaks rather than widen the page */
 }
 .doc-body p, .doc-body li { text-wrap: pretty; }
 .doc-body :is(h2, h3, h4) { text-wrap: balance; }
@@ -357,7 +358,7 @@ td .win { color: var(--text); }
 .bench-metric { margin: 0; min-width: 0; }
 .bench-metric figcaption { color: var(--text-dim); font-size: var(--fs-sm); margin: 0 0 10px; }
 .bench-metric figcaption span { color: var(--text-faint); }
-.bench-metric figcaption span::before { content: "· "; }
+.bench-metric figcaption > span:first-of-type::before { content: "· "; }
 .bench-metric ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
 .bench-metric li {
   display: grid; grid-template-columns: 12ch minmax(0, 1fr); align-items: center; gap: 14px;
@@ -373,6 +374,22 @@ td .win { color: var(--text); }
 .bench-note { margin: 0; font-size: var(--fs-sm); color: var(--text-faint); }
 .bench-note a { color: var(--text-dim); }
 .bench-range { color: var(--text-faint); font-size: var(--fs-xs); }
+/* the launch race (BenchRace): one clock, each bar stops at its own time */
+.bench-race { margin-left: 4px; color: var(--text-faint); }
+.bench-race::before { content: "· "; }
+.bench-race button { margin-left: 10px; background: none; border: 0; padding: 0; font: inherit; color: var(--text-faint); cursor: pointer; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; }
+.bench-race button:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.bench-clock { display: inline-block; min-width: 7ch; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+figure[data-race="armed"] .bench-bar { transform: scaleX(0); }
+figure[data-race="armed"] :is(.bench-val, .bench-x) { opacity: 0; }
+figure[data-race="on"] .bench-bar { transform-origin: left; animation: race-bar calc(var(--ms) * 1ms) linear both; }
+figure[data-race="on"] :is(.bench-val, .bench-x) { animation: race-done 1ms linear calc(var(--ms) * 1ms) both; }
+figure[data-race] li { transition: color .2s; }
+figure[data-race="on"] li:not(.is-us) { animation: race-dim 1ms linear calc(var(--ms) * 1ms) both; }
+.bench-bar { transform-origin: left; }
+@keyframes race-bar { from { transform: scaleX(0); } }
+@keyframes race-done { from { opacity: 0; } to { opacity: 1; } }
+@keyframes race-dim { from { color: var(--text-faint); } to { color: var(--text-dim); } }
 :is(th, td).num { white-space: nowrap; }
 td .bench-range { display: block; }
 /* phones: the benchmark table becomes one record per tool — the name and
@@ -414,12 +431,28 @@ td .bench-range { display: block; }
 .notfound-list kbd { border: 1px solid var(--border); padding: 0 5px; font-size: var(--fs-xs); color: var(--text); }
 
 /* ── changelog as git log ─────────────────────────────────────────────── */
-.gitlog { list-style: none; padding: 0; margin: 0 0 40px; font-size: var(--fs-sm); }
-.gitlog li { display: grid; grid-template-columns: 9ch 11ch minmax(0, 1fr); gap: 12px; padding: 2px 0; }
-.gitlog a { text-decoration: none; }
+.gitlog { list-style: none; padding: 0; margin: 0 0 40px; font-size: var(--fs-sm); display: grid; grid-template-columns: 2ch max-content 11ch minmax(0, 1fr) max-content; column-gap: 12px; }
+.gitlog li { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; padding: 2px 0; position: relative; align-items: baseline; }
+.gitlog a { text-decoration: none; color: var(--c-env); white-space: nowrap; }
 .gitlog a:hover { text-decoration: underline; }
 .gitlog time { color: var(--text-faint); font-variant-numeric: tabular-nums; }
-.gitlog span { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gitlog .gl-title { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the graph rail: a * per release, joined by a line, like git log --graph */
+.gl-graph { color: var(--accent); text-align: center; position: relative; }
+.gitlog li:not(:last-child) .gl-graph::after { content: ""; position: absolute; left: 50%; top: 1.15em; height: calc(100% + 0.25em); border-left: 1px solid var(--border); }
+.gl-deco { color: var(--c-env); opacity: .75; }
+.gl-head { color: var(--c-path); font-weight: 600; }
+.gl-stat { display: flex; gap: 8px; font-variant-numeric: tabular-nums; color: var(--text-faint); }
+.gl-add { color: var(--c-cmd); }
+.gl-chg { color: var(--c-env); }
+.gl-fix { color: var(--c-sym); }
+@media (max-width: 720px) {
+  .gitlog { grid-template-columns: 2ch max-content minmax(0, 1fr); }
+  .gitlog li { row-gap: 0; }
+  .gitlog time { grid-column: 3; }
+  .gitlog .gl-title { grid-column: 2 / -1; }
+  .gitlog .gl-stat { display: none; }
+}
 
 /* ── blog ─────────────────────────────────────────────────────────────── */
 .post-list { list-style: none; padding: 0; margin: 8px 0 0; }
@@ -451,6 +484,27 @@ td .bench-range { display: block; }
 .post-tags { display: flex; flex-wrap: wrap; margin: 14px 0 0; font-size: var(--fs-sm); color: var(--text-faint); }
 .post-tags span + span::before { content: "·"; margin: 0 1ch; color: var(--border); }
 @media (max-width: 1150px) { .post-shell { grid-template-columns: minmax(0, var(--measure)); } }
+/* margin notes ([^x] in markdown). On wide blog pages they float into the
+   right column beside the line that cites them; elsewhere the number is a
+   toggle that opens the note under the line. */
+.sn-ref { font-size: .72em; vertical-align: super; line-height: 0; color: var(--accent); cursor: pointer; padding: 0 1px; }
+.sn-ref::before { content: "["; color: var(--text-faint); } .sn-ref::after { content: "]"; color: var(--text-faint); }
+.sn-toggle { display: none; }
+.sn { display: none; font-size: var(--fs-sm); line-height: 1.55; color: var(--text-faint); }
+.sn-n { color: var(--accent); }
+.sn-toggle:checked + .sn { display: block; margin: 6px 0 10px; padding-left: 2ch; border-left: 1px solid var(--border); }
+/* a post with notes gets a notes column between the text and the contents */
+@media (min-width: 1360px) {
+  .post-shell:has(.sn) { grid-template-columns: minmax(0, var(--measure)) 200px 180px; column-gap: 40px; }
+  .post-shell:has(.sn) > article { grid-column: 1; }
+  .post-shell:has(.sn) > :last-child:not(article) { grid-column: 3; }
+  .post-shell .sn, .post-shell .sn-toggle:checked + .sn {
+    display: block; float: right; clear: right; width: 200px; margin: 3px -240px 12px 0;
+    padding: 0 0 0 10px; border: 0; border-left: 1px solid var(--border-soft); position: relative;
+  }
+  .post-shell .sn-ref { cursor: default; }
+}
+@media print { .sn { display: block; } }
 
 /* ── docs ─────────────────────────────────────────────────────────────── */
 .docs-shell {
@@ -464,6 +518,10 @@ td .bench-range { display: block; }
 .doc-head { margin-bottom: 36px; }
 .doc-head .lead { margin: 10px 0 14px; }
 .page-actions { display: flex; gap: 16px; font-size: var(--fs-sm); }
+.doc-stamp { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+.doc-version { font-size: var(--fs-sm); color: var(--text-faint); }
+.doc-version::before { content: "· "; }
+.doc-version a { color: var(--text-dim); text-decoration-color: var(--border); }
 .page-actions button, .page-actions a {
   padding: 0; background: none; border: 0; cursor: pointer; color: var(--text-faint); text-decoration: none;
 }
@@ -544,6 +602,36 @@ td .bench-range { display: block; }
 .cmdk-empty { padding: 14px; color: var(--text-faint); }
 .cmdk-foot { display: flex; gap: 18px; padding: 8px 14px; border-top: 1px solid var(--border-soft); color: var(--text-faint); font-size: var(--fs-xs); }
 .cmdk-foot kbd { margin-right: 3px; }
+.cmdk-desc { display: block; color: var(--text-faint); font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the theme picker previews on the page itself, so it docks to the right and
+   leaves the page undimmed: the page IS the preview */
+.theme-overlay { background: none; place-items: start end; padding: calc(var(--nav-h) + 12px) 16px 0 0; }
+.theme-picker { width: min(380px, calc(100vw - 24px)); box-shadow: 0 8px 40px color-mix(in srgb, #000 35%, transparent); }
+.theme-picker .cmdk-results { max-height: min(60vh, 520px); }
+.theme-swatch { display: inline-flex; gap: 2px; align-items: center; padding: 3px 4px; border: 1px solid var(--border); background: var(--bg); align-self: center; }
+.theme-swatch i { width: 8px; height: 8px; display: block; }
+.theme-swatch[data-base="dark"] { background: #100f0f; }
+.theme-swatch[data-base="light"] { background: #fffcf0; }
+.theme-swatch[data-base]::before { content: ""; width: 48px; height: 8px; background: linear-gradient(90deg, #ce5d97 0 20%, #3aa99f 0 40%, #879a39 0 60%, #d0a215 0 80%, #4385be 0); }
+
+/* the mode line (StatusLine): vim's, at the bottom of the window */
+.statusline {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; height: 22px;
+  display: flex; align-items: center; gap: 16px; padding: 0 16px 0 var(--gutter);
+  background: var(--bg-soft); border-top: 1px solid var(--border-soft);
+  font-size: var(--fs-xs); color: var(--text-faint); white-space: nowrap; view-transition-name: statusline;
+}
+.statusline button { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.statusline button:hover { color: var(--text); }
+.sl-file { color: var(--text-dim); }
+.sl-sec, .sl-msg { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sl-msg { color: var(--tip); }
+.sl-fill { flex: 1; }
+.sl-pos { min-width: 4ch; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-dim); }
+.sl-keys kbd { border: 1px solid var(--border); padding: 0 4px; margin-right: 4px; }
+body:has(.statusline) { padding-bottom: 22px; }
+::view-transition-group(statusline) { animation: none; }
+@media (max-width: 720px), (hover: none), print { .statusline { display: none; } body:has(.statusline) { padding-bottom: 0; } }
 @media (max-width: 720px) {
   .cmdk-overlay { padding-top: 0; place-items: start stretch; }
   .cmdk { width: 100%; border-width: 0 0 1px; }
@@ -661,6 +749,17 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
   background: none; border: 0; color: var(--text-dim); font: inherit; font-size: var(--fs-sm);
 }
 .replay-again:hover { color: var(--accent); }
+/* "try it live": xterm takes the replay's exact box */
+.live-inline { position: absolute; inset: 0; z-index: 2; background: var(--replay-bg); padding: 10px 6px 10px 12px; }
+.live-inline .xterm { height: 100%; }
+.live-inline .xterm-viewport { background: transparent !important; }
+.replay[data-live-on] .replay-again { display: none; }
+.live-try { background: none; border: 0; padding: 0; margin-left: 12px; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: 3px; }
+.live-try:hover { color: var(--accent-hover); }
+.live-try-state { margin-left: 12px; color: var(--text-dim); }
+.live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--warn); vertical-align: 1px; }
+.live-dot.live { background: var(--tip); animation: cursor-blink 1.6s steps(1) infinite; }
+.live-dot.ended { background: var(--text-faint); }
 @supports (width: round(down, 1px, 1px)) {
   .replay-grid { --step: 1px; --rh: round(calc(var(--cw) * 2), var(--step)); --t: max(var(--step), round(calc(var(--cw) * .125), var(--step))); }
   @media (resolution >= 2dppx) { .replay-grid { --step: .5px; } }
@@ -715,3 +814,19 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 .codeblock:not(.run) .codeblock-copy { opacity: 0; background: var(--bg-soft); }
 .codeblock:hover .codeblock-head .codeblock-copy, .codeblock-copy:focus-visible { opacity: 1; }
 @media (hover: none) { .codeblock-head .codeblock-copy { opacity: 1; } }
+
+/* page changes: the nav and docs sidebar hold still, the content cross-fades
+   and settles up by a few pixels. Same-document (client) and cross-document
+   (full load) navigations both get it; reduced motion gets neither. */
+@view-transition { navigation: auto; }
+.nav { view-transition-name: nav; }
+.docs-side { view-transition-name: docs-side; }
+::view-transition-group(nav), ::view-transition-group(docs-side) { animation: none; }
+::view-transition-old(root) { animation: vt-out 90ms ease-in both; }
+::view-transition-new(root) { animation: vt-in 160ms cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

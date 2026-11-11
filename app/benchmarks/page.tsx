@@ -59,7 +59,7 @@ export default function Benchmarks() {
       </header>
 
       <div className="doc-body">
-        <BenchBars metrics={["ready", "rss", "disk", "startup"]} />
+        <BenchBars metrics={["ready", "rss", "disk", "startup"]} race />
 
         <h2 id="all-numbers">All numbers</h2>
         <div className="tablewrap">

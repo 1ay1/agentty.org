@@ -111,18 +111,29 @@ function fromClone() {
 // search engines trust the field and recrawl what actually changed.
 function writeDocDates(dir, run) {
   try {
-    const out = run(["log", "--format=@%cI", "--name-only", "--", "docs/website"], dir);
+    const out = run(["log", "--format=@%cI %H", "--name-only", "--", "docs/website"], dir);
     const dates = {};
-    let cur = "";
+    const commits = {};
+    let cur = "", hash = "";
     for (const line of out.split("\n")) {
-      if (line.startsWith("@")) cur = line.slice(1);
+      if (line.startsWith("@")) [cur, hash] = line.slice(1).split(" ");
       else if (line.startsWith("docs/website/") && line.endsWith(".md")) {
         const name = line.slice("docs/website/".length);
-        if (!name.includes("/") && !dates[name]) dates[name] = cur;   // newest first
+        if (!name.includes("/") && !dates[name]) { dates[name] = cur; commits[name] = hash; }   // newest first
       }
     }
     writeFileSync(join(ROOT, "lib", "docs-dates.generated.json"), JSON.stringify(dates, null, 1) + "\n");
     log(`doc dates: ${Object.keys(dates).length} files`);
+    // the first release whose tag contains each page's last change: the page
+    // describes that version. Not yet tagged → it describes what's on master.
+    const shipped = {};
+    for (const [name, h] of Object.entries(commits)) {
+      let tag = "";
+      try { tag = run(["describe", "--contains", "--match", "v[0-9]*", h], dir).trim().replace(/[~^].*$/, ""); } catch {}
+      shipped[name] = tag || "master";
+    }
+    writeFileSync(join(ROOT, "lib", "docs-versions.generated.json"), JSON.stringify(shipped, null, 1) + "\n");
+    log(`doc versions: ${Object.values(shipped).filter((v) => v !== "master").length} tagged`);
   } catch (e) {
     log(`doc dates skipped (${e.message.split("\n")[0]})`);
   }

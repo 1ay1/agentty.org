@@ -7,7 +7,7 @@ import { site } from "@/lib/site";
 // Search over every docs page and its sections, blog posts, guides and the
 // site's pages. The index (/search.json, built statically) is fetched once,
 // the first time the palette opens.
-type Item = { title: string; href: string; group: string; parent?: string; desc?: string; external?: boolean };
+type Item = { title: string; href: string; group: string; parent?: string; desc?: string; external?: boolean; action?: string };
 type Row = [string, string, string, (string | null)?, string?];
 
 const STATIC: Item[] = [
@@ -24,7 +24,10 @@ const STATIC: Item[] = [
   { title: "GitHub repository", href: site.github, group: "Links", external: true },
   { title: "Latest release", href: site.releasesLatest, group: "Links", external: true },
   { title: "Discord", href: site.discord, group: "Links", external: true },
+  { title: "Theme: pick one of agentty's colour schemes", href: "#", group: "Actions", action: "agentty:open-theme", desc: "t" },
+  { title: "Keyboard shortcuts", href: "#", group: "Actions", action: "agentty:open-keys", desc: "?" },
 ];
+const REFERENCE = new Set(["Keys", "Commands", "Environment", "Flags", "Reference"]);
 const SUGGESTED = ["/docs/quick-start/", "/docs/installation/", "/docs/providers/", "/docs/keybindings/", "/docs/sandboxing/", "/docs/cli/"];
 
 let indexPromise: Promise<Item[]> | null = null;
@@ -137,7 +140,8 @@ export function CommandPalette({ startOpen = false, initialQuery = "" }: { start
 
   const go = (it: Item) => {
     setOpen(false);
-    if (it.external) window.open(it.href, "_blank", "noopener,noreferrer");
+    if (it.action) window.setTimeout(() => window.dispatchEvent(new Event(it.action!)), 0);
+    else if (it.external) window.open(it.href, "_blank", "noopener,noreferrer");
     else router.push(it.href);
   };
 
@@ -189,6 +193,7 @@ export function CommandPalette({ startOpen = false, initialQuery = "" }: { start
                 {r.parent && <span className="cmdk-parent">{r.parent} › </span>}
                 {r.title}
                 {r.external && " ↗"}
+                {REFERENCE.has(r.group) && r.desc && <span className="cmdk-desc">{r.desc}</span>}
               </span>
               <span className="cmdk-section">{r.group}</span>
             </button>

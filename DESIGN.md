@@ -64,23 +64,46 @@ or an animation to work, it doesn't belong.
 
 ## Motion
 
-- None, beyond the wordmark (a faithful port of agentty's welcome screen),
-  the replayed demo, which are the program itself, and the header's `▌`,
-  which blinks like agentty's cursor. No fades, no smooth scroll, no scroll
-  effects. Hover changes colour or underline only.
+- Motion only where it carries information: the wordmark (a faithful port
+  of agentty's welcome screen), the replayed demo (the program itself), the
+  header's `▌` (agentty's cursor), and the launch race, which replays the
+  measured times in real time on one clock, so the difference is felt, not
+  read. No smooth scroll, no scroll effects. Hover changes colour or
+  underline only.
+- Page changes: the nav and docs sidebar hold still and the content
+  cross-fades in 160 ms (View Transitions). Reduced motion: none of it, the
+  race shows the static bars.
 - Speed is part of the look: static pages, almost no JavaScript.
+  Hovering a link fetches it (speculation rules, router prefetch), so a
+  click lands on a warm page.
 
 ## Terminal touches
 
 - A missing page is a shell error: `cd: no such file or directory`, and like a
   shell it suggests the closest real page (`did you mean /docs/sandboxing?`).
-- The changelog opens with a `git log --oneline` of releases.
-- Keys work like `less`: `j k`, `d u`, `g g` / `G`, `[ ]` for the previous /
-  next page, `g` + a letter to jump, `?` for the list.
+- The changelog opens with a `git log --graph --decorate` of releases: tags,
+  dates, and `+added ~changed !fixed` counts in git's colours.
+- Keys work like `less` and vim: `j k`, `d u`, `g g` / `G`, `{ }` for the
+  previous / next section, `[ ]` for the previous / next page, `y` copies
+  the page as markdown, `Y` the link, `t` picks a theme, `g` + a letter to
+  jump, `?` for the list. `/` searches pages, sections, and every key,
+  setting, env var and command in the docs' reference tables.
+- A mode line along the bottom (desktop): the file you're reading, the
+  section, the scheme, `Top / 42% / Bot`. Key messages show there, like
+  vim's message line.
+- Themes are agentty's: all 615 schemes from maya's `schemes.hpp`
+  (scripts/gen-themes.mjs → public/themes.json), mapped onto the site's
+  tokens by the same slots agentty uses. Picking one previews it live.
 - The header reports the page's own weight (`187 KB · 0 cookies`), measured
   by the browser: the site measures itself the way it measures agentty.
 - Printed, a page reads like a man page: `AGENTTY(1)` running header, CAPS
   section names, indented body, no navigation.
+- Notes go in the margin: `[^id]` in markdown, `[^id]: text` on its own line.
+  On a wide blog page they sit in a column beside the line that cites them;
+  narrower, the bracketed number opens the note under its line.
+- Every docs page says which release it describes (`for v0.9.51 · unchanged
+  since v0.9.46`): the first tag containing the page's last commit, from
+  sync-docs (lib/docs-versions.generated.json).
 
 ## The terminal edition
 
@@ -94,6 +117,15 @@ columns unless the source line itself is (then it's placed, never mangled).
 
 `curl -fsSL agentty.org/bench | sh` (public/bench) measures the agents on
 the reader's own machine and draws the same bars.
+
+`ssh ssh.agentty.org` serves the same pages in a pager (deploy/live/ssh.mjs):
+less's keys, Tab through the OSC 8 links, Enter follows one, `a` starts the
+real agentty. `ssh ssh.agentty.org docs/sandboxing` prints one page, like curl.
+
+"try it live" on the home page and `a` over SSH run the real binary against
+a mock model, each session in bubblewrap: read-only root, empty /home and
+/tmp, no network (a bridge reaches only the mock's unix socket), its own pid
+namespace, a throwaway workdir.
 
 ## Docs that can't lie
 

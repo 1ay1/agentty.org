@@ -1,0 +1,55 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+// Replays a time benchmark in real time: when the chart scrolls into view,
+// every bar grows from zero on one shared clock, so each tool's bar stops at
+// its measured time (agentty at 47 ms, the slowest after five seconds).
+// The bars' widths are already proportional to their times, so a single
+// clock means one speed for every bar: CSS does the drawing
+// (animation-duration = the row's --ms), and this component only arms it,
+// runs the clock readout, and offers a replay. Without JS, or with reduced
+// motion, the chart is the static one.
+export function BenchRace() {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [t, setT] = useState<number | null>(null);
+  const [runs, setRuns] = useState(0);
+
+  useEffect(() => {
+    const fig = ref.current?.closest<HTMLElement>("figure[data-race-ms]");
+    if (!fig || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const total = Number(fig.dataset.raceMs) + 150;
+    let raf = 0;
+    const run = () => {
+      fig.dataset.race = "";                           // restart the CSS animations
+      void fig.offsetWidth;
+      fig.dataset.race = "on";
+      const t0 = performance.now();
+      const tick = (now: number) => {
+        const e = now - t0;
+        setT(Math.min(e, total));
+        if (e < total) raf = requestAnimationFrame(tick);
+        else fig.dataset.race = "done";
+      };
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(tick);
+    };
+    if (runs > 0) { run(); return () => cancelAnimationFrame(raf); }
+    // first run: only once it is actually on screen
+    fig.dataset.race = "armed";
+    const io = new IntersectionObserver((es) => {
+      if (es.some((x) => x.isIntersecting)) { io.disconnect(); run(); }
+    }, { threshold: 0.6 });
+    io.observe(fig);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, [runs]);
+
+  return (
+    <span ref={ref} className="bench-race">
+      {t !== null && <span className="bench-clock">{t < 1000 ? `${Math.round(t)} ms` : `${(t / 1000).toFixed(2)} s`}</span>}
+      <button type="button" onClick={() => setRuns((r) => r + 1)} aria-label="Replay the launch race in real time">
+        replay
+      </button>
+    </span>
+  );
+}

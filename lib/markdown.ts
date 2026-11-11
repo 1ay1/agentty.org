@@ -271,13 +271,41 @@ export function renderMarkdown(src: string, ids: Map<string, number> = new Map()
   md ??= build();
   const env: Env = { ids, headings: [] };
   // directives become a placeholder paragraph, swapped for a sentinel div
-  const text = preprocess(src);
+  const { text: noted, notes } = footnotes(preprocess(src));
+  const text = noted;
   const html = md
     .render(text, env)
     .replace(/<p>@@directive:([a-z-]+)(?::([a-z0-9,-]+))?@@<\/p>/g, (_m: string, name: string, arg?: string) =>
       `<div data-directive="${name}${arg ? `:${arg}` : ""}"></div>`,
+    )
+    // [^x] → a margin note beside the line that cites it (a block under the
+    // paragraph where there is no margin). The number is the link both ways.
+    .replace(/@@sn:(\d+)@@/g, (_m: string, n: string) =>
+      `<label class="sn-ref" for="sn-${n}" id="sn-ref-${n}">${n}</label><input type="checkbox" class="sn-toggle" id="sn-${n}" aria-label="Note ${n}" />` +
+      `<span class="sn" role="note"><span class="sn-n">${n}</span> ${md!.renderInline(notes[Number(n) - 1] ?? "")}</span>`,
     );
   return { html, headings: env.headings };
+}
+
+// Footnote definitions (`[^id]: text`, one line) are lifted out; each first
+// reference becomes a numbered placeholder. Undefined refs are left as typed.
+function footnotes(src: string): { text: string; notes: string[] } {
+  const defs = new Map<string, string>();
+  const body = src.replace(/^\[\^([^\]\s]+)\]:[ \t]+(.+)$\n?/gm, (_m, id: string, t: string) => (defs.set(id, t.trim()), ""));
+  if (!defs.size) return { text: src, notes: [] };
+  const order: string[] = [];
+  let fence = false;
+  const text = body.split("\n").map((line) => {
+    if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+    if (fence) return line;
+    return line.replace(/\[\^([^\]\s]+)\]/g, (m, id: string) => {
+      if (!defs.has(id)) return m;
+      let i = order.indexOf(id);
+      if (i < 0) i = order.push(id) - 1;
+      return `@@sn:${i + 1}@@`;
+    });
+  }).join("\n");
+  return { text, notes: order.map((id) => defs.get(id)!) };
 }
 
 export function markdownToHtml(src: string): string {

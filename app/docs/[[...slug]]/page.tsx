@@ -4,6 +4,9 @@ import { Breadcrumb, EditThisPage } from "@/components/DocMeta";
 import { DocNav } from "@/components/DocNav";
 import { DocBody } from "@/components/DocBody";
 import { PageActions } from "@/components/PageActions";
+import docDates from "@/lib/docs-dates.generated.json";
+import docVersions from "@/lib/docs-versions.generated.json";
+import { versionLabel } from "@/lib/release";
 import {
   getDoc,
   getDocSlugs,
@@ -89,7 +92,22 @@ export default async function DocsPage({ params }: { params: Promise<Params> }) 
         <Breadcrumb title={doc.title} />
         <h1>{doc.title}</h1>
         {doc.description && <p className="lead">{doc.description}</p>}
-        <PageActions md={`/md/${doc.slug || "index"}.md`} />
+        <div className="doc-stamp">
+          <PageActions md={`/md/${doc.slug || "index"}.md`} />
+          {(() => {
+            // which release this page describes: the first tag containing its last change
+            const v = (docVersions as Record<string, string>)[doc.file];
+            const d = (docDates as Record<string, string>)[doc.file]?.slice(0, 10);
+            if (!v) return null;
+            return (
+              <span className="doc-version" title={d ? `last changed ${d}` : undefined}>
+                {v === "master"
+                  ? <>changed since <a href="/changelog/">{versionLabel}</a>, on master</>
+                  : <>for <a href="/changelog/">{versionLabel}</a> · unchanged since {v}</>}
+              </span>
+            );
+          })()}
+        </div>
       </header>
 
       {doc.headings.filter((h) => h.level === 2).length > 2 && (

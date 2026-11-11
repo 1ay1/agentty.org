@@ -1,0 +1,53 @@
+// scripts/gen-themes.mjs — the site's theme list, taken from agentty.
+//
+// agentty ships 615 colour schemes (maya/include/maya/style/schemes.hpp,
+// generated from iTerm2-Color-Schemes and mapped onto maya's semantic
+// slots). This reads that header and writes public/themes.json, which the
+// site's theme picker fetches the first time it opens, so picking "Nord"
+// here gives the same colours as picking Nord in agentty's Appearance pane.
+//
+//   node scripts/gen-themes.mjs [path/to/schemes.hpp]
+//
+// Without a path it tries the agentty checkout next to this repo, then
+// GitHub (agentty-org/maya@master).
+
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const LOCAL = [
+  process.argv[2],
+  join(ROOT, "../agentty/build/_deps/maya-src/include/maya/style/schemes.hpp"),
+  join(ROOT, "../maya/include/maya/style/schemes.hpp"),
+].filter(Boolean);
+const REMOTE = "https://raw.githubusercontent.com/agentty-org/maya/master/include/maya/style/schemes.hpp";
+
+let src = "";
+for (const p of LOCAL) if (existsSync(p)) { src = readFileSync(p, "utf8"); console.log(`themes: ${p}`); break; }
+if (!src) {
+  const r = await fetch(REMOTE);
+  if (!r.ok) throw new Error(`themes: ${REMOTE} → ${r.status}`);
+  src = await r.text();
+  console.log(`themes: ${REMOTE}`);
+}
+
+// inline constexpr Theme ident { .slot = Color::hex(0xRRGGBB), ... };
+const bodies = new Map();
+for (const m of src.matchAll(/inline constexpr Theme (\w+) \{([^}]*)\};/g)) {
+  const slots = {};
+  for (const s of m[2].matchAll(/\.(\w+)\s*=\s*Color::hex\(0x([0-9A-Fa-f]{6})\)/g)) slots[s[1]] = s[2].toLowerCase();
+  bodies.set(m[1], slots);
+}
+// {"Display Name", &ident},
+const table = src.slice(src.indexOf("inline constexpr NamedTheme schemes[]"));
+const SLOTS = ["background", "surface", "border", "text", "muted", "accent", "primary", "secondary", "info", "warning", "error", "highlight"];
+const out = [];
+for (const m of table.matchAll(/\{"((?:[^"\\]|\\.)*)", &(\w+)\}/g)) {
+  const t = bodies.get(m[2]);
+  if (!t || SLOTS.some((k) => !t[k])) continue;
+  out.push([m[1].replace(/\\"/g, '"'), ...SLOTS.map((k) => t[k])]);
+}
+if (out.length < 100) throw new Error(`themes: only parsed ${out.length} schemes`);
+writeFileSync(join(ROOT, "public", "themes.json"), JSON.stringify({ slots: SLOTS, themes: out }) + "\n");
+console.log(`themes: ${out.length} schemes → public/themes.json`);
