@@ -112,10 +112,12 @@ button { font: inherit; color: inherit; }
 }
 .wrap { width: 100%; padding: 0 24px 0 var(--gutter); }
 .nav-inner { display: flex; align-items: center; gap: 22px; }
-.brand { display: flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; font-weight: 700; font-size: var(--fs-base); }
+/* the header reads a step larger than the chrome it sits beside */
+.brand { display: flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; font-weight: 700; font-size: calc(var(--fs-base) + 1.5px); }
 .brand:hover { color: var(--text); }
 .brand-mark { color: var(--accent); }
-.brand-ver { font-size: var(--fs-xs); color: var(--text-faint); font-weight: 400; }
+/* the version in a box, like a tag: a hairline rectangle, no fill */
+.brand-ver { font-size: var(--fs-xs); color: var(--text-dim); font-weight: 400; line-height: 1; padding: 3px 5px; border: 1px solid var(--border); font-variant-numeric: tabular-nums; }
 .page-weight { margin-left: -14px; font-size: var(--fs-xs); color: var(--text-faint); white-space: nowrap; cursor: default; }
 .page-weight::before { content: "·"; margin-right: 8px; color: var(--border); }
 @media (max-width: 900px) { .page-weight { display: none; } }
@@ -125,7 +127,7 @@ button { font: inherit; color: inherit; }
 .mobile-menu-links a { text-transform: lowercase; }
 .nav-links a[aria-current]::before { content: ">"; position: absolute; right: 100%; margin-right: .6ch; color: var(--accent); }
 .nav-links a, .nav-cta a, .cmdk-trigger {
-  color: var(--text-faint); text-decoration: none; font-size: var(--fs-sm); white-space: nowrap; text-transform: lowercase;
+  color: var(--text-faint); text-decoration: none; font-size: calc(var(--fs-sm) + 1px); white-space: nowrap; text-transform: lowercase;
 }
 .nav-links a:hover, .nav-cta a:hover, .cmdk-trigger:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .nav-spacer { flex: 1; }
