@@ -144,7 +144,7 @@ export function ReplayTerminal({
     // ── clock ──────────────────────────────────────────────────────────────
     const loop = (now: number) => {
       raf = 0;
-      if (disposed || !data || !onScreen || document.hidden || ended) return;
+      if (disposed || !data || !onScreen || document.hidden || ended || "liveOn" in box.dataset) { pause(); return; }
       const tick = ((now - t0) * data.fps) / 1000;
       while (i < data.frames.length && due[i] <= tick) queue(data.frames[i++]);
       if (pendingRows.length) flush();
@@ -157,7 +157,7 @@ export function ReplayTerminal({
       if (started && !pausedAt) pausedAt = performance.now();
     };
     const resume = () => {
-      if (!started || raf || ended || !onScreen || document.hidden) return;
+      if (!started || raf || ended || !onScreen || document.hidden || "liveOn" in box.dataset) return;
       if (pausedAt) {                      // shift the clock: continue, don't jump
         const gap = performance.now() - pausedAt;
         t0 += gap;
@@ -278,6 +278,10 @@ export function ReplayTerminal({
 
     const onVis = () => (document.hidden ? pause() : resume());
     document.addEventListener("visibilitychange", onVis);
+    // "try it live" covers the replay with the real terminal: stop the replay
+    // clock while it is there (it was repainting rows nobody can see)
+    const live = new MutationObserver(() => ("liveOn" in box.dataset ? pause() : resume()));
+    live.observe(box, { attributes: true, attributeFilter: ["data-live-on"] });
 
     // the site theme toggle: before the player loads, CSS already shows the
     // matching opening frame; after, swap recordings
@@ -293,6 +297,7 @@ export function ReplayTerminal({
       if (raf) cancelAnimationFrame(raf);
       io.disconnect();
       mo.disconnect();
+      live.disconnect();
       grid.removeEventListener("scroll", onScroll);
       replayBtn?.removeEventListener("click", replay);
       document.removeEventListener("visibilitychange", onVis);

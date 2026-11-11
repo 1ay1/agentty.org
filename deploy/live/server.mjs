@@ -124,9 +124,15 @@ export function startSession(ip, cols, rows, io) {
   sessions.add(sess);
   console.log(`[live] session up (${sessions.size} active, ${io.kind}) → ${work}`);
 
+  // one message per ~frame, not one per write(): a streamed reply is many
+  // tiny writes, and each message costs the browser a parse + a paint
+  let out = "", flushT = null;
+  const flush = () => { flushT = null; if (out) { io.send(out); out = ""; } };
   pty.onData((d) => {
     sess.lastActivity = Date.now();
-    io.send(d);
+    out += d;
+    if (out.length > 64 * 1024) flush();
+    else if (!flushT) flushT = setTimeout(flush, 12);
   });
 
   pty.onExit(() => end("agentty exited"));
@@ -201,6 +207,13 @@ if (process.env.LIVE_SSH_PORT) {
 
 // ---- helpers -------------------------------------------------------------
 function seedWorkspace(dir) {
+  try {
+    // agentty's own settings for the demo: motion off. The welcome screen's
+    // animation otherwise streams ~30 KB/s of redraws at an idle visitor,
+    // which is the lag a phone feels; everything else is agentty's default.
+    fs.mkdirSync(path.join(dir, ".agentty"), { recursive: true, mode: 0o700 });
+    fs.writeFileSync(path.join(dir, ".agentty", "settings.json"), JSON.stringify({ ui: { motion: 2 } }) + "\n");
+  } catch {}
   try {
     fs.writeFileSync(path.join(dir, "README.md"),
       "# demo workspace\n\nThis is a throwaway sandbox for the agentty live demo.\n" +

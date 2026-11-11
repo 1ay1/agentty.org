@@ -11,19 +11,18 @@ import { useEffect, useRef, useState } from "react";
 // (bytes are buffered), and the terminal's size is worked out before xterm
 // exists and sent with the connection, so agentty starts at the final size
 // and never redraws for a resize.
-// Sharp: the font is fitted so agentty gets at least MIN_COLS columns (on a
-// phone that means a small font, like the replay's), rendered as real text
-// (xterm's DOM renderer: the system's own font rasteriser, crisp at any pixel
-// density), at line height 1 so box-drawing lines meet with no gaps.
-// (xterm's WebGL renderer mis-scales its canvas on 2x/3x screens.)
+// Sharp: the font is fitted so agentty gets at least MIN_COLS columns, using
+// the font's MEASURED cell width (a guessed one cut the right edge off),
+// rendered as real text (xterm's DOM renderer: the system's own font
+// rasteriser, crisp at any pixel density), at line height 1 so box-drawing
+// lines meet. (xterm's canvas and WebGL renderers mis-scale on 2x/3x screens.)
 declare global { interface Window { Terminal?: any; FitAddon?: any } }
 
 const V = "/vendor/xterm/";
 const SCRIPTS = [V + "xterm.js", V + "addon-fit.js"];
-const MIN_COLS = 64;          // agentty lays out well from here; fewer columns and it wraps
+const MIN_COLS = 48;          // ~11.5px on a phone; agentty still lays its screen out at this width
 const MAX_FONT = 13;
 const LINE = 1;
-const CELL_W = 0.6;           // JetBrains Mono's advance, in em
 
 const hint = (rel: "prefetch" | "preload") => {
   for (const href of [...SCRIPTS, V + "xterm.css"]) {
@@ -57,16 +56,29 @@ const FLEXOKI = {
     brightBlack: "#b7b5ac", brightRed: "#d14d41", brightGreen: "#879a39", brightYellow: "#d0a215", brightBlue: "#4385be", brightMagenta: "#ce5d97", brightCyan: "#3aa99f", brightWhite: "#100f0f" },
 };
 
+// the font's real advance, in em (measured once: canvas text metrics use the
+// same font the terminal will, already loaded by the page)
+let advance = 0;
+function cellEm(family: string) {
+  if (advance) return advance;
+  const c = document.createElement("canvas").getContext("2d")!;
+  c.font = `100px ${family}`;
+  advance = c.measureText("W".repeat(50)).width / 50 / 100 || 0.6;
+  return advance;
+}
+
 // the terminal's size from the box alone (no xterm yet): a font that gives
-// at least MIN_COLS, capped at MAX_FONT, snapped to half pixels
-function fit(el: HTMLElement) {
+// at least MIN_COLS, capped at MAX_FONT, snapped to half pixels; one spare
+// column of slack so rounding never pushes the last column off the edge
+function fit(el: HTMLElement, family: string) {
   const cs = getComputedStyle(el);
   const w = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const h = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-  const fontSize = Math.max(6, Math.min(MAX_FONT, Math.floor((w / (MIN_COLS * CELL_W)) * 2) / 2));
+  const em = cellEm(family);
+  const fontSize = Math.max(6, Math.min(MAX_FONT, Math.floor((w / (MIN_COLS * em)) * 2) / 2));
   return {
     fontSize,
-    cols: Math.max(20, Math.floor(w / (fontSize * CELL_W))),
+    cols: Math.max(20, Math.floor(w / (fontSize * em)) - 1),
     rows: Math.max(8, Math.floor(h / Math.ceil(fontSize * LINE))),
   };
 }
@@ -102,7 +114,8 @@ export function LiveTakeover() {
     setState("connecting");
     const end = (msg: string) => { if (!disposed) { setState("ended"); setNote(msg); } };
 
-    const size = fit(el);
+    const family = getComputedStyle(document.body).fontFamily;
+    const size = fit(el, family);
     const pending: (string | Uint8Array)[] = [];
     const scripts = loadAll();
     const font = document.fonts?.ready ?? Promise.resolve();
@@ -128,14 +141,23 @@ export function LiveTakeover() {
       const light = document.documentElement.getAttribute("data-theme") === "light";
       term = new window.Terminal!({
         cols: size.cols, rows: size.rows,
-        fontFamily: getComputedStyle(document.body).fontFamily, fontSize: size.fontSize, lineHeight: LINE,
+        fontFamily: family, fontSize: size.fontSize, lineHeight: LINE,
         cursorBlink: true, allowProposedApi: true, scrollback: 1000,
         theme: light ? FLEXOKI.light : FLEXOKI.dark,
       });
       fitter = new window.FitAddon!.FitAddon();
       term.loadAddon(fitter);
       term.open(el);
+      // xterm has now measured the real cell; if that disagrees with the
+      // estimate, take its numbers before a single byte is drawn
+      const real = fitter.proposeDimensions?.();
+      if (real && (real.cols < term.cols || real.rows < term.rows)) {
+        term.resize(Math.min(real.cols, term.cols), Math.min(real.rows, term.rows));
+        if (ws?.readyState === WebSocket.OPEN) ws.send("\x00json:" + JSON.stringify({ t: "resize", cols: term.cols, rows: term.rows }));
+        else ws?.addEventListener("open", () => ws?.send("\x00json:" + JSON.stringify({ t: "resize", cols: term.cols, rows: term.rows })), { once: true });
+      }
       for (const d of pending.splice(0)) term.write(d);
+      (window as any).__agenttyLive = term;          // for poking at it from devtools
       setState("live");
       if (!matchMedia("(hover: none)").matches) term.focus();
       const resize = () => {
