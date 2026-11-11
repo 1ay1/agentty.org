@@ -116,10 +116,9 @@ echo "==> Notifying IndexNow (Bing/DuckDuckGo/Yandex) of the current sitemap"
 node scripts/submit-indexnow.mjs || echo "   (IndexNow submission skipped)"
 
 echo "==> Syncing the live agentty backend service"
-# node deps for the live PTY/mock-model/ssh server (node-pty is native; only
-# reinstalls when a dependency is missing).
-if [ ! -f "$PROJECT/deploy/live/node_modules/node-pty/build/Release/pty.node" ] \
-   || [ ! -d "$PROJECT/deploy/live/node_modules/ssh2" ]; then
+# node deps for the live PTY/mock-model server (node-pty is native; only
+# rebuilds when missing).
+if [ ! -f "$PROJECT/deploy/live/node_modules/node-pty/build/Release/pty.node" ]; then
   ( cd "$PROJECT/deploy/live" && npm install --no-audit --no-fund && npm rebuild node-pty )
 fi
 sudo cp "$PROJECT/deploy/agentty-live.service" /etc/systemd/system/agentty-live.service

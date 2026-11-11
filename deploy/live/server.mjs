@@ -9,7 +9,6 @@
 // agentty TUI — real composer, real streaming, real tool timeline — against a
 // free mock model. No cloud, no key, no repo access.
 
-import { Screen } from "./screen.mjs";
 import { WebSocketServer } from "ws";
 import { spawn as ptySpawn } from "node-pty";
 import { createMockOllama } from "./mock-ollama.mjs";
@@ -83,8 +82,8 @@ function sandboxed(work, args) {
 const wss = new WebSocketServer({ server: httpServer, path: "/live/ws" });
 const sessions = new Set();
 
-// One sandboxed agentty, whoever asked for it (a browser over WebSocket, or
-// someone over SSH). `io` is the transport: send(bytes) and close(reason).
+// One sandboxed agentty for one browser. `io` is the transport:
+// send(bytes) and close(reason).
 // Returns the session ({ write, resize, end }) or a string saying why not.
 export function startSession(ip, cols, rows, io) {
   const mine = [...sessions].filter((s) => s.ip === ip).length;
@@ -168,37 +167,29 @@ wss.on("connection", (ws, req) => {
   const q = new URL(req.url || "/", "http://x").searchParams;
   const clamp = (v, lo, hi, d) => (Number.isFinite(+v) && +v > 0 ? Math.min(hi, Math.max(lo, +v | 0)) : d);
   const cols = clamp(q.get("cols"), 20, 300, 100), rows = clamp(q.get("rows"), 6, 120, 30);
-  // render=rows: the terminal lives here (screen.mjs) and the browser gets
-  // changed rows; otherwise raw bytes for a client-side emulator (/dev)
-  const screen = q.get("render") === "rows"
-    ? new Screen(cols, rows, (j) => { if (ws.readyState === ws.OPEN) ws.send(j); }, { fps: clamp(q.get("fps"), 10, 60, 30) })
-    : null;
   const s = startSession(ip, cols, rows, {
     kind: "web",
-    send: screen ? (d) => screen.write(d) : (d) => { if (ws.readyState === ws.OPEN) ws.send(d); },
+    send: (d) => { if (ws.readyState === ws.OPEN) ws.send(d); },
     close: (reason) => {
-      screen?.dispose();
       try { ws.send(JSON.stringify({ t: "end", m: reason })); } catch {}
       try { ws.close(); } catch {}
     },
   });
   if (typeof s === "string") {
-    screen?.dispose();
     try { ws.send(JSON.stringify({ t: "err", m: s })); } catch {}
     ws.close();
     return;
   }
   ws.on("message", (raw) => {
-    // control frames are JSON (resize, paste, wheel); everything else is keystrokes
+    // control frames are JSON ({resize}); everything else is raw keystrokes
     const str = raw.toString();
     if (str.startsWith("\x00json:")) {
       try {
         const msg = JSON.parse(str.slice(6));
         if (msg.t === "resize" && msg.cols && msg.rows) {
           const c = clamp(msg.cols, 20, 300, cols), r = clamp(msg.rows, 6, 120, rows);
-          s.resize(c, r); screen?.resize(c, r);
-        } else if (screen && msg.t === "paste" && typeof msg.d === "string") s.write(screen.paste(msg.d.slice(0, 20000)));
-        else if (screen && msg.t === "wheel") s.write(screen.wheel(+msg.dy || 0, msg.x | 0, msg.y | 0));
+          s.resize(c, r);
+        }
       } catch {}
       return;
     }
@@ -211,12 +202,6 @@ wss.on("connection", (ws, req) => {
 httpServer.listen(PORT, "127.0.0.1", () => {
   console.log(`[live] ws server on 127.0.0.1:${PORT} (path /live/ws)`);
 });
-
-// ---- 3. ssh agentty.org (optional) ---------------------------------------
-if (process.env.LIVE_SSH_PORT) {
-  const { startSsh } = await import("./ssh.mjs");
-  startSsh({ port: Number(process.env.LIVE_SSH_PORT), startSession });
-}
 
 // ---- helpers -------------------------------------------------------------
 function seedWorkspace(dir) {

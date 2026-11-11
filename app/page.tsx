@@ -3,7 +3,6 @@ import { site } from "@/lib/site";
 import { repo, starLabel } from "@/lib/repo";
 import { InstallPicker } from "@/components/InstallPicker";
 import { ReplayDemo } from "@/components/ReplayDemo";
-import { LiveTakeover } from "@/components/LiveTakeover";
 import { BenchBars } from "@/components/BenchBars";
 import { AgenttyLogo } from "@/components/AgenttyLogo";
 import bench from "@/lib/bench.generated.json";
@@ -23,7 +22,7 @@ export default function Home() {
 
       <figure className="home-demo">
         <ReplayDemo />
-        <figcaption>a real agentty session, replayed from the terminal <LiveTakeover /></figcaption>
+        <figcaption>a real agentty session, replayed from the terminal</figcaption>
       </figure>
 
       <section className="home-info" aria-label="Install">

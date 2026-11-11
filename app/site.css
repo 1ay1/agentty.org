@@ -758,30 +758,6 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
   background: none; border: 0; color: var(--text-dim); font: inherit; font-size: var(--fs-sm);
 }
 .replay-again:hover { color: var(--accent); }
-/* "try it live": the server's terminal, drawn as rows in the replay's exact box */
-/* its font: JetBrains Mono with every glyph agentty draws, one cell wide
-   (scripts/gen-term-font.py). Fetched only when a live session starts. */
-@font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-400.woff2) format("woff2"); font-weight: 400; font-style: normal; font-display: block; }
-@font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-700.woff2) format("woff2"); font-weight: 700; font-style: normal; font-display: block; }
-@font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-400i.woff2) format("woff2"); font-weight: 400; font-style: italic; font-display: block; }
-@font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-700i.woff2) format("woff2"); font-weight: 700; font-style: italic; font-display: block; }
-.live-inline { position: absolute; inset: 0; z-index: 2; background: var(--replay-bg); }   /* padding: .replay-screen's own */
-/* the live grid IS a .replay-grid (same cell maths, same canvas, same glyph
-   drawing); it only differs in having no scrollback and the full font */
-.replay-grid.lv { --sb: 0px; overflow: hidden; font-family: "agentty term", var(--mono); }
-.lv-cursor { position: absolute; left: 0; top: 0; z-index: 2; width: var(--cw); height: var(--rh); background: currentColor;
-  opacity: .7; pointer-events: none; will-change: transform; }
-/* the keyboard's target: invisible, in place, 16px so iOS doesn't zoom */
-.lv-input { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0;
-  resize: none; font-size: 16px; caret-color: transparent; }
-.live-inline { touch-action: pan-x pinch-zoom; cursor: text; }
-.replay[data-live-on] .replay-again { display: none; }
-.live-try { background: none; border: 0; padding: 0; margin-left: 12px; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: 3px; }
-.live-try:hover { color: var(--accent-hover); }
-.live-try-state { margin-left: 12px; color: var(--text-dim); }
-.live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--warn); vertical-align: 1px; }
-.live-dot.live { background: var(--tip); animation: cursor-blink 1.6s steps(1) infinite; }
-.live-dot.ended { background: var(--text-faint); }
 @supports (width: round(down, 1px, 1px)) {
   .replay-grid { --step: 1px; --rh: round(calc(var(--cw) * 2), var(--step)); --t: max(var(--step), round(calc(var(--cw) * .125), var(--step))); }
   @media (resolution >= 2dppx) { .replay-grid { --step: .5px; } }
@@ -865,15 +841,9 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 .bench-metric figcaption { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 1ch; }
 .bench-race { margin-left: 0; display: inline-flex; gap: 10px; }
 .bench-race button { margin-left: 0; }
-.home-demo figcaption { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; row-gap: 4px; }
-.home-demo figcaption .live-try, .live-try-state { margin-left: 0; }
-.live-try-state { display: inline-flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; }
-.live-try-state .live-try { margin-left: 0; }
-.live-inline { overflow: hidden; }
 @media (max-width: 720px) {
   /* tap targets */
-  .live-try, .bench-race button { padding: 6px 0; }
-  /* a live agentty needs rows: the box grows while it runs */
+  .bench-race button { padding: 6px 0; }
   /* the version stamp gets its own line; no leading separator there */
   .doc-version::before { content: none; }
   .doc-stamp { row-gap: 6px; }

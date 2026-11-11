@@ -11,14 +11,8 @@ Environment=AGENTTY_BIN=/home/ayush/.local/bin/agentty
 Environment=LIVE_MAX_SESSIONS=12
 Environment=LIVE_SESSION_MS=600000
 Environment=LIVE_IDLE_MS=180000
-# a browser or an ssh client may hold at most this many sessions per address
+# one visitor (IP address) may hold at most this many sessions
 Environment=LIVE_MAX_PER_IP=2
-# ssh ssh.agentty.org: the terminal edition + agentty (deploy/live/ssh.mjs).
-# ssh.agentty.org is DNS-only (Cloudflare can't proxy SSH); nftables allows
-# 2222 and the router forwards it (public :22 too, if the box's own sshd
-# isn't reached from outside on 22).
-Environment=LIVE_SSH_PORT=2222
-Environment=LIVE_SITE_ROOT=/var/www/agentty.org
 ExecStart=/usr/bin/node /home/ayush/projects/agentpp-site/deploy/live/server.mjs
 Restart=always
 RestartSec=2
