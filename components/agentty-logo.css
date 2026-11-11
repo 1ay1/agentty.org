@@ -24,9 +24,14 @@
   color: var(--logo-mag);
   user-select: none;
   /* heartbeat — a brief hard white flash of the whole mark. Period 5.76 s,
-     the white spike is ~150 ms; magenta is held the rest of the cycle. */
-  animation: logo-pulse 5.76s linear 2.16s infinite;
+     the white spike is ~150 ms; magenta is held the rest of the cycle.
+     Done as a FILTER (desaturate + overexpose = white), which the GPU
+     animates on its own layer: animating `color` restyled all 288 cells on
+     every frame for a flash that is visible 2.6% of the time. */
+  /* the heartbeat is AgenttyLogo's ticker toggling .flash: two restyles per
+     5.76 s instead of an animation ticking every frame */
 }
+.agentty-logo.flash { color: #fff; }
 
 /* one letter = a vertical stack of half-block rows, animated as a unit */
 .logo-letter {
@@ -36,13 +41,12 @@
   will-change: transform;
   /* NB: no `color` here — letters inherit the heartbeat-animated color from
      .agentty-logo so the whole wordmark flashes white as one unit. */
-  /* drop-in cascade then a perpetual bob.
-     The drop runs ONCE, staggered by --delay (180 ms/letter cascade).
-     The bob loops forever, phase-shifted by --bob-delay so the sine wave
-     travels L→R at the TUI's 0.7 rad/letter phase. */
-  animation:
-    logo-drop 0.9s cubic-bezier(0.215, 0.61, 0.355, 1) both var(--delay),
-    logo-bob 4s ease-in-out infinite var(--bob-delay);
+  /* drop-in cascade, ONCE, staggered by --delay (180 ms/letter) */
+  /* the drop runs once in CSS; the bob is AgenttyLogo's 12 fps ticker
+     writing `translate` (it composes with the drop's `transform`), which is
+     how the TUI steps it too. A CSS infinite animation made the compositor
+     produce 60 frames a second for 8 letters: ~13% of a phone's CPU. */
+  animation: logo-drop 0.9s cubic-bezier(0.215, 0.61, 0.355, 1) both var(--delay);
 }
 .logo-letter:last-child { margin-right: 0; }
 
@@ -88,27 +92,7 @@
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* ±1.5 px bob on the ~9px canvas ≈ ±0.16em; the per-letter --bob-delay makes
-   the wave travel L→R. Symmetric around 0 so the resting row is the home row. */
-@keyframes logo-bob {
-  0%   { transform: translateY(0); }
-  25%  { transform: translateY(-0.16em); }
-  50%  { transform: translateY(0); }
-  75%  { transform: translateY(0.16em); }
-  100% { transform: translateY(0); }
-}
 
-@keyframes logo-pulse {
-  /* Magenta for ~97% of the loop; a quick white blip (~2.6% ≈ 150 ms of the
-     5.76 s cycle) that ramps in and back out — the TUI's 80 ms/3200 ms
-     heartbeat, scaled. Held magenta the rest so the mark never sits washed. */
-  0%, 94%, 100% {
-    color: var(--logo-mag);
-  }
-  96%, 97% {
-    color: #ffffff;
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .agentty-logo,

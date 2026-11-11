@@ -12,14 +12,32 @@ import { useEffect, useRef, useState } from "react";
 // exists and sent with the connection, so agentty starts at the final size
 // and never redraws for a resize.
 // Sharp: the font is fitted so agentty gets at least MIN_COLS columns, using
-// the font's MEASURED cell width (a guessed one cut the right edge off),
-// rendered as real text (xterm's DOM renderer: the system's own font
-// rasteriser, crisp at any pixel density), at line height 1 so box-drawing
-// lines meet. (xterm's canvas and WebGL renderers mis-scale on 2x/3x screens.)
-declare global { interface Window { Terminal?: any; FitAddon?: any } }
+// the font's MEASURED cell width, drawn by the GPU (WebGL) with box and block
+// glyphs as pixel-snapped geometry; the DOM renderer when WebGL isn't there.
+// Efficient like a real terminal: bytes go in once per frame, only changed
+// rows are redrawn, nothing is drawn off screen or in a hidden tab.
+declare global { interface Window { Terminal?: any; FitAddon?: any; WebglAddon?: any } }
 
 const V = "/vendor/xterm/";
-const SCRIPTS = [V + "xterm.js", V + "addon-fit.js"];
+const SCRIPTS = [V + "xterm.js", V + "addon-fit.js", V + "addon-webgl.js"];
+
+// WebGL renderer, with the DOM renderer as the fallback: if the context can't
+// be made, or the GPU drops it later (phones do, under memory pressure), the
+// addon is disposed and xterm carries on drawing rows as HTML
+function gpuRenderer(term: any): boolean {
+  if (new URLSearchParams(location.search).get("r") === "dom" || !window.WebglAddon) return false;
+  try {
+    const probe = document.createElement("canvas").getContext("webgl2");
+    if (!probe) return false;
+    probe.getExtension("WEBGL_lose_context")?.loseContext();   // free it: only asked if WebGL2 exists
+    const gl = new window.WebglAddon.WebglAddon();
+    gl.onContextLoss(() => { try { gl.dispose(); } catch {} });
+    term.loadAddon(gl);
+    return true;
+  } catch {
+    return false;
+  }
+}
 // the terminal's own font (scripts/gen-term-font.py): every glyph agentty
 // draws, one cell wide. Without it 31 of agentty's 35 symbols came from
 // whatever system font had them, each its own width: broken lines, slow paints
@@ -127,6 +145,11 @@ export function LiveTakeover() {
     const host = document.createElement("div");
     host.className = "live-host";
     el.appendChild(host);
+    // the replay under the terminal is invisible now: pin its height and take
+    // it out of rendering entirely (content-visibility skips style, layout and
+    // paint for its 300+ cells), instead of keeping a hidden grid alive
+    const under = replay.querySelector<HTMLElement>(".replay-screen");
+    if (under) { under.style.height = `${under.offsetHeight}px`; under.style.contentVisibility = "hidden"; }
     replay.dataset.liveOn = "";                  // the box takes its live size first
     replay.appendChild(el);
     // on a phone the box is now most of the screen: put all of it in view
@@ -142,7 +165,21 @@ export function LiveTakeover() {
     const end = (msg: string) => { if (!disposed) { setState("ended"); setNote(msg); } };
 
     const family = `${TERM_FONT}, ${getComputedStyle(document.body).fontFamily}`;
-    const pending: (string | Uint8Array)[] = [];
+    // incoming bytes: never written straight into the terminal. They queue and
+    // go in ONCE per animation frame, so a burst of 20 messages is one parse
+    // and one paint, like a real terminal's frame clock. A hidden tab gets no
+    // frames, so nothing is parsed or drawn until it is looked at again (then
+    // it all goes in at once, and only the final screen is painted).
+    let queue: (string | Uint8Array)[] = [];
+    let frame = 0;
+    const pump = () => {
+      frame = 0;
+      if (!term || !queue.length) return;
+      const q = queue; queue = [];
+      if (q.every((x) => typeof x === "string")) term.write((q as string[]).join(""));
+      else for (const d of q) term.write(d);
+    };
+    const push = (d: string | Uint8Array) => { queue.push(d); if (term && !frame) frame = requestAnimationFrame(pump); };
     const scripts = loadAll();
     let size = { fontSize: 12, cols: 80, rows: 24 };
     let timer = 0;
@@ -162,8 +199,7 @@ export function LiveTakeover() {
         if (typeof m.data === "string" && m.data.startsWith("{\"t\":")) {
           try { const j = JSON.parse(m.data); if (j.t === "err" || j.t === "end") return end(j.m || "session ended"); } catch {}
         }
-        const d = typeof m.data === "string" ? m.data : new Uint8Array(m.data);
-        if (term) term.write(d); else pending.push(d);
+        push(typeof m.data === "string" ? m.data : new Uint8Array(m.data));
       };
       ws.onclose = () => end("session ended");
       ws.onerror = () => end("the live demo isn't reachable right now");
@@ -174,12 +210,25 @@ export function LiveTakeover() {
       term = new window.Terminal!({
         cols: size.cols, rows: size.rows,
         fontFamily: family, fontSize: size.fontSize, lineHeight: LINE,
-        cursorBlink: true, allowProposedApi: true, scrollback: 1000,
+        allowProposedApi: true,
+        // agentty draws its own UI and redraws the whole conversation; a deep
+        // scrollback is memory and reflow work for nothing
+        scrollback: 200,
+        // the cursor doesn't blink: a blink is a repaint twice a second forever
+        cursorBlink: false, cursorStyle: "bar", cursorInactiveStyle: "none",
+        smoothScrollDuration: 0, fastScrollModifier: "none",
+        drawBoldTextInBrightColors: false, minimumContrastRatio: 1,
+        // box drawing and block elements drawn by the renderer as geometry,
+        // pixel-snapped: lines meet exactly at any size, no font involved
+        customGlyphs: true,
         theme: light ? FLEXOKI.light : FLEXOKI.dark,
       });
       fitter = new window.FitAddon!.FitAddon();
       term.loadAddon(fitter);
       term.open(host);
+      // draw with the GPU: one texture atlas of glyphs, every frame a single
+      // draw call; only rows that changed are rebuilt. DOM rows if unavailable.
+      const gpu = gpuRenderer(term);
       // xterm has now measured the real cell; if that disagrees with the
       // estimate, take its numbers before a single byte is drawn
       const real = fitter.proposeDimensions?.();
@@ -188,8 +237,9 @@ export function LiveTakeover() {
         if (ws?.readyState === WebSocket.OPEN) ws.send("\x00json:" + JSON.stringify({ t: "resize", cols: term.cols, rows: term.rows }));
         else ws?.addEventListener("open", () => ws?.send("\x00json:" + JSON.stringify({ t: "resize", cols: term.cols, rows: term.rows })), { once: true });
       }
-      for (const d of pending.splice(0)) term.write(d);
+      if (queue.length) frame = requestAnimationFrame(pump);
       (window as any).__agenttyLive = term;          // for poking at it from devtools
+      el.dataset.renderer = gpu ? "webgl" : "dom";
       setState("live");
       requestAnimationFrame(toView);
       if (!matchMedia("(hover: none)").matches) term.focus();
@@ -212,10 +262,12 @@ export function LiveTakeover() {
     return () => {
       disposed = true;
       window.clearTimeout(timer);
+      cancelAnimationFrame(frame);
       ro?.disconnect();
       try { ws?.close(); } catch {}
       try { term?.dispose(); } catch {}
       el.remove();
+      if (under) { under.style.height = ""; under.style.contentVisibility = ""; }
       delete replay.dataset.liveOn;
     };
   }, [on]);

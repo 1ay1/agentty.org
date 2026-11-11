@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { PREFIX, className, styleRule, type DemoTheme, type Frame, type Screen, type Seg } from "@/lib/replay";
+import { CanvasGrid } from "@/lib/replay-canvas";
 
 /**
  * ReplayTerminal — plays a REAL recorded agentty session as plain DOM.
@@ -62,15 +63,27 @@ export function ReplayTerminal({
     let pendingRows: number[] = [];
     let gen = 0;
     let disposed = false, loading = false, onScreen = false, started = false;
-    let raf = 0, i = 0, t0 = 0, pausedAt = 0, ended = false, follow = true;
+    let raf = 0, sleeper = 0, i = 0, t0 = 0, pausedAt = 0, ended = false, follow = true;
     let due: Float64Array = new Float64Array(0);
     const blank: boolean[] = [];             // per row: no visible text
+    const stale = new Map<number, Seg[]>();  // rows that changed while off screen
+    let rh = 0;
+    const rowH = () => rh || (rh = rowEls[0]?.getBoundingClientRect().height || 16);   // fractional: rounding drifts 300 rows apart
+    const onResize = () => { rh = 0; };
+    window.addEventListener("resize", onResize, { passive: true });
+    // phones draw the recording at 15 fps: agentty's own spinners step at
+    // ~11 fps, so nothing visible is lost, and half the frames is half the
+    // style/layout/paint work on the device that can least afford it
+    const minGap = matchMedia("(max-width: 720px)").matches ? 1000 / 15 : 0;
+    let lastDraw = 0;
     let skipped = 0;
     const sheets: CSSStyleSheet[] = [], styleEls: HTMLStyleElement[] = [];
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // ── write one row: reconcile segments into its pooled spans ────────────
+    let canvas: CanvasGrid | null = null;   // once loaded: one canvas draws the visible rows
     const paint = (y: number, segs: Seg[]) => {
+      if (canvas) { canvas.set(y, segs); return; }
       const row = rowEls[y], pool = cells[y], g = ++gen;
       for (let k = 0; k < segs.length; k++) {
         const [col, w, txt, ci] = segs[k];
@@ -105,10 +118,18 @@ export function ReplayTerminal({
     const flush = () => {
       let max = 0;
       for (const y of pendingRows) if (y > max) max = y;
+      const grew = max + 1 > rowEls.length;
       addRows(max + 1);
+      // only rows on screen are drawn; a row that changed while scrolled out
+      // of view keeps its latest segments and is drawn when it comes back
+      // (the canvas keeps every row in its model and draws only the visible ones itself)
+      const top = canvas ? -1 : follow ? rowEls.length - rows - 1 : Math.floor(grid.scrollTop / rowH()) - 1;
+      const bottom = canvas ? Infinity : follow ? rowEls.length : top + rows + 3;
       for (const y of pendingRows) {
-        blank[y] = !pending[y]!.some((g) => g[2].trim());
-        paint(y, pending[y]!); pending[y] = null;
+        const segs = pending[y]!; pending[y] = null;
+        blank[y] = !segs.some((g) => g[2].trim());
+        if (y >= top && y < bottom) { paint(y, segs); stale.delete(y); }
+        else stale.set(y, segs);
       }
       pendingRows.length = 0;
       // agentty draws its conversation from where the cursor was, under the
@@ -116,14 +137,22 @@ export function ReplayTerminal({
       // everything fits on one screen they're the real terminal's top; once
       // the session scrolls, scrolling back up would only find that gap, so
       // it's skipped (never more than the rows that have scrolled away)
+      // Only when the buffer GREW: most frames rewrite rows already on screen,
+      // and touching the scroll position forces a full layout. Setting it to
+      // a huge value clamps to the bottom without reading scrollHeight.
+      if (!grew) return;
       let lead = 0;
       while (lead < rowEls.length && blank[lead] !== false) lead++;
       const skip = Math.max(0, Math.min(lead, rowEls.length - rows));
-      if (skip !== skipped) { grid.style.setProperty("--skip", String(skip)); skipped = skip; }
-      if (follow) grid.scrollTop = grid.scrollHeight;   // stick to the bottom, like a terminal
+      if (skip !== skipped) { grid.style.setProperty("--skip", String(skip)); skipped = skip; canvas?.invalidate(); }
+      if (follow) grid.scrollTop = 1e9;                 // stick to the bottom, like a terminal
     };
     const onScroll = () => {                  // reader scrolled up: stop following until back at the bottom
       follow = grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 4;
+      if (canvas) { canvas.request(); return; }
+      if (!stale.size) return;
+      const top = Math.floor(grid.scrollTop / rowH()) - 1, bottom = top + rows + 3;
+      stale.forEach((segs, y) => { if (y >= top && y < bottom) { paint(y, segs); stale.delete(y); } });
     };
     const replayBtn = box.querySelector<HTMLButtonElement>(".replay-again");
     const finish = () => { ended = true; if (replayBtn) replayBtn.hidden = false; };
@@ -145,14 +174,21 @@ export function ReplayTerminal({
     const loop = (now: number) => {
       raf = 0;
       if (disposed || !data || !onScreen || document.hidden || ended || "liveOn" in box.dataset) { pause(); return; }
+      if (minGap && now - lastDraw < minGap - 4) { raf = requestAnimationFrame(loop); return; }
+      lastDraw = now;
       const tick = ((now - t0) * data.fps) / 1000;
       while (i < data.frames.length && due[i] <= tick) queue(data.frames[i++]);
       if (pendingRows.length) flush();
       if (i >= data.frames.length) return finish();   // play once, stay on the result
-      raf = requestAnimationFrame(loop);
+      // sleep until the next recorded frame is due (agentty waiting on the
+      // model is seconds of nothing), then wake on a vsync to draw it
+      const wait = ((due[i] - tick) * 1000) / data.fps;
+      if (wait > 24) { sleeper = window.setTimeout(() => { sleeper = 0; raf = requestAnimationFrame(loop); }, wait - 12); raf = -1; }
+      else raf = requestAnimationFrame(loop);
     };
     const pause = () => {
-      if (raf) cancelAnimationFrame(raf);
+      if (raf > 0) cancelAnimationFrame(raf);
+      if (sleeper) { clearTimeout(sleeper); sleeper = 0; }
       raf = 0;
       if (started && !pausedAt) pausedAt = performance.now();
     };
@@ -197,6 +233,7 @@ export function ReplayTerminal({
       grid.style.color = o.fg ?? "";
       grid.style.background = o.bg ?? "";
       box.dataset.theme = t;
+      canvas?.use(data, o.fg ?? getComputedStyle(grid).color, o.bg ?? getComputedStyle(grid).backgroundColor);
     };
 
     // the site theme changed: swap recordings and repaint the same moment
@@ -255,6 +292,17 @@ export function ReplayTerminal({
         return pool;
       });
 
+      // hand drawing over to the canvas: it takes the opening frame, and the
+      // server-rendered spans go (the row divs stay, empty, as scroll content)
+      try {
+        canvas = new CanvasGrid(grid, cols, rows, (y) => (y - skipped) * rowH());
+        const o = theme === "light" ? light : dark;
+        canvas.use(data!, o.fg ?? getComputedStyle(grid).color, o.bg ?? getComputedStyle(grid).backgroundColor);
+        for (const [y, segs] of data!.frames[0][1]) canvas.set(y, segs);
+        cells.forEach((pool) => { pool.forEach((c) => c.el.remove()); pool.clear(); });
+        box.dataset.canvas = "";
+      } catch { canvas = null; }
+
       if (reduce) {                        // the finished session, painted once
         for (const f of data!.frames) queue(f);
         flush();
@@ -294,10 +342,13 @@ export function ReplayTerminal({
 
     return () => {
       disposed = true;
-      if (raf) cancelAnimationFrame(raf);
+      if (raf > 0) cancelAnimationFrame(raf);
+      if (sleeper) clearTimeout(sleeper);
       io.disconnect();
       mo.disconnect();
       live.disconnect();
+      canvas?.destroy();
+      window.removeEventListener("resize", onResize);
       grid.removeEventListener("scroll", onScroll);
       replayBtn?.removeEventListener("click", replay);
       document.removeEventListener("visibilitychange", onVis);

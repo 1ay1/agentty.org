@@ -781,7 +781,8 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
   @media (resolution >= 2dppx) { .replay-grid { --step: .5px; } }
 }
 .replay-grid > div { position: relative; height: var(--rh); contain: strict; }
-.replay-grid > div:first-child { margin-top: calc(var(--skip, 0) * var(--rh) * -1); }
+.replay-grid > div:first-of-type { margin-top: calc(var(--skip, 0) * var(--rh) * -1 - var(--canvas-h, 0px)); }
+.replay-canvas { position: sticky; top: 0; z-index: 1; display: block; pointer-events: none; }
 .replay-grid span { position: absolute; top: 0; height: 100%; overflow: visible; }
 @media (max-width: 720px) { .replay-screen { padding: 8px 2px 8px 8px; } .replay-grid { --sb: 8px; } }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import "./agentty-logo.css";
 
 /**
@@ -20,8 +21,40 @@ import { TEXT, buildLetter } from "@/lib/wordmark";
 const LETTERS = TEXT.split("").map((ch) => buildLetter(ch));
 
 export function AgenttyLogo() {
+  const ref = useRef<HTMLDivElement>(null);
+  // The bob and the heartbeat, stepped like the TUI's own frame clock: one
+  // 12 fps timer, running only while the wordmark is on screen in a visible
+  // tab. Each tick writes 8 `translate`s (compositor-only); the flash is a
+  // class on for 150 ms of every 5.76 s.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const letters = [...el.querySelectorAll<HTMLElement>(".logo-letter")];
+    const t0 = performance.now();
+    let timer = 0, seen = false;
+    const tick = () => {
+      const t = performance.now() - t0;
+      letters.forEach((l, li) => {
+        const start = li * 180 + 900;                 // the bob starts when this letter's drop ends
+        const ph = t < start ? 0 : ((t - start) / 4000) * 2 * Math.PI + li * 0.7;
+        l.style.translate = `0 ${(-0.16 * Math.sin(ph)).toFixed(3)}em`;
+      });
+      const beat = (t - 2160) % 5760;
+      el.classList.toggle("flash", t > 2160 && beat > 5410 && beat < 5590);
+    };
+    const run = () => {
+      const on = seen && !document.hidden;
+      if (on && !timer) { tick(); timer = window.setInterval(tick, 83); }
+      else if (!on && timer) { clearInterval(timer); timer = 0; }
+    };
+    const io = new IntersectionObserver(([e]) => { seen = e.isIntersecting; run(); });
+    io.observe(el);
+    document.addEventListener("visibilitychange", run);
+    return () => { io.disconnect(); document.removeEventListener("visibilitychange", run); clearInterval(timer); };
+  }, []);
+
   return (
-    <div className="agentty-logo lg" role="img" aria-label="agentty">
+    <div ref={ref} className="agentty-logo lg" role="img" aria-label="agentty">
       {LETTERS.map((cells, li) => (
         <span
           className="logo-letter"
@@ -32,13 +65,6 @@ export function AgenttyLogo() {
               // Cascade drop: 180ms stagger per letter (TUI kStaggerMs 100ms,
               // slowed 1.8×). Runs once.
               "--delay": `${li * 180}ms`,
-              // Bob phase: in the TUI each glyph starts its sine bob when its
-              // drop ends (drop_end = li*180 + 900), and the L→R traveling wave
-              // comes from the 0.7 rad/letter phase — as a time offset over the
-              // 4000ms loop that is li * 0.7/(2π) * 4000 ≈ li*446ms EARLIER. Net
-              // animation-delay = (li*180 + 900) - li*446 so the bob neither
-              // fights the drop nor loses the wave.
-              "--bob-delay": `${li * 180 + 900 - li * 446}ms`,
             } as React.CSSProperties
           }
         >
