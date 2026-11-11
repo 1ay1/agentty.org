@@ -36,9 +36,10 @@ or an animation to work, it doesn't belong.
     bar, the nav's `>`, the selected item, and link underlines (the text
     turns magenta only on hover)
   - **cyan**: structure. Section headings (`##`) and paths / files in code
-  - **green**: commands you'd type, and tips
+  - **green**: commands you'd type (a program with arguments), and tips
   - **yellow**: environment variables and settings, and warnings
-  - **blue**: code symbols (`resolve()`, `std::move`)
+  - **blue**: code symbols (`resolve()`, `std::move`) and agentty's tool names
+    (`read`, `grep`, `repo_map`)
   Inline code is classified at build time (lib/markdown.ts `codeKind`);
   anything it can't name stays ink.
 - Selection and keyboard focus are inverse video, like a terminal.

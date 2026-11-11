@@ -41,13 +41,23 @@ function runBlock(cmd: string): string {
 export type MdHeading = { id: string; text: string; level: number };
 
 const COMMANDS = /^(agentty|git|npm|npx|node|pnpm|yarn|cargo|make|cmake|ninja|curl|wget|ssh|scp|rsync|docker|kubectl|brew|apt|apt-get|dnf|pacman|yay|paru|pip|pipx|uv|python3?|go|rustup|sudo|cd|ls|cat|grep|rg|find|sed|awk|chmod|mkdir|rm|cp|mv|echo|export|source|tmux|ollama|iw|ip|systemctl|journalctl|irm|winget|scoop|choco|nix|snap|emerge|apk|zypper|code|zed|vim|nvim)(\s|$)/;
+// agentty's tools, by the names the model calls them: a mention of one is a
+// code symbol, never a shell command (`grep` the tool, not grep the program)
+const TOOLS = new Set(["read", "edit", "write", "apply_patch", "move", "remove", "shell", "bash", "process_start",
+  "process_poll", "process_stop", "grep", "glob", "list_dir", "search_structural", "extract", "aggregate",
+  "read_filter", "replace", "json_query", "outline", "repo_map", "find_definition", "diagnostics", "test",
+  "git_status", "git_diff", "git_log", "git_show", "git_blame", "git_commit", "git_branch", "git_stash",
+  "git_rebase", "git_cherry_pick", "web_fetch", "web_search", "remember", "forget", "wipe_memory", "task",
+  "skill", "search_docs", "search_code", "rewrite_structural", "todo"]);
 const FILE_EXT = /\.(json|toml|ya?ml|md|txt|sh|py|js|ts|tsx|cpp|hpp|c|h|rs|go|lock|conf|cfg|ini|env|log|pem|html|css|plist|service|socket|desktop|zip|tar|gz|deb|rpm|exe|ps1|sock|jsonl|ansi)$/i;
 
 /** What a piece of inline code is: "path", "cmd", "env", "sym", or "" (anything else). */
 function codeKind(t: string): "" | "path" | "cmd" | "env" | "sym" {
   const s = t.trim();
   if (!s || s.length > 120) return "";
-  if (COMMANDS.test(s)) return "cmd";
+  if (TOOLS.has(s)) return "sym";
+  // a command you'd type: a known program WITH arguments (a bare `ssh` is a name)
+  if (COMMANDS.test(s) && /\s\S/.test(s)) return "cmd";
   if (/^\/[a-z][a-z-]*( .*)?$/.test(s) && !/^\/(tmp|usr|etc|var|opt|bin|dev|proc|sys|home|mnt|run)\b/.test(s)) return "cmd";   // /compact, /model
   // $FOO, FOO=1, FOO_BAR, or a well-known one: an environment variable
   if (/^\$?[A-Z][A-Z0-9_]*(=\S*)?$/.test(s) && (/[_=$]/.test(s) || /^(PATH|HOME|TERM|SHELL|EDITOR|VISUAL|LANG|USER|DISPLAY|TMPDIR|PAGER)$/.test(s))) return "env";
