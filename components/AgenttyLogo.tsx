@@ -22,35 +22,29 @@ const LETTERS = TEXT.split("").map((ch) => buildLetter(ch));
 
 export function AgenttyLogo() {
   const ref = useRef<HTMLDivElement>(null);
-  // The bob and the heartbeat, stepped like the TUI's own frame clock: one
-  // 12 fps timer, running only while the wordmark is on screen in a visible
-  // tab. Each tick writes 8 `translate`s (compositor-only); the flash is a
-  // class on for 150 ms of every 5.76 s.
+  // The bob runs in CSS on the GPU; this only pauses it off screen (or in a
+  // hidden tab) and drives the heartbeat: a class on for 180 ms of every
+  // 5.76 s, so the 288 cells are restyled twice per beat, not every frame.
   useEffect(() => {
     const el = ref.current;
-    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const letters = [...el.querySelectorAll<HTMLElement>(".logo-letter")];
-    const t0 = performance.now();
-    let timer = 0, seen = false;
-    const tick = () => {
-      const t = performance.now() - t0;
-      letters.forEach((l, li) => {
-        const start = li * 180 + 900;                 // the bob starts when this letter's drop ends
-        const ph = t < start ? 0 : ((t - start) / 4000) * 2 * Math.PI + li * 0.7;
-        l.style.translate = `0 ${(-0.16 * Math.sin(ph)).toFixed(3)}em`;
-      });
-      const beat = (t - 2160) % 5760;
-      el.classList.toggle("flash", t > 2160 && beat > 5410 && beat < 5590);
+    if (!el) return;
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let seen = false, beat = 0, off = 0;
+    const flash = () => {
+      el.classList.add("flash");
+      off = window.setTimeout(() => el.classList.remove("flash"), 180);
     };
     const run = () => {
       const on = seen && !document.hidden;
-      if (on && !timer) { tick(); timer = window.setInterval(tick, 83); }
-      else if (!on && timer) { clearInterval(timer); timer = 0; }
+      el.classList.toggle("paused", !on);
+      if (still) return;
+      if (on && !beat) beat = window.setInterval(flash, 5760);
+      else if (!on && beat) { clearInterval(beat); beat = 0; }
     };
     const io = new IntersectionObserver(([e]) => { seen = e.isIntersecting; run(); });
     io.observe(el);
     document.addEventListener("visibilitychange", run);
-    return () => { io.disconnect(); document.removeEventListener("visibilitychange", run); clearInterval(timer); };
+    return () => { io.disconnect(); document.removeEventListener("visibilitychange", run); clearInterval(beat); clearTimeout(off); };
   }, []);
 
   return (
@@ -65,6 +59,10 @@ export function AgenttyLogo() {
               // Cascade drop: 180ms stagger per letter (TUI kStaggerMs 100ms,
               // slowed 1.8×). Runs once.
               "--delay": `${li * 180}ms`,
+              // the bob starts when this letter's drop ends (li*180 + 900 ms);
+              // the 0.7 rad/letter phase of the TUI's travelling wave is
+              // li * 0.7/(2π) * 4000 ≈ li*446 ms earlier in the 4 s loop
+              "--bob-delay": `${li * 180 + 900 - li * 446}ms`,
             } as React.CSSProperties
           }
         >

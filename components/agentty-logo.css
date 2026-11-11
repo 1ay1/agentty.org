@@ -32,6 +32,7 @@
      5.76 s instead of an animation ticking every frame */
 }
 .agentty-logo.flash { color: #fff; }
+.agentty-logo.paused .logo-letter { animation-play-state: paused; }
 
 /* one letter = a vertical stack of half-block rows, animated as a unit */
 .logo-letter {
@@ -42,11 +43,13 @@
   /* NB: no `color` here — letters inherit the heartbeat-animated color from
      .agentty-logo so the whole wordmark flashes white as one unit. */
   /* drop-in cascade, ONCE, staggered by --delay (180 ms/letter) */
-  /* the drop runs once in CSS; the bob is AgenttyLogo's 12 fps ticker
-     writing `translate` (it composes with the drop's `transform`), which is
-     how the TUI steps it too. A CSS infinite animation made the compositor
-     produce 60 frames a second for 8 letters: ~13% of a phone's CPU. */
-  animation: logo-drop 0.9s cubic-bezier(0.215, 0.61, 0.355, 1) both var(--delay);
+  /* drop-in once, then the bob: a transform animation, run by the GPU at the
+     display's rate (sub-pixel smooth; a 12 fps JS step moved a 10px logo in
+     0.2px jumps that snapped to the pixel grid and looked like a crawl).
+     AgenttyLogo pauses it whenever the wordmark is off screen. */
+  animation:
+    logo-drop 0.9s cubic-bezier(0.215, 0.61, 0.355, 1) both var(--delay),
+    logo-bob 4s ease-in-out infinite var(--bob-delay);
 }
 .logo-letter:last-child { margin-right: 0; }
 
@@ -83,6 +86,16 @@
 
 @media (max-width: 380px) {
   .agentty-logo.lg { font-size: 8px; }
+}
+
+/* ±1.5 px bob on the TUI's ~9px canvas ≈ ±0.16em; the per-letter --bob-delay
+   makes the wave travel L→R. Symmetric around 0 so the resting row is home. */
+@keyframes logo-bob {
+  0%   { transform: translateY(0); }
+  25%  { transform: translateY(-0.16em); }
+  50%  { transform: translateY(0); }
+  75%  { transform: translateY(0.16em); }
+  100% { transform: translateY(0); }
 }
 
 @keyframes logo-drop {
