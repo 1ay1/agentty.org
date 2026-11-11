@@ -5,6 +5,8 @@ import "./site.css";
 import { SiteNav } from "@/components/SiteNav";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { Shortcuts } from "@/components/Shortcuts";
+import { ViewTransitions } from "@/components/ViewTransitions";
+import { StatusLine } from "@/components/StatusLine";
 import { site } from "@/lib/site";
 import { seoDescription } from "@/lib/seo";
 import { stats } from "@/lib/stats";
@@ -167,12 +169,22 @@ export default function RootLayout({
             not consulted. A tiny blocking script so there's no FOUC. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t='dark';try{if(localStorage.getItem('theme')==='light')t='light';}catch(e){}document.documentElement.setAttribute('data-theme',t);})();`,
+            __html: `(function(){var t='dark',d=document.documentElement;try{if(localStorage.getItem('theme')==='light')t='light';var s=localStorage.getItem('scheme-css');if(s)d.style.cssText=s;}catch(e){}d.setAttribute('data-theme',t);})();`,
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        {/* Before the app hydrates (and in browsers that load pages whole),
+            hovering a page link fetches it, so the click lands on a warm page. */}
+        <script
+          type="speculationrules"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              prefetch: [{ where: { and: [{ href_matches: "/*/" }, { not: { href_matches: "/md/*" } }] }, eagerness: "moderate" }],
+            }),
+          }}
         />
         {/* Self-hosted Umami analytics — first-party, privacy-friendly, no
             cookies, served from our own subdomain so ad-blockers that target
@@ -190,6 +202,8 @@ export default function RootLayout({
         <main id="main">{children}</main>
         <CommandPaletteLazy />
         <Shortcuts />
+        <ViewTransitions />
+        <StatusLine />
       </body>
     </html>
   );
