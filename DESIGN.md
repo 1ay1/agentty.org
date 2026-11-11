@@ -18,7 +18,8 @@ or an animation to work, it doesn't belong.
 - **Markers hang in the margin.** The text edge stays clean; `$`, `##`,
   list dashes, `note` / `tip` / `warn` and the nav's `>` sit just left of it
   (optical alignment). On phones there's no margin, so they fold back in.
-- **A reading size and a chrome size.** Docs, blog and comparisons read at
+- **A reading size and a chrome size.** Docs, blog, comparisons and the home
+  page read at
   14 px, ~77 columns (the column is still --measure wide); code and tables at
   13 px; the nav, sidebars and labels stay small. Headings step up: page
   title 22, `##` 17, `###` 15, with more space above a heading than below it.

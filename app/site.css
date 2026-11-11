@@ -361,7 +361,7 @@ td .win { color: var(--text); }
 .bench-metric ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
 .bench-metric li {
   display: grid; grid-template-columns: 12ch minmax(0, 1fr); align-items: center; gap: 14px;
-  font-size: var(--fs-sm); line-height: 1.4; color: var(--text-dim);
+  font-size: var(--fs-read-code); line-height: 1.4; color: var(--text-dim);
 }
 .bench-name { white-space: nowrap; }
 .bench-track { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -370,7 +370,7 @@ td .win { color: var(--text); }
 .bench-x { margin-left: 8px; color: var(--text-faint); font-size: var(--fs-xs); }
 .bench-metric li.is-us { color: var(--text); font-weight: 600; }
 .bench-metric li.is-us .bench-bar { background: var(--accent); min-width: 3px; }
-.bench-note { margin: 0; font-size: var(--fs-xs); color: var(--text-faint); }
+.bench-note { margin: 0; font-size: var(--fs-sm); color: var(--text-faint); }
 .bench-note a { color: var(--text-dim); }
 .bench-range { color: var(--text-faint); font-size: var(--fs-xs); }
 :is(th, td).num { white-space: nowrap; }
@@ -552,14 +552,14 @@ td .bench-range { display: block; }
 }
 
 /* ── homepage ─────────────────────────────────────────────────────────── */
-.home { max-width: 760px; padding: 14px 24px 56px var(--gutter); }
+.home { max-width: 760px; padding: 14px 24px 56px var(--gutter); font-size: var(--fs-read); }
 /* homepage rhythm: 20px inside the hero, 28px between sections */
 .home-logo { margin: 0 0 12px; }
 .home-logo .agentty-logo { margin: 0; font-size: clamp(6px, 1.6vw, 10px) !important; }
 /* one line at any width: 45 chars × 0.6em ≈ 27em */
-.home h1 { white-space: nowrap; font-size: var(--fs-lg); margin: 0 0 6px; }
+.home h1 { white-space: nowrap; font-size: 22px; line-height: 1.3; margin: 0 0 8px; }
 @media (max-width: 560px) { .home h1 { white-space: normal; text-wrap: balance; line-height: 1.45; } }
-.home-head p { color: var(--text-dim); margin: 0; }
+.home-head p { color: var(--text-dim); font-size: var(--fs-lead); margin: 0; }
 /* the header's ▌ is agentty's cursor, and blinks like one */
 .brand-mark { animation: cursor-blink 1.06s steps(1) infinite; }
 @keyframes cursor-blink { 50% { opacity: 0; } }
@@ -573,6 +573,9 @@ td .bench-range { display: block; }
 .home-facts dt { color: var(--text-faint); }
 .home-facts dd { margin: 0; min-width: 0; color: var(--text-dim); overflow-wrap: anywhere; }
 .home-facts code, .home-facts kbd { font: inherit; color: var(--text); }
+.home-facts code.c-path { color: var(--c-path); }
+.home-facts code.c-cmd { color: var(--c-cmd); }
+.home-facts code.c-sym { color: var(--c-sym); }
 .home-install { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .home-install > .install-meta { color: var(--text-faint); font-size: var(--fs-sm); }
 /* the platforms pick the command: the current one(s) in ink, the others faint, all underlined */
@@ -581,7 +584,7 @@ td .bench-range { display: block; }
 .install-meta a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 .home-links {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px;
-  margin-top: 28px; font-size: var(--fs-base);
+  margin-top: 28px; font-size: var(--fs-read);
 }
 .home-links a { color: var(--text); text-decoration: none; }
 .home-links a:hover { color: var(--accent); text-decoration: underline; }
