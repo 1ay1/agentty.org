@@ -20,7 +20,7 @@ declare global { interface Window { Terminal?: any; FitAddon?: any } }
 
 const V = "/vendor/xterm/";
 const SCRIPTS = [V + "xterm.js", V + "addon-fit.js"];
-const MIN_COLS = 48;          // ~11.5px on a phone; agentty still lays its screen out at this width
+const MIN_COLS = 54;          // ~10.5px on a phone; agentty lays its screen out at this width
 const MAX_FONT = 13;
 const LINE = 1;
 
@@ -57,13 +57,16 @@ const FLEXOKI = {
 };
 
 // the font's real advance, in em (measured once: canvas text metrics use the
-// same font the terminal will, already loaded by the page)
-let advance = 0;
+// same font the terminal will, already loaded by the page). Height too: at
+// line height 1 xterm's row is the font's ascent + descent, not its size
+let advance = 0, tall = 0;
 function cellEm(family: string) {
   if (advance) return advance;
   const c = document.createElement("canvas").getContext("2d")!;
   c.font = `100px ${family}`;
-  advance = c.measureText("W".repeat(50)).width / 50 / 100 || 0.6;
+  const m = c.measureText("W".repeat(50));
+  advance = m.width / 50 / 100 || 0.6;
+  tall = (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent) / 100 || 1.3;
   return advance;
 }
 
@@ -79,7 +82,7 @@ function fit(el: HTMLElement, family: string) {
   return {
     fontSize,
     cols: Math.max(20, Math.floor(w / (fontSize * em)) - 1),
-    rows: Math.max(8, Math.floor(h / Math.ceil(fontSize * LINE))),
+    rows: Math.max(8, Math.floor(h / Math.ceil(fontSize * tall * LINE))),
   };
 }
 
@@ -109,6 +112,11 @@ export function LiveTakeover() {
     let disposed = false, term: any, fitter: any, ws: WebSocket | null = null, ro: ResizeObserver | null = null;
     const el = document.createElement("div");
     el.className = "live-inline";
+    // xterm's fit reads its PARENT's box and ignores that parent's padding, so
+    // the padding lives on el and the terminal in an unpadded child
+    const host = document.createElement("div");
+    host.className = "live-host";
+    el.appendChild(host);
     replay.dataset.liveOn = "";                  // the box takes its live size first
     replay.appendChild(el);
     // on a phone the box is now most of the screen: put all of it in view
@@ -156,7 +164,7 @@ export function LiveTakeover() {
       });
       fitter = new window.FitAddon!.FitAddon();
       term.loadAddon(fitter);
-      term.open(el);
+      term.open(host);
       // xterm has now measured the real cell; if that disagrees with the
       // estimate, take its numbers before a single byte is drawn
       const real = fitter.proposeDimensions?.();
@@ -180,7 +188,7 @@ export function LiveTakeover() {
         const k = dims ? `${dims.cols}x${dims.rows}` : "";
         if (k && k !== last) { last = k; resize(); }
       });
-      ro.observe(el);
+      ro.observe(host);
       term.onData((d: string) => { if (ws?.readyState === WebSocket.OPEN) ws.send(d); });
       // tapping the terminal on a phone brings up the keyboard
       el.addEventListener("click", () => term.focus());

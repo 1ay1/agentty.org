@@ -761,6 +761,7 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 /* "try it live": xterm takes the replay's exact box */
 .live-inline { position: absolute; inset: 0; z-index: 2; background: var(--replay-bg); padding: 10px 6px 10px 12px; }
 .live-inline .xterm { height: 100%; }
+.live-host { width: 100%; height: 100%; overflow: hidden; }
 .live-inline .xterm-viewport { background: transparent !important; }
 .replay[data-live-on] .replay-again { display: none; }
 .live-try { background: none; border: 0; padding: 0; margin-left: 12px; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: 3px; }
