@@ -40,6 +40,27 @@ function runBlock(cmd: string): string {
 
 export type MdHeading = { id: string; text: string; level: number };
 
+const COMMANDS = /^(agentty|git|npm|npx|node|pnpm|yarn|cargo|make|cmake|ninja|curl|wget|ssh|scp|rsync|docker|kubectl|brew|apt|apt-get|dnf|pacman|yay|paru|pip|pipx|uv|python3?|go|rustup|sudo|cd|ls|cat|grep|rg|find|sed|awk|chmod|mkdir|rm|cp|mv|echo|export|source|tmux|ollama|iw|ip|systemctl|journalctl|irm|winget|scoop|choco|nix|snap|emerge|apk|zypper|code|zed|vim|nvim)(\s|$)/;
+const FILE_EXT = /\.(json|toml|ya?ml|md|txt|sh|py|js|ts|tsx|cpp|hpp|c|h|rs|go|lock|conf|cfg|ini|env|log|pem|html|css|plist|service|socket|desktop|zip|tar|gz|deb|rpm|exe|ps1|sock|jsonl|ansi)$/i;
+
+/** What a piece of inline code is: "path", "cmd", "env", "sym", or "" (anything else). */
+function codeKind(t: string): "" | "path" | "cmd" | "env" | "sym" {
+  const s = t.trim();
+  if (!s || s.length > 120) return "";
+  if (COMMANDS.test(s)) return "cmd";
+  if (/^\/[a-z][a-z-]*( .*)?$/.test(s) && !/^\/(tmp|usr|etc|var|opt|bin|dev|proc|sys|home|mnt|run)\b/.test(s)) return "cmd";   // /compact, /model
+  // $FOO, FOO=1, FOO_BAR, or a well-known one: an environment variable
+  if (/^\$?[A-Z][A-Z0-9_]*(=\S*)?$/.test(s) && (/[_=$]/.test(s) || /^(PATH|HOME|TERM|SHELL|EDITOR|VISUAL|LANG|USER|DISPLAY|TMPDIR|PAGER)$/.test(s))) return "env";
+  // a code symbol: resolve(), std::move, Model::update, maya::Element
+  if (/^[A-Za-z_~][\w:<>~]*\(.*\)$/.test(s) || /^[A-Za-z_]\w*(::[\w~<>]+)+$/.test(s)) return "sym";
+  if (/\s/.test(s)) return "";
+  // a path: starts at ~ / ./ ../ or /x, ends in a slash, or names a file
+  if (/^(~|\.{1,2}\/|\/[\w.-])/.test(s) || /^\.[\w-]/.test(s)) return "path";
+  if (/^[\w.@-]+(\/[\w.@*<>-]*)+$/.test(s) && (/\/$/.test(s) || FILE_EXT.test(s))) return "path";
+  if (/^[\w.-]+$/.test(s) && FILE_EXT.test(s)) return "path";
+  return "";
+}
+
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -83,6 +104,15 @@ function build(): MD {
     return clip
       ? `<kbd class="clip-ref" data-clip="${clip}" tabindex="0">${esc(tokens[i].content)}</kbd>`
       : `<kbd>${esc(tokens[i].content)}</kbd>`;
+  };
+
+  // inline code takes a colour by what it is, the way agentty colours its own
+  // output: a path or file (cyan), a command you'd type (green), an
+  // environment variable or setting (yellow). Anything else stays ink.
+  md.renderer.rules.code_inline = (tokens, i) => {
+    const t = tokens[i].content;
+    const kind = codeKind(t);
+    return `<code${kind ? ` class="c-${kind}"` : ""}>${esc(t)}</code>`;
   };
 
   // callouts

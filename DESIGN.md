@@ -29,11 +29,18 @@ or an animation to work, it doesn't belong.
 ## Surface
 
 - One monospace face. Two weights.
-- Flat colours: ink in three shades (`--text`, `--text-dim`, `--text-faint`)
-  and **one accent**, spent rarely. It means "agentty / this / the current
-  one": the brand mark, the `$` prompt, agentty's own bar, the nav's `>`,
-  the selected item. Links are ink with a magenta-tinted underline; the
-  text itself turns magenta only on hover.
+- Flat colours: ink in three shades (`--text`, `--text-dim`, `--text-faint`),
+  one accent, and a few colours that mean something, the way agentty colours
+  its own output. Never decoration:
+  - **magenta** (the accent), spent rarely: agentty, the `$` prompt, its own
+    bar, the nav's `>`, the selected item, and link underlines (the text
+    turns magenta only on hover)
+  - **cyan**: structure. Section headings (`##`) and paths / files in code
+  - **green**: commands you'd type, and tips
+  - **yellow**: environment variables and settings, and warnings
+  - **blue**: code symbols (`resolve()`, `std::move`)
+  Inline code is classified at build time (lib/markdown.ts `codeKind`);
+  anything it can't name stays ink.
 - Selection and keyboard focus are inverse video, like a terminal.
 - No cards, shadows, rounded corners or gradients. Hairlines only where
   data needs separating (tables, the nav).
