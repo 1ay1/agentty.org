@@ -156,7 +156,11 @@ export function startSession(ip, cols, rows, io) {
 
 wss.on("connection", (ws, req) => {
   const ip = String(req.headers["x-real-ip"] || req.socket.remoteAddress || "");
-  const s = startSession(ip, 100, 30, {
+  // the browser sends its terminal size up front (?cols=&rows=), so agentty
+  // starts at that size and its first frame is final: no resize, no redraw
+  const q = new URL(req.url || "/", "http://x").searchParams;
+  const clamp = (v, lo, hi, d) => (Number.isFinite(+v) && +v > 0 ? Math.min(hi, Math.max(lo, +v | 0)) : d);
+  const s = startSession(ip, clamp(q.get("cols"), 20, 300, 100), clamp(q.get("rows"), 6, 120, 30), {
     kind: "web",
     send: (d) => { if (ws.readyState === ws.OPEN) ws.send(d); },
     close: (reason) => {

@@ -859,9 +859,11 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 @media (max-width: 720px) {
   /* tap targets */
   .live-try, .bench-race button { padding: 6px 0; }
-  /* a live agentty needs rows: the box grows to most of the screen while it runs */
-  .replay[data-live-on] { min-height: min(600px, 74svh); }
-  .live-inline { padding: 8px 4px 8px 8px; }
+  /* a live agentty needs rows: the box grows while it runs */
+  .replay[data-live-on] { min-height: min(400px, 52svh); }
+  .live-inline { padding: 6px 4px 6px 6px; }
+  /* xterm's hidden input: 16px or iOS zooms the page when the keyboard opens */
+  .live-inline .xterm-helper-textarea { font-size: 16px !important; }
   /* the version stamp gets its own line; no leading separator there */
   .doc-version::before { content: none; }
   .doc-stamp { row-gap: 6px; }
