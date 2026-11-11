@@ -154,6 +154,16 @@ export function SiteNav() {
               <span>theme</span>
               <ThemeToggle />
             </div>
+            <button
+              type="button"
+              className="mobile-util"
+              onClick={() => {
+                close();
+                window.dispatchEvent(new Event("agentty:open-theme"));
+              }}
+            >
+              agentty&apos;s 615 themes <span className="mobile-util-hint">›</span>
+            </button>
           </div>
         </div>
       )}

@@ -159,6 +159,7 @@ html[data-theme="dark"] .theme-icon.moon, html[data-theme="light"] .theme-icon.s
   padding: 0; background: none; border: 0; border-bottom: 1px solid var(--border-soft);
   color: var(--text-faint); font: inherit; text-align: left; cursor: pointer;
 }
+.mobile-util-hint { margin-left: auto; color: var(--text); }
 
 /* ── shared text blocks ───────────────────────────────────────────────── */
 .kicker, .sec-title, .docs-toc .t, .docnav .dir {
@@ -315,7 +316,12 @@ td .win { color: var(--text); }
 @media (max-width: 720px) { .copyrow { margin-left: 0; padding-left: 12px; } }
 .copyrow code { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; white-space: nowrap; color: var(--text); scrollbar-width: none; }
 .copyrow code::-webkit-scrollbar { display: none; }
-@media (max-width: 560px) { .copyrow code { white-space: normal; overflow-wrap: anywhere; } .copyrow { align-items: baseline; } }
+@media (max-width: 560px) {
+  .copyrow code { white-space: normal; overflow-wrap: break-word; }
+  .copyrow { align-items: baseline; }
+  /* "| sh" never strands on its own line: the pipe stays with what it pipes into */
+  .copyrow code .nobr { white-space: nowrap; }
+}
 .copyrow-caret { flex: none; width: var(--hang); margin-left: calc(var(--hang) * -1); color: var(--accent); }
 @media (max-width: 720px) { .copyrow-caret { width: 2ch; margin-left: 0; } }
 .copybtn {
@@ -610,6 +616,9 @@ td .bench-range { display: block; }
 .theme-picker .cmdk-results { max-height: min(60vh, 520px); }
 .theme-swatch { display: inline-flex; gap: 2px; align-items: center; padding: 3px 4px; border: 1px solid var(--border); background: var(--bg); align-self: center; }
 .theme-swatch i { width: 8px; height: 8px; display: block; }
+.theme-picker .cmdk-item { grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0; }
+.theme-keep { display: none; margin-right: 10px; color: var(--accent); font-size: var(--fs-xs); white-space: nowrap; }
+@media (hover: none) { .theme-keep { display: inline; } }
 .theme-swatch[data-base="dark"] { background: #100f0f; }
 .theme-swatch[data-base="light"] { background: #fffcf0; }
 .theme-swatch[data-base]::before { content: ""; width: 48px; height: 8px; background: linear-gradient(90deg, #ce5d97 0 20%, #3aa99f 0 40%, #879a39 0 60%, #d0a215 0 80%, #4385be 0); }
@@ -829,4 +838,45 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 @media (prefers-reduced-motion: reduce) {
   @view-transition { navigation: none; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* ── phones: the new pieces ───────────────────────────────────────────────────── */
+/* captions wrap as whole pieces ("· 1.20 s", "replay"), never mid-phrase */
+.bench-metric figcaption { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 1ch; }
+.bench-race { margin-left: 0; display: inline-flex; gap: 10px; }
+.bench-race button { margin-left: 0; }
+.home-demo figcaption { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; row-gap: 4px; }
+.home-demo figcaption .live-try, .live-try-state { margin-left: 0; }
+.live-try-state { display: inline-flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; }
+.live-try-state .live-try { margin-left: 0; }
+.live-inline { overflow: hidden; }
+@media (max-width: 720px) {
+  /* tap targets */
+  .live-try, .bench-race button { padding: 6px 0; }
+  /* a live agentty needs rows: the box grows to most of the screen while it runs */
+  .replay[data-live-on] { min-height: min(600px, 74svh); }
+  .live-inline { padding: 8px 4px 8px 8px; }
+  /* the version stamp gets its own line; no leading separator there */
+  .doc-version::before { content: none; }
+  .doc-stamp { row-gap: 6px; }
+  /* the theme picker is a bottom sheet: the page above it is the preview */
+  .theme-overlay { place-items: end stretch; padding: 0; }
+  .theme-picker { width: 100%; border-width: 1px 0 0; box-shadow: 0 -8px 32px color-mix(in srgb, #000 40%, transparent); }
+  .theme-picker .cmdk-results { max-height: 38svh; }
+  .theme-picker .cmdk-item { min-height: 44px; }
+  .theme-picker .cmdk-input { font-size: 16px; }   /* 16px: iOS doesn't zoom the page on focus */
+  .theme-picker .cmdk-inputrow { padding-top: 6px; padding-bottom: 6px; }
+  .theme-picker .cmdk-foot { display: none; }
+  .theme-picker .cmdk-parent { display: none; }
+  /* palette: reference rows keep their description to one line */
+  .cmdk-desc { font-size: var(--fs-xs); }
+}
+@media (max-width: 720px) and (hover: none) {
+  .cmdk-input { font-size: 16px; }   /* below 16px iOS zooms the whole page when the field focuses */
+}
+@media (max-width: 560px) {
+  /* the race clock and replay get their own line instead of a dangling "·" */
+  .bench-race { flex-basis: 100%; align-items: baseline; }
+  .bench-race::before { content: none; }
+  .bench-race button { padding: 0; }
 }

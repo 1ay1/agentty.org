@@ -20,12 +20,14 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
   const list = useRef<HTMLDivElement>(null);
   const before = useRef<{ css: string; theme: string; scheme: string | null } | null>(null);
   const kept = useRef(false);
+  const touch = useRef(false);
 
   useEffect(() => {
     const d = document.documentElement;
     before.current = { css: d.style.cssText, theme: d.getAttribute("data-theme") || "dark", scheme: currentScheme() };
     load().then(setAll);
-    input.current?.focus();
+    // on a touch screen, don't throw the keyboard up over the preview
+    if (!matchMedia("(hover: none)").matches) input.current?.focus();
     return () => {
       if (kept.current || !before.current) return;
       d.style.cssText = before.current.css;              // Esc / click away: undo the preview
@@ -75,7 +77,7 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
             ref={input}
             className="cmdk-input"
             aria-label="Filter themes"
-            placeholder={all.length ? `${all.length} schemes from agentty, type to filter` : "loading…"}
+            placeholder={all.length ? `filter ${all.length} schemes` : "loading…"}
             value={q}
             role="combobox"
             aria-expanded="true"
@@ -104,10 +106,12 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
                 className={`cmdk-item ${i === sel ? "sel" : ""}`}
                 role="option"
                 aria-selected={i === sel}
-                onMouseMove={() => i !== sel && setSel(i)}
-                onClick={() => keep(r)}
+                onPointerDown={(e) => (touch.current = e.pointerType !== "mouse")}
+                onPointerMove={(e) => e.pointerType === "mouse" && i !== sel && setSel(i)}
+                onClick={() => (touch.current && i !== sel ? setSel(i) : keep(r))}
               >
                 <span className="cmdk-title">{r.name}{r.label && <span className="cmdk-parent"> · {r.label}</span>}</span>
+                {i === sel && <span className="theme-keep" aria-hidden="true">tap to keep</span>}
                 <span className="theme-swatch" aria-hidden="true" style={s ? { background: s.background, borderColor: s.border } : undefined} data-base={r.base}>
                   {s && [s.accent, s.info, s.secondary, s.warning, s.primary].map((c, j) => <i key={j} style={{ background: c }} />)}
                 </span>
