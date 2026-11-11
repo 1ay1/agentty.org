@@ -23,6 +23,7 @@ const ROUND = glyphs.round as unknown as Record<string, [string, string]>;
 const BLOCKS = glyphs.blocks as unknown as Record<string, [number, number, number, number]>;
 const SHADE = glyphs.shade as unknown as Record<string, number>;
 const DASH = glyphs.dash as unknown as Record<string, number>;
+const DRAWN = new Set([...Object.keys(ARMS), ...Object.keys(ROUND), ...Object.keys(BLOCKS), ...Object.keys(SHADE), ...Object.keys(DASH)]);
 
 export class CanvasGrid {
   readonly canvas: HTMLCanvasElement;
@@ -39,7 +40,7 @@ export class CanvasGrid {
   private spacing: boolean;
   private ro: ResizeObserver;
 
-  constructor(private grid: HTMLElement, private cols: number, private rows: number, private rowTop: (y: number) => number) {
+  constructor(private grid: HTMLElement, private cols: number, public rows: number, private rowTop: (y: number) => number) {
     this.canvas = document.createElement("canvas");
     this.canvas.className = "replay-canvas";
     this.canvas.setAttribute("aria-hidden", "true");
@@ -63,6 +64,21 @@ export class CanvasGrid {
     this.full = true;
   }
   private bg = "#100f0f";
+  private fgDefault = "#cecdc3";
+
+  /** a live session: no recording, styles arrive as they are first used */
+  live(fg: string, bg: string) {
+    this.fgDefault = fg; this.bg = bg;
+    this.styles = [{ fg, bg: null, font: "400", deco: 0 }];
+    this.glyph = [""];
+    this.lines = []; this.full = true; this.request();
+  }
+  define(ci: number, fg: string | null, bg: string | null, flags: number) {
+    this.styles[ci] = { fg: fg ?? this.fgDefault, bg, font: `${flags & 2 ? "italic " : ""}${flags & 1 ? "700" : "400"}`, deco: flags & 12 };
+    this.glyph[ci] = "";
+  }
+  /** a new size (rows changed): redraw everything at the next frame */
+  setRows(rows: number) { this.rows = rows; this.lines.length = Math.min(this.lines.length, rows); this.measure(); this.full = true; this.request(); }
 
   set(y: number, segs: Seg[]) { this.lines[y] = segs; this.dirty.add(y); this.request(); }
   reset() { this.lines = []; this.full = true; }
@@ -148,20 +164,40 @@ export class CanvasGrid {
       const chars = [...txt];
       const step = (w * cw) / chars.length;
       const mid = top + rh / 2;
-      if (this.spacing && chars.length > 1 && /^[\x20-\x7e]*$/.test(txt)) {
-        const adv = ctx.measureText("M").width;
-        (ctx as any).letterSpacing = `${step - adv}px`;
-        ctx.fillText(txt, x, mid);
-        (ctx as any).letterSpacing = "0px";
-      } else {
-        for (let k = 0; k < chars.length; k++) if (chars[k] !== " ") ctx.fillText(chars[k], x + k * step, mid);
+      // runs of plain ASCII go in one fillText (letter spacing holds them to
+      // the grid); box/block characters inside a run are drawn as geometry,
+      // exactly like the recording's pre-split ones; anything else per cell
+      let run = "", runAt = 0;
+      const flushRun = () => {
+        if (!run.trim()) { run = ""; return; }
+        if (this.spacing && run.length > 1) {
+          (ctx as any).letterSpacing = `${step - this.advance(ctx)}px`;
+          ctx.fillText(run, x + runAt * step, mid);
+          (ctx as any).letterSpacing = "0px";
+        } else for (let k = 0; k < run.length; k++) if (run[k] !== " ") ctx.fillText(run[k], x + (runAt + k) * step, mid);
+        run = "";
+      };
+      for (let k = 0; k < chars.length; k++) {
+        const c = chars[k], cp = c.codePointAt(0)!;
+        if (cp >= 0x20 && cp <= 0x7e) { if (!run) runAt = k; run += c; continue; }
+        flushRun();
+        const hex = cp.toString(16);
+        if (DRAWN.has(hex)) this.drawGlyphs(hex, x + k * step, top, 1);
+        else ctx.fillText(c, x + k * step, mid);
       }
+      flushRun();
       if (st.deco) {
         const t = Math.max(1, Math.round(this.fontSize * 0.075 * this.dpr)) / this.dpr;
         if (st.deco & 4) ctx.fillRect(x, top + rh * 0.85, w * cw, t);
         if (st.deco & 8) ctx.fillRect(x, top + rh * 0.5, w * cw, t);
       }
     }
+  }
+  private adv = new Map<string, number>();
+  private advance(ctx: CanvasRenderingContext2D) {
+    let a = this.adv.get(ctx.font);
+    if (a === undefined) { a = ctx.measureText("M").width; this.adv.set(ctx.font, a); }
+    return a;
   }
 
   // device-pixel snapping: edges land on whole device pixels, so adjacent

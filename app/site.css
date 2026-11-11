@@ -765,19 +765,12 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 @font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-700.woff2) format("woff2"); font-weight: 700; font-style: normal; font-display: block; }
 @font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-400i.woff2) format("woff2"); font-weight: 400; font-style: italic; font-display: block; }
 @font-face { font-family: "agentty term"; src: url(/vendor/xterm/agentty-term-700i.woff2) format("woff2"); font-weight: 700; font-style: italic; font-display: block; }
-.live-inline { position: absolute; inset: 0; z-index: 2; background: var(--replay-bg); padding: 10px 6px 10px 12px; }
-/* the grid: one div per row, spans placed by column (like the replay), in
-   the terminal font so every glyph is one 0.6em cell. Layout containment on
-   each row means repainting a row never lays out any other. */
-.lv { position: relative; font-family: "agentty term", var(--mono); line-height: var(--lh, 1.32em); white-space: pre;
-  font-kerning: none; font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0;
-  color: var(--lv-fg); width: calc(var(--cols, 80) * .6em); }
-.lv > div { position: relative; height: var(--lh, 1.32em); contain: layout style size; }   /* no paint clip: glyph edges must meet */
-.lv > div > span { position: absolute; top: 0; height: 100%; }
-html:not([data-theme="light"]) .live-inline { --lv-fg: #cecdc3; }
-html[data-theme="light"] .live-inline { --lv-fg: #100f0f; }
-.lv-cursor { position: absolute; left: 0; top: 0; width: .6em; height: 1.32em; background: var(--lv-fg); opacity: .75;
-  pointer-events: none; will-change: transform; font-family: "agentty term", var(--mono); }
+.live-inline { position: absolute; inset: 0; z-index: 2; background: var(--replay-bg); }   /* padding: .replay-screen's own */
+/* the live grid IS a .replay-grid (same cell maths, same canvas, same glyph
+   drawing); it only differs in having no scrollback and the full font */
+.replay-grid.lv { --sb: 0px; overflow: hidden; font-family: "agentty term", var(--mono); }
+.lv-cursor { position: absolute; left: 0; top: 0; z-index: 2; width: var(--cw); height: var(--rh); background: currentColor;
+  opacity: .7; pointer-events: none; will-change: transform; }
 /* the keyboard's target: invisible, in place, 16px so iOS doesn't zoom */
 .lv-input { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0;
   resize: none; font-size: 16px; caret-color: transparent; }
@@ -881,8 +874,6 @@ html[data-theme="light"] .live-inline { --lv-fg: #100f0f; }
   /* tap targets */
   .live-try, .bench-race button { padding: 6px 0; }
   /* a live agentty needs rows: the box grows while it runs */
-  .replay[data-live-on] { min-height: min(720px, calc(100svh - var(--nav-h) - 72px)); }
-  .live-inline { padding: 6px 4px 6px 6px; }
   /* the version stamp gets its own line; no leading separator there */
   .doc-version::before { content: none; }
   .doc-stamp { row-gap: 6px; }

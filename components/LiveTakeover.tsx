@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { CanvasGrid } from "@/lib/replay-canvas";
 
 // "Try it live" on the home page: the replay box becomes the REAL agentty
 // binary, in a PTY on this server, pointed at a mock model (deploy/live/
@@ -26,18 +27,8 @@ const loadFont = () =>
     Promise.all(["400", "700"].map((w) => document.fonts?.load(`${w} 12px ${TERM_FONT}`, "─█⠋✦"))).catch(() => {}),
     new Promise((r) => setTimeout(r, 2500)),           // never hang the demo on a font
   ]);
-const MIN_COLS = 54;          // ~10px on a phone; agentty lays its screen out at this width
+const MIN_COLS = 64;          // agentty's welcome screen (wordmark, tips box) fits from 64 columns
 const MAX_FONT = 13;
-// row height in em: the font's own ascent + descent, measured once it has
-// loaded, so block and box glyphs meet row to row with no seam
-let LINE = 1.32;
-const measureLine = () => {
-  const c = document.createElement("canvas").getContext("2d")!;
-  c.font = `100px ${TERM_FONT}, monospace`;
-  const m = c.measureText("█");
-  const h = (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent) / 100;
-  if (h > 0.9 && h < 2) LINE = Math.round(h * 100) / 100;
-};
 
 const hint = () => {
   for (const href of FONT_FILES) {
@@ -101,11 +92,14 @@ export function LiveTakeover() {
     let disposed = false, ws: WebSocket | null = null, timer = 0, frame = 0;
     const theme: "dark" | "light" = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
 
-    // ── the box ───────────────────────────────────────────────────────────
+    // ── the box: the SAME grid and renderer as the recorded demo ──────────
+    // a .replay-screen (same padding, same container query) holding a
+    // .replay-grid (cell width = box width / cols, rows two cells tall) that
+    // CanvasGrid paints: one font, one geometry, one glyph drawer for both.
     const el = document.createElement("div");
-    el.className = "live-inline";
+    el.className = "replay-screen live-inline";
     const grid = document.createElement("div");
-    grid.className = "lv";
+    grid.className = "replay-grid lv";
     const cursor = document.createElement("div");
     cursor.className = "lv-cursor";
     const input = document.createElement("textarea");
@@ -113,10 +107,11 @@ export function LiveTakeover() {
     input.setAttribute("aria-label", "Type to agentty");
     input.autocapitalize = "off"; input.autocomplete = "off"; input.spellcheck = false;
     input.setAttribute("autocorrect", "off");
-    grid.appendChild(cursor);
     el.append(grid, input);
     // the replay underneath is invisible now: out of rendering entirely
-    const under = replay.querySelector<HTMLElement>(".replay-screen");
+    const under = replay.querySelector<HTMLElement>(".replay-screen:not(.live-inline)");
+    const demoGrid = replay.querySelector<HTMLElement>(".replay-grid[data-live]") ?? replay.querySelector<HTMLElement>(".replay-grid");
+    const demoCs = demoGrid ? getComputedStyle(demoGrid) : null;
     if (under) { under.style.height = `${under.offsetHeight}px`; under.style.contentVisibility = "hidden"; }
     replay.dataset.liveOn = "";
     replay.appendChild(el);
@@ -129,101 +124,77 @@ export function LiveTakeover() {
     setState("connecting");
     const end = (msg: string) => { if (!disposed) { setState("ended"); setNote(msg); } };
 
-    // styles arrive as ids; each becomes one CSS rule, once
-    const sheet = new CSSStyleSheet();
-    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-    const { fg: FG, bg: BG } = DEF[theme];
+    // the demo's own colours (its recording's terminal fg/bg)
+    const FG = demoCs?.color || DEF[theme].fg, BG = demoCs?.backgroundColor && demoCs.backgroundColor !== "rgba(0, 0, 0, 0)" ? demoCs.backgroundColor : DEF[theme].bg;
+    grid.style.color = FG; grid.style.background = BG;
     const color = (v: string | number | null) => (v === null ? null : typeof v === "number" ? pal(v, theme) : v);
-    const addStyle = ([id, f, b, fl]: StyleDef) => {
+    let canvas: CanvasGrid | null = null;
+    const pendingStyles: StyleDef[] = [];
+    const addStyle = (d: StyleDef) => {
+      if (!canvas) { pendingStyles.push(d); return; }
+      const [id, f, b, fl] = d;
       let fg = color(f), bg = color(b);
       if (fl & 32) { const t = fg; fg = bg ?? BG; bg = t ?? FG; }
       if (fl & 64) fg = bg ?? BG;
-      const rules = [
-        fg && `color:${fl & 16 ? `color-mix(in srgb,${fg} 55%,${bg ?? BG})` : fg}`,
-        !fg && fl & 16 && `color:color-mix(in srgb,${FG} 55%,${BG})`,
-        bg && `background:${bg}`,
-        fl & 1 && "font-weight:700", fl & 2 && "font-style:italic",
-        (fl & 12) && `text-decoration:${fl & 4 ? "underline" : ""} ${fl & 8 ? "line-through" : ""}`,
-      ].filter(Boolean).join(";");
-      sheet.insertRule(`.lv .s${id}{${rules}}`, sheet.cssRules.length);
+      if (fl & 16) fg = `color-mix(in srgb, ${fg ?? FG} 50%, transparent)`;
+      canvas.define(id, fg, bg, fl & 15);
     };
 
-    // ── rows: the browser's whole job ─────────────────────────────────────
+    // ── rows: hand them to the canvas, which paints only what changed ─────
     let rowEls: HTMLDivElement[] = [];
     const sizeGrid = (w: number, h: number) => {
-      grid.replaceChildren();
+      grid.style.setProperty("--cols", String(w));
+      grid.style.setProperty("--rows", String(h));
+      rowEls.forEach((r) => r.remove());
       rowEls = Array.from({ length: h }, () => { const d = document.createElement("div"); grid.appendChild(d); return d; });
       grid.appendChild(cursor);
-      grid.style.setProperty("--cols", String(w));
+      if (!canvas) {
+        canvas = new CanvasGrid(grid, w, h, (y) => y * rowH());
+        canvas.live(FG, BG);
+        pendingStyles.splice(0).forEach(addStyle);
+      } else canvas.setRows(h);
     };
-    // a changed row reuses its spans: only text, position or class that
-    // actually differ are written (a spinner tick touches one text node)
-    const paintRow = (y: number, segs: Seg[]) => {
-      const row = rowEls[y];
-      if (!row) return;
-      const kids = row.children;
-      for (let k = 0; k < segs.length; k++) {
-        const [col, cells, text, s] = segs[k];
-        let sp = kids[k] as HTMLSpanElement | undefined;
-        if (!sp) { sp = document.createElement("span"); row.appendChild(sp); }
-        const d = sp.dataset;
-        if (d.c !== String(col)) { sp.style.left = `${col * 0.6}em`; d.c = String(col); }
-        if (sp.textContent !== text) sp.textContent = text;
-        const cls = s ? `s${s}` : "";
-        if (sp.className !== cls) sp.className = cls;
-        const wide = cells !== [...text].length ? `${cells * 0.6}em` : "";
-        if (sp.style.width !== wide) sp.style.width = wide;
-      }
-      while (kids.length > segs.length) row.lastElementChild!.remove();
-    };
-    // frames queue; one animation frame applies the newest version of each row
-    let pendingRows = new Map<number, Seg[]>();
+    const rowH = () => rowEls[0]?.getBoundingClientRect().height || 16;
     let pendingCursor: number[] | null = null;
     const apply = () => {
       frame = 0;
-      pendingRows.forEach((segs, y) => paintRow(y, segs));
-      pendingRows = new Map();
       if (pendingCursor) {
         const [x, y, vis] = pendingCursor;
-        cursor.style.transform = `translate(${x * 0.6}em, calc(${y} * var(--lh)))`;
+        cursor.style.transform = `translate(calc(${x} * var(--cw)), calc(${y} * var(--rh)))`;
         cursor.hidden = !vis;
         pendingCursor = null;
       }
     };
     const onFrame = (f: { w?: number; h?: number; s?: StyleDef[]; r?: [number, Seg[]][]; c?: number[] }) => {
+      if (f.w && f.h) sizeGrid(f.w, f.h);
       if (f.s) f.s.forEach(addStyle);
-      if (f.w && f.h) { sizeGrid(f.w, f.h); pendingRows = new Map(); }
-      if (f.r) for (const [y, segs] of f.r) pendingRows.set(y, segs);
-      if (f.c) pendingCursor = f.c;
-      if (!frame) frame = requestAnimationFrame(apply);
+      if (f.r && canvas) for (const [y, segs] of f.r) canvas.set(y, segs);
+      if (f.c) { pendingCursor = f.c; if (!frame) frame = requestAnimationFrame(apply); }
     };
 
-    // ── size: from the font itself, before connecting ─────────────────────
+    // ── size: cols from the box, like the demo's grid ─────────────────────
     const send = (d: string) => { if (ws?.readyState === WebSocket.OPEN) ws.send(d); };
     const ctl = (o: object) => send("\x00json:" + JSON.stringify(o));
-    let fontPx = 12, cols = 80, rows = 24;
+    let cols = 80, rows = 24, cw = 7, rh = 14;
     const measure = () => {
       const cs = getComputedStyle(el);
       const w = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       const h = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-      const dpr = window.devicePixelRatio || 1;
-      const want = Math.min(MAX_FONT, w / (MIN_COLS * 0.6));
-      // snap: a row is a whole number of DEVICE pixels and the font is sized
-      // so its glyphs fill that row exactly (line height = ascent + descent).
-      // Box and block glyphs then meet row to row with no anti-aliased seam.
-      const rowPx = Math.max(6, Math.floor(want * LINE * dpr)) / dpr;
-      fontPx = rowPx / LINE;
-      cols = Math.max(20, Math.floor(w / (fontPx * 0.6)));
-      rows = Math.max(8, Math.floor(h / rowPx));
-      grid.style.fontSize = `${fontPx}px`;
-      grid.style.setProperty("--lh", `${rowPx}px`);
-      cursor.style.height = `${rowPx}px`;
+      // a cell no wider than the demo's at MAX_FONT, and at least MIN_COLS of them
+      const want = Math.min(MAX_FONT * 0.6, w / MIN_COLS);
+      cols = Math.max(20, Math.floor(w / want));
+      cw = w / cols; rh = cw * 2;                     // the demo's geometry: rows are two cells tall
+      if (matchMedia("(max-width: 720px)").matches) {
+        // a phone: a terminal-shaped box like the demo's, as tall as its rows,
+        // not the whole screen with agentty's screen stuck at the top of it
+        rows = 36;
+        replay.style.height = `${Math.ceil(rows * rh + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + 2)}px`;
+      } else rows = Math.max(8, Math.floor(h / rh));
     };
 
     (async () => {
       await loadFont();
       if (disposed) return;
-      measureLine();
       measure();
       const fps = matchMedia("(max-width: 720px)").matches ? 30 : 60;
       ws = new WebSocket(`${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/live/ws?render=rows&cols=${cols}&rows=${rows}&fps=${fps}`);
@@ -260,12 +231,12 @@ export function LiveTakeover() {
     let wheelAcc = 0;
     const cellOf = (cx: number, cy: number) => {
       const r = grid.getBoundingClientRect();
-      return { x: Math.max(0, Math.floor((cx - r.left) / (fontPx * 0.6))), y: Math.max(0, Math.floor((cy - r.top) / (fontPx * LINE))) };
+      return { x: Math.max(0, Math.floor((cx - r.left) / cw)), y: Math.max(0, Math.floor((cy - r.top) / rh)) };
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      wheelAcc += e.deltaMode === 1 ? e.deltaY * fontPx * LINE : e.deltaY;
-      const step = fontPx * LINE * 2;
+      wheelAcc += e.deltaMode === 1 ? e.deltaY * rh : e.deltaY;
+      const step = rh * 2;
       const { x, y } = cellOf(e.clientX, e.clientY);
       while (Math.abs(wheelAcc) >= step) { ctl({ t: "wheel", dy: Math.sign(wheelAcc), x, y }); wheelAcc -= Math.sign(wheelAcc) * step; }
     };
@@ -273,7 +244,7 @@ export function LiveTakeover() {
     let touchY = 0, moved = false;
     const onTouchStart = (e: TouchEvent) => { touchY = e.touches[0].clientY; moved = false; };
     const onTouchMove = (e: TouchEvent) => {
-      const y = e.touches[0].clientY, d = touchY - y, step = fontPx * LINE * 2;
+      const y = e.touches[0].clientY, d = touchY - y, step = rh * 2;
       if (Math.abs(d) < step) return;
       moved = true; e.preventDefault();
       const c = cellOf(e.touches[0].clientX, y);
@@ -300,7 +271,7 @@ export function LiveTakeover() {
       if (k !== lastSize) { lastSize = k; ctl({ t: "resize", cols, rows }); }
     });
     ro.observe(el);
-    (window as any).__agenttyLive = { grid, get cols() { return cols; }, get rows() { return rows; }, get font() { return fontPx; } };
+    (window as any).__agenttyLive = { grid, get cols() { return cols; }, get rows() { return rows; }, get cell() { return [cw, rh]; }, canvas: () => canvas };
 
     return () => {
       disposed = true;
@@ -308,9 +279,10 @@ export function LiveTakeover() {
       cancelAnimationFrame(frame);
       ro.disconnect();
       try { ws?.close(); } catch {}
-      document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== sheet);
+      canvas?.destroy();
       el.remove();
       if (under) { under.style.height = ""; under.style.contentVisibility = ""; }
+      replay.style.height = "";
       delete replay.dataset.liveOn;
     };
   }, [on]);

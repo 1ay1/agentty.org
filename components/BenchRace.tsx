@@ -12,14 +12,25 @@ import { useEffect, useRef, useState } from "react";
 // motion, the chart is the static one.
 export function BenchRace() {
   const ref = useRef<HTMLSpanElement>(null);
-  const [t, setT] = useState<number | null>(null);
+  const clock = useRef<HTMLSpanElement>(null);
   const [runs, setRuns] = useState(0);
 
   useEffect(() => {
     const fig = ref.current?.closest<HTMLElement>("figure[data-race-ms]");
     if (!fig || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const total = Number(fig.dataset.raceMs) + 150;
-    let raf = 0;
+    let raf = 0, shown = -1;
+    // the readout is one text node written directly, 20 times a second: no
+    // React render per frame (that was most of a phone's CPU during the race)
+    const show = (t: number) => {
+      const c = clock.current;
+      if (!c) return;
+      const q = Math.floor(t / 50);
+      if (q === shown) return;
+      shown = q;
+      c.hidden = false;
+      c.textContent = t < 1000 ? `${Math.round(t)} ms` : `${(t / 1000).toFixed(2)} s`;
+    };
     const run = () => {
       fig.dataset.race = "";                           // restart the CSS animations
       void fig.offsetWidth;
@@ -27,9 +38,9 @@ export function BenchRace() {
       const t0 = performance.now();
       const tick = (now: number) => {
         const e = now - t0;
-        setT(Math.min(e, total));
+        show(Math.min(e, total));
         if (e < total) raf = requestAnimationFrame(tick);
-        else fig.dataset.race = "done";
+        else { shown = -1; show(total); fig.dataset.race = "done"; }
       };
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
@@ -46,7 +57,7 @@ export function BenchRace() {
 
   return (
     <span ref={ref} className="bench-race">
-      {t !== null && <span className="bench-clock">{t < 1000 ? `${Math.round(t)} ms` : `${(t / 1000).toFixed(2)} s`}</span>}
+      <span ref={clock} className="bench-clock" hidden />
       <button type="button" onClick={() => setRuns((r) => r + 1)} aria-label="Replay the launch race in real time">
         replay
       </button>
