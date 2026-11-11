@@ -130,16 +130,18 @@ export function TableOfContents() {
     }
   };
 
+  // sections above the one you're in have been read: they go quiet
+  const activeIndex = headings.findIndex((h) => h.id === active);
   return (
     <aside className="docs-toc" aria-label="On this page">
       <p className="t">on this page</p>
-      {headings.map((h) => (
+      {headings.map((h, i) => (
         <a
           key={h.id}
           href={`#${h.id}`}
           onClick={() => onClick(h.id)}
           aria-current={active === h.id ? "true" : undefined}
-          className={`${active === h.id ? "active" : ""} ${h.level === 3 ? "sub" : ""}`}
+          className={`${active === h.id ? "active" : i < activeIndex ? "read" : ""} ${h.level === 3 ? "sub" : ""}`}
         >
           {h.text}
         </a>

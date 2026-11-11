@@ -18,8 +18,12 @@ or an animation to work, it doesn't belong.
 - **Markers hang in the margin.** The text edge stays clean; `$`, `##`,
   list dashes, `note` / `tip` / `warn` and the nav's `>` sit just left of it
   (optical alignment). On phones there's no margin, so they fold back in.
-- **80 columns.** Prose is `--measure` = 80 characters wide, a terminal's
-  width. Only the demo, bars and tables may go wider.
+- **A reading size and a chrome size.** Docs, blog and comparisons read at
+  15 px, 72 columns (the column is still --measure wide); code and tables at
+  13.5 px; the nav, sidebars and labels stay small. Headings step up: page
+  title 24, `##` 18, `###` 16, with more space above a heading than below it.
+  The opening paragraph (`.lead`) is a size up. Long `>` asides stay upright;
+  only a one-line quote is italic.
 - **Rows.** Every vertical space is a multiple of `--line`, one text row,
   as if the page were a terminal grid.
 - **Tables are rules, not boxes**: a line above, one under the header, one
