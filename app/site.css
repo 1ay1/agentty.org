@@ -780,13 +780,19 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 
 /* ── phone ────────────────────────────────────────────────────────────── */
 @media (max-width: 720px) {
+  /* phones read closer to the eye: one step down across the board */
+  :root, html[data-theme] {
+    --fs-xs: 10.5px; --fs-sm: 11.5px; --fs-base: 12.5px;
+    --fs-read: 13px; --fs-read-code: 12px; --fs-h2: 15px; --fs-h3: 13.5px; --fs-lead: 13.5px;
+  }
   .nav-links, .nav-cta { display: none; }
   .nav-toggle { display: inline-flex; }
-  .page h1, .docs-main h1, .post-head h1 { font-size: 20px; }
-  .doc-body { --fs-read: 14.5px; --fs-h2: 16.5px; --fs-h3: 15px; }
-  .lead { font-size: 14.5px; }
+  .page h1, .docs-main h1, .post-head h1 { font-size: 18px; }
+  .home h1 { font-size: 18px; }
+  .doc-body { --fs-read: 13px; --fs-h2: 15px; --fs-h3: 13.5px; }
+  .lead { font-size: var(--fs-lead); }
   .cmdk-input { font-size: 16px; }   /* <16px makes iOS zoom on focus */
-  .doc-body { line-height: 1.75; }
+  .doc-body { line-height: 1.7; }
   .breadcrumb a, .edit-page a { display: inline-block; padding: 6px 0; }
   .home-links { gap: 2px 18px; }
   .home-links a { padding: 10px 0; }
