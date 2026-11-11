@@ -67,14 +67,10 @@ or an animation to work, it doesn't belong.
 
 - Motion only where it carries information: the wordmark (a faithful port
   of agentty's welcome screen), the replayed demo (the program itself), the
-  header's `▌` (agentty's cursor), and the launch race, which replays the
-  measured times on one clock (sped up so the slowest lands in 1.6 s, the same
-  speed-up for every bar, the readout in real milliseconds), so the difference
-  is felt, not read. No smooth scroll, no scroll effects. Hover changes colour or
-  underline only.
+  header's `▌` (agentty's cursor). The benchmark bars are static. No smooth
+  scroll, no scroll effects. Hover changes colour or underline only.
 - Page changes: the nav and docs sidebar hold still and the content
-  cross-fades in 160 ms (View Transitions). Reduced motion: none of it, the
-  race shows the static bars.
+  cross-fades in 160 ms (View Transitions). Reduced motion: none of it.
 - Speed is part of the look: static pages, almost no JavaScript.
   Hovering a link fetches it (speculation rules, router prefetch), so a
   click lands on a warm page.

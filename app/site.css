@@ -364,7 +364,7 @@ td .win { color: var(--text); }
 .bench-metric { margin: 0; min-width: 0; }
 .bench-metric figcaption { color: var(--text-dim); font-size: var(--fs-sm); margin: 0 0 10px; }
 .bench-metric figcaption span { color: var(--text-faint); }
-.bench-metric figcaption > span:first-of-type::before { content: "· "; }
+.bench-metric figcaption span::before { content: "· "; }
 .bench-metric ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
 .bench-metric li {
   display: grid; grid-template-columns: 12ch minmax(0, 1fr); align-items: center; gap: 14px;
@@ -380,22 +380,6 @@ td .win { color: var(--text); }
 .bench-note { margin: 0; font-size: var(--fs-sm); color: var(--text-faint); }
 .bench-note a { color: var(--text-dim); }
 .bench-range { color: var(--text-faint); font-size: var(--fs-xs); }
-/* the launch race (BenchRace): one clock, each bar stops at its own time */
-.bench-race { margin-left: 4px; color: var(--text-faint); }
-.bench-race::before { content: "· "; }
-.bench-race button { margin-left: 10px; background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: 3px; }
-.bench-race button:hover { color: var(--accent-hover); text-decoration-color: var(--accent-hover); }
-.bench-clock { display: inline-block; min-width: 7ch; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-figure[data-race="armed"] .bench-bar { transform: scaleX(0); }
-figure[data-race="armed"] :is(.bench-val, .bench-x) { opacity: 0; }
-figure[data-race="on"] .bench-bar { transform-origin: left; animation: race-bar calc(var(--ms) * 1ms / var(--race-k, 1)) linear both; }
-figure[data-race="on"] :is(.bench-val, .bench-x) { animation: race-done 1ms linear calc(var(--ms) * 1ms / var(--race-k, 1)) both; }
-figure[data-race] li { transition: color .2s; }
-figure[data-race="on"] li:not(.is-us) { animation: race-dim 1ms linear calc(var(--ms) * 1ms / var(--race-k, 1)) both; }
-.bench-bar { transform-origin: left; }
-@keyframes race-bar { from { transform: scaleX(0); } }
-@keyframes race-done { from { opacity: 0; } to { opacity: 1; } }
-@keyframes race-dim { from { color: var(--text-faint); } to { color: var(--text-dim); } }
 :is(th, td).num { white-space: nowrap; }
 td .bench-range { display: block; }
 /* phones: the benchmark table becomes one record per tool — the name and
@@ -837,13 +821,8 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 }
 
 /* ── phones: the new pieces ───────────────────────────────────────────────────── */
-/* captions wrap as whole pieces ("· 1.20 s", "replay"), never mid-phrase */
-.bench-metric figcaption { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 1ch; }
-.bench-race { margin-left: 0; display: inline-flex; gap: 10px; }
-.bench-race button { margin-left: 0; }
 @media (max-width: 720px) {
   /* tap targets */
-  .bench-race button { padding: 6px 0; }
   /* the version stamp gets its own line; no leading separator there */
   .doc-version::before { content: none; }
   .doc-stamp { row-gap: 6px; }
@@ -861,10 +840,4 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 }
 @media (max-width: 720px) and (hover: none) {
   .cmdk-input { font-size: 16px; }   /* below 16px iOS zooms the whole page when the field focuses */
-}
-@media (max-width: 560px) {
-  /* the race clock and replay get their own line instead of a dangling "·" */
-  .bench-race { flex-basis: 100%; align-items: baseline; }
-  .bench-race::before { content: none; }
-  .bench-race button { padding: 0; }
 }

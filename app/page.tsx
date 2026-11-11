@@ -35,7 +35,7 @@ export default function Home() {
       </section>
 
       <section className="home-bench" aria-label="Benchmarks">
-        <BenchBars metrics={["ready", "rss"]} race />
+        <BenchBars metrics={["ready", "rss"]} />
       </section>
 
       <section className="home-info">

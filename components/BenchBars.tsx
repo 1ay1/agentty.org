@@ -1,6 +1,5 @@
 import Link from "next/link";
 import bench from "@/lib/bench.generated.json";
-import { BenchRace } from "./BenchRace";
 
 // Real measurements of terminal agent harnesses (scripts/bench-agents.mjs),
 // drawn as plain text bars. Server component: zero JS.
@@ -15,7 +14,7 @@ export const METRICS: Metric[] = [
   { key: "startup", label: "--version startup", unit: "ms", value: (t) => t.startupMs.median, fmt: (v) => (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${v < 10 ? v.toFixed(1) : Math.round(v)} ms`) },
 ];
 
-export function BenchBars({ metrics = ["ready"], only, race = false }: { metrics?: string[]; only?: string[]; race?: boolean }) {
+export function BenchBars({ metrics = ["ready"], only }: { metrics?: string[]; only?: string[] }) {
   const tools = only ? bench.tools.filter((t) => t.id === "agentty" || only.includes(t.id)) : bench.tools;
   return (
     <div className="bench">
@@ -23,18 +22,14 @@ export function BenchBars({ metrics = ["ready"], only, race = false }: { metrics
         const rows = [...tools].sort((a, b) => m.value(a) - m.value(b));
         const max = Math.max(...rows.map(m.value));
         const us = m.value(bench.tools.find((t) => t.id === "agentty")!);
-        const races = race && m.unit === "ms";
         return (
-          <figure key={m.key} className="bench-metric" data-race-ms={races ? Math.round(max) : undefined}>
-            <figcaption>
-              {m.label} <span>lower is better</span>
-              {races && <BenchRace />}
-            </figcaption>
+          <figure key={m.key} className="bench-metric">
+            <figcaption>{m.label} <span>lower is better</span></figcaption>
             <ol aria-label={`${m.label}: ` + rows.map((t) => `${t.name} ${m.fmt(m.value(t))}`).join(", ")}>
               {rows.map((t) => {
                 const v = m.value(t), ratio = v / us;
                 return (
-                  <li key={t.id} className={t.id === "agentty" ? "is-us" : undefined} style={races ? ({ "--ms": Math.round(v) } as React.CSSProperties) : undefined}>
+                  <li key={t.id} className={t.id === "agentty" ? "is-us" : undefined}>
                     <span className="bench-name">{t.name}</span>
                     <span className="bench-track">
                       <span className="bench-bar" style={{ width: `calc((100% - 15ch) * ${Math.max(0.006, v / max).toFixed(4)})` }} />
