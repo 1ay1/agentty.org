@@ -40,7 +40,7 @@ function runBlock(cmd: string): string {
 
 export type MdHeading = { id: string; text: string; level: number };
 
-const COMMANDS = /^(agentty|git|npm|npx|node|pnpm|yarn|cargo|make|cmake|ninja|curl|wget|ssh|scp|rsync|docker|kubectl|brew|apt|apt-get|dnf|pacman|yay|paru|pip|pipx|uv|python3?|go|rustup|sudo|cd|ls|cat|grep|rg|find|sed|awk|chmod|mkdir|rm|cp|mv|echo|export|source|tmux|ollama|iw|ip|systemctl|journalctl|irm|winget|scoop|choco|nix|snap|emerge|apk|zypper|code|zed|vim|nvim)(\s|$)/;
+const COMMANDS = /^(agentty|which|ssh-copy-id|xdg-open|open|kill|ps|jq|tail|head|less|tee|env|time|watch|nc|ollama|git|npm|npx|node|pnpm|yarn|cargo|make|cmake|ninja|curl|wget|ssh|scp|rsync|docker|kubectl|brew|apt|apt-get|dnf|pacman|yay|paru|pip|pipx|uv|python3?|go|rustup|sudo|cd|ls|cat|grep|rg|find|sed|awk|chmod|mkdir|rm|cp|mv|echo|export|source|tmux|ollama|iw|ip|systemctl|journalctl|irm|winget|scoop|choco|nix|snap|emerge|apk|zypper|code|zed|vim|nvim)(\s|$)/;
 // agentty's tools, by the names the model calls them: a mention of one is a
 // code symbol, never a shell command (`grep` the tool, not grep the program)
 const TOOLS = new Set(["read", "edit", "write", "apply_patch", "move", "remove", "shell", "bash", "process_start",
@@ -49,18 +49,34 @@ const TOOLS = new Set(["read", "edit", "write", "apply_patch", "move", "remove",
   "git_status", "git_diff", "git_log", "git_show", "git_blame", "git_commit", "git_branch", "git_stash",
   "git_rebase", "git_cherry_pick", "web_fetch", "web_search", "remember", "forget", "wipe_memory", "task",
   "skill", "search_docs", "search_code", "rewrite_structural", "todo"]);
-const FILE_EXT = /\.(json|toml|ya?ml|md|txt|sh|py|js|ts|tsx|cpp|hpp|c|h|rs|go|lock|conf|cfg|ini|env|log|pem|html|css|plist|service|socket|desktop|zip|tar|gz|deb|rpm|exe|ps1|sock|jsonl|ansi)$/i;
+const FILE_EXT = /\.(json|toml|ya?ml|md|txt|sh|py|js|ts|tsx|cpp|hpp|c|h|rs|go|lock|conf|cfg|ini|env|log|pem|html|css|plist|service|socket|desktop|zip|tar|gz|deb|rpm|exe|ps1|sock|jsonl|ansi|cmake|png|gif|webp|svg|tcp)$/i;
 
-/** What a piece of inline code is: "path", "cmd", "env", "sym", or "" (anything else). */
-function codeKind(t: string): "" | "path" | "cmd" | "env" | "sym" {
+/** What a piece of inline code is, by the colour it gets. */
+type CodeKind = "" | "path" | "cmd" | "env" | "sym" | "flag" | "val";
+function codeKind(t: string): CodeKind {
   const s = t.trim();
-  if (!s || s.length > 120) return "";
+  if (!s || s.length > 160) return "";
   if (TOOLS.has(s)) return "sym";
+  // a place: a URL, a domain, host:port, or a path that starts at a placeholder
+  if (/^(https?|wss?|ircs?):\/\//.test(s) || /^[\w.-]+\.(com|org|net|io|dev|ai|sh|app|so)(\/\S*)?$/.test(s)) return "path";
+  if (/^(localhost|[\d.]+|[\w-]+(\.[\w-]+)*|\[[\d:a-f]+\]):\d{2,5}$/.test(s) || s === "host:port") return "path";
+  if (/^(<[\w-]+>|\$[A-Z_]+|%[A-Z_]+%)[\\/]/.test(s)) return "path";
+  // several variables in one span: A / B / C
+  if (/^\$?[A-Z][A-Z0-9_*<>]+( \/ \$?[A-Z][A-Z0-9_*<>]+)+$/.test(s)) return "env";
   // a command you'd type: a known program WITH arguments (a bare `ssh` is a name)
   if (COMMANDS.test(s) && /\s\S/.test(s)) return "cmd";
   if (/^\/[a-z][a-z-]*( .*)?$/.test(s) && !/^\/(tmp|usr|etc|var|opt|bin|dev|proc|sys|home|mnt|run)\b/.test(s)) return "cmd";   // /compact, /model
   // $FOO, FOO=1, FOO_BAR, or a well-known one: an environment variable
-  if (/^\$?[A-Z][A-Z0-9_]*(=\S*)?$/.test(s) && (/[_=$]/.test(s) || /^(PATH|HOME|TERM|SHELL|EDITOR|VISUAL|LANG|USER|DISPLAY|TMPDIR|PAGER)$/.test(s))) return "env";
+  if (/^\$?[A-Z][A-Z0-9_]*(_\*|_<[A-Z]+>)?(=\S*)?$/.test(s) && (/[_=$]/.test(s) || /^(PATH|HOME|TERM|SHELL|EDITOR|VISUAL|LANG|USER|DISPLAY|TMPDIR|PAGER)$/.test(s))) return "env";
+  // an option flag: --setup, -m, --profile ask
+  if (/^--?[A-Za-z][\w-]*(=\S*)?( \S+)?$/.test(s)) return "flag";
+  // a setting written as key=value (wire=trace, warn,auth=debug)
+  if (/^[a-z][\w.-]*=\S+$/.test(s) || /^[a-z]+(,[a-z]+=[a-z]+)+$/.test(s)) return "flag";
+  // a model name: qwen3-embedding:0.6b, qwen2.5:0.5b
+  if (/^[a-z][\w.-]*:[\w.]+$/.test(s) && /\d/.test(s)) return "val";
+  // a value: a number, size or duration, a quoted string, true / false / null
+  if (/^-?\d[\d.,_]*\s?(%|[kKMGT]i?B?|ms|s|m|h|px|x|×)?$/.test(s) || /^(["']).*\1$/.test(s) || /^(true|false|null|none|nil|on|off|yes|no)$/i.test(s)
+      || /^=\S+$/.test(s) || /^[{[].*[}\]]$/.test(s)) return "val";
   // a code symbol: resolve(), std::move, Model::update, maya::Element
   if (/^[A-Za-z_~][\w:<>~]*\(.*\)$/.test(s) || /^[A-Za-z_]\w*(::[\w~<>]+)+$/.test(s)) return "sym";
   if (/\s/.test(s)) return "";
@@ -68,6 +84,13 @@ function codeKind(t: string): "" | "path" | "cmd" | "env" | "sym" {
   if (/^(~|\.{1,2}\/|\/[\w.-])/.test(s) || /^\.[\w-]/.test(s)) return "path";
   if (/^[\w.@-]+(\/[\w.@*<>-]*)+$/.test(s) && (/\/$/.test(s) || FILE_EXT.test(s))) return "path";
   if (/^[\w.-]+$/.test(s) && FILE_EXT.test(s)) return "path";
+  // a name from code: snake_case, CONSTANT, CamelCase, dotted.setting.name
+  if (/^[A-Za-z_][\w]*$/.test(s) && (/_/.test(s) || /^[A-Z][A-Z0-9]{2,}$/.test(s) || /^[A-Z][a-z]+[A-Z]\w*$/.test(s) || /^[a-z]+[A-Z]\w*$/.test(s))) return "sym";
+  if (/^[a-z_][\w-]*(\.[\w-]+)+$/.test(s) && !FILE_EXT.test(s)) return "sym";
+  // a protocol method or a header: session/new, tools/call, $/cancel_request, Retry-After
+  if (/^(\$|[a-z_]+)(\/[a-z_*]+)+$/.test(s) || /^[A-Z][a-z]+(-[A-Z][a-z]+)+$/.test(s)) return "sym";
+  // a single plain word: a mode, state or keyword value (none, partial, ask)
+  if (/^[a-z][a-z0-9-]*$/.test(s)) return "val";
   return "";
 }
 

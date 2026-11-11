@@ -39,11 +39,14 @@ or an animation to work, it doesn't belong.
   - **magenta** (the accent), spent rarely: agentty, the `$` prompt, its own
     bar, the nav's `>`, the selected item, and link underlines (the text
     turns magenta only on hover)
-  - **cyan**: structure. Section headings (`##`) and paths / files in code
+  - **cyan**: structure and places. Section headings (`##`), paths, files,
+    URLs, `host:port`
   - **green**: commands you'd type (a program with arguments), and tips
-  - **yellow**: environment variables and settings, and warnings
-  - **blue**: code symbols (`resolve()`, `std::move`) and agentty's tool names
-    (`read`, `grep`, `repo_map`)
+  - **yellow**: environment variables, flags and settings, and warnings
+  - **blue**: names from code: `resolve()`, `std::move`, `no_new_privs`,
+    `TIOCSTI`, agentty's tool names (`read`, `grep`), protocol methods
+  - **orange**: values: modes and states (`none`, `partial`, `ask`), numbers,
+    strings, `true` / `false`, model names
   Inline code is classified at build time (lib/markdown.ts `codeKind`);
   anything it can't name stays ink.
 - Selection and keyboard focus are inverse video, like a terminal.
