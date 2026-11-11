@@ -24,6 +24,10 @@ export function StatusLine() {
   const [sec, setSec] = useState("");
   const [scheme, setScheme] = useState("");
   const [msg, setMsg] = useState("");
+  // the file name is set after mount: a page can be served at another URL
+  // (dev.agentty.org/ is the /dev/ page), and the server can't know which
+  const [file, setFile] = useState("");
+  useEffect(() => setFile(fileOf(location.pathname)), [path]);
 
   useEffect(() => {
     const read = () => setScheme(currentScheme() || (document.documentElement.getAttribute("data-theme") === "light" ? "agentty light" : "agentty dark"));
@@ -72,7 +76,7 @@ export function StatusLine() {
 
   return (
     <div className="statusline" aria-hidden="true">
-      <span className="sl-file">{fileOf(path)}</span>
+      <span className="sl-file">{file}</span>
       {msg ? <span className="sl-msg">{msg}</span> : sec && <span className="sl-sec">§ {sec}</span>}
       <span className="sl-fill" />
       <button type="button" tabIndex={-1} className="sl-theme" onClick={() => window.dispatchEvent(new Event("agentty:open-theme"))}>{scheme}</button>
