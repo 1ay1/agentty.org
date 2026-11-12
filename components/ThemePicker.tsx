@@ -25,11 +25,12 @@ const ROW = 40;          // px; must match .theme-picker .cmdk-item in site.css
 const OVERSCAN = 4;
 
 let cache: Promise<Row[]> | null = null;
+let loaded: Row[] | null = null;            // the list once parsed, for a synchronous first render
 export const loadThemes = () =>
   (cache ??= fetch("/themes.json")
     .then((r) => r.json())
     .then(parseThemes)
-    .then((list) => list.map((s) => ({ name: s.name, lower: s.name.toLowerCase(), light: isLight(s), scheme: s })))
+    .then((list) => (loaded = list.map((s) => ({ name: s.name, lower: s.name.toLowerCase(), light: isLight(s), scheme: s }))))
     .catch(() => { cache = null; return []; }));
 
 const BASE: Row[] = [
@@ -63,10 +64,22 @@ const Item = memo(function Item({ r, i, sel, current, onPick }: { r: Row; i: num
   );
 });
 
+// the row of the scheme in force: the picker opens ON it, so opening never
+// changes what you see
+function startIndex(rows: Row[]): number {
+  let cur: string | null = null;
+  try { cur = currentScheme(); } catch {}
+  if (cur) { const i = rows.findIndex((r) => r.name === cur); if (i >= 0) return i; }
+  return document.documentElement.getAttribute("data-theme") === "light" ? 1 : 0;
+}
+
 export function ThemePicker({ onClose }: { onClose: () => void }) {
-  const [all, setAll] = useState<Row[]>([]);
+  const [all, setAll] = useState<Row[]>(() => loaded ?? []);
   const [q, setQ] = useState("");
-  const [sel, setSel] = useState(0);
+  const [sel, setSel] = useState(() => startIndex([...BASE, ...(loaded ?? [])]));
+  // the page previews a row only after the arrow keys (or a tap) moved to it:
+  // not on opening, not while typing a filter
+  const navigated = useRef(false);
   const [top, setTop] = useState(0);
   const [height, setHeight] = useState(480);
   const input = useRef<HTMLInputElement>(null);
@@ -77,7 +90,7 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const d = document.documentElement;
     before.current = { css: d.style.cssText, theme: d.getAttribute("data-theme") || "dark", scheme: currentScheme() };
-    void loadThemes().then(setAll);
+    if (!loaded) void loadThemes().then((l) => { setAll(l); setSel(startIndex([...BASE, ...l])); });
     // on a touch screen, don't throw the keyboard up over the preview
     if (!matchMedia("(hover: none)").matches) input.current?.focus();
     return () => {
@@ -103,15 +116,13 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
     return [...BASE.filter(hit), ...all.filter(hit)];
   }, [q, all]);
 
-  // start on the scheme in use
+  // a new filter starts at its first match, without previewing it
+  const firstQ = useRef(true);
   useEffect(() => {
-    if (!all.length || q) return;
-    const cur = before.current?.scheme;
-    const i = cur ? rows.findIndex((r) => r.name === cur) : before.current?.theme === "light" ? 1 : 0;
-    setSel(Math.max(0, i));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [all]);
-  useEffect(() => setSel(0), [q]);
+    if (firstQ.current) { firstQ.current = false; return; }
+    navigated.current = false;
+    setSel(0);
+  }, [q]);
 
   // the visible window of rows
   useLayoutEffect(() => {
@@ -137,7 +148,7 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     cancelAnimationFrame(previewRaf.current);
     const r = rows[sel];
-    if (!r) return;
+    if (!r || !navigated.current) return;
     previewRaf.current = requestAnimationFrame(() => applyScheme(r.scheme, r.base, false));
   }, [sel, rows]);
 
@@ -152,13 +163,14 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
   const rowsRef = useRef(rows); rowsRef.current = rows;
   const selRef = useRef(sel); selRef.current = sel;
   const onPick = useMemo(() => (i: number, touch: boolean) => {
-    if (touch && i !== selRef.current) setSel(i); else keep(rowsRef.current[i]);
+    if (touch && i !== selRef.current) { navigated.current = true; setSel(i); } else keep(rowsRef.current[i]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const first = Math.max(0, Math.floor(top / ROW) - OVERSCAN);
   const last = Math.min(rows.length, Math.ceil((top + height) / ROW) + OVERSCAN);
-  const move = (d: number) => setSel((s) => Math.min(rows.length - 1, Math.max(0, s + d)));
+  const go = (i: number) => { navigated.current = true; setSel(Math.min(rows.length - 1, Math.max(0, i))); };
+  const move = (d: number) => { navigated.current = true; setSel((s) => Math.min(rows.length - 1, Math.max(0, s + d))); };
 
   return (
     <div className="cmdk-overlay theme-overlay" onClick={onClose}>
@@ -181,8 +193,8 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
               else if (e.key === "ArrowUp" || (e.ctrlKey && e.key === "p")) { e.preventDefault(); move(-1); }
               else if (e.key === "PageDown") { e.preventDefault(); move(10); }
               else if (e.key === "PageUp") { e.preventDefault(); move(-10); }
-              else if (e.key === "Home" && !q) { e.preventDefault(); setSel(0); }
-              else if (e.key === "End" && !q) { e.preventDefault(); setSel(rows.length - 1); }
+              else if (e.key === "Home" && !q) { e.preventDefault(); go(0); }
+              else if (e.key === "End" && !q) { e.preventDefault(); go(rows.length - 1); }
               else if (e.key === "Enter") { e.preventDefault(); keep(rows[sel]); }
               else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onClose(); }
             }}
