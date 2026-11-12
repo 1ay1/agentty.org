@@ -31,6 +31,8 @@ const REFERENCE = new Set(["Keys", "Commands", "Environment", "Flags", "Referenc
 const SUGGESTED = ["/docs/quick-start/", "/docs/installation/", "/docs/providers/", "/docs/keybindings/", "/docs/sandboxing/", "/docs/cli/"];
 
 let indexPromise: Promise<Item[]> | null = null;
+/** fetch + parse the search index now, so the first open is instant */
+export const warmIndex = () => void loadIndex();
 const loadIndex = () =>
   (indexPromise ??= fetch("/search.json")
     .then((r) => (r.ok ? r.json() : []))

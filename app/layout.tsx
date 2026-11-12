@@ -6,6 +6,7 @@ import { SiteNav } from "@/components/SiteNav";
 import { CommandPaletteLazy } from "@/components/CommandPaletteLazy";
 import { Shortcuts } from "@/components/Shortcuts";
 import { Prefetch } from "@/components/Prefetch";
+import { Warm } from "@/components/Warm";
 import { StatusLine } from "@/components/StatusLine";
 import { site } from "@/lib/site";
 import { seoDescription } from "@/lib/seo";
@@ -193,6 +194,7 @@ export default function RootLayout({
         <CommandPaletteLazy />
         <Shortcuts />
         <Prefetch />
+        <Warm />
         <StatusLine />
       </body>
     </html>

@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import { CommandPalette as Palette } from "./CommandPalette";
 
-// The palette itself (with useRouter + the search index) is only loaded the
-// first time the user actually summons it — keeping it out of the initial
-// hydration bundle entirely. Until then this component ships ~nothing.
-const Palette = dynamic(
-  () => import("./CommandPalette").then((m) => m.CommandPalette),
-  { ssr: false },
-);
+// The palette mounts the first time it's summoned. Its code is in the page
+// bundle (2 KB: a lazy chunk cost a ~300 ms round of Suspense on first open)
+// and its index is fetched ahead of time by <Warm/>, so the first / or ⌘K
+// opens it in the same frame.
 
 export function CommandPaletteLazy() {
   const [armed, setArmed] = useState(false);

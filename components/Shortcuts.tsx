@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
+import { ThemePicker } from "./ThemePicker";   // in the bundle: a lazy chunk cost ~300 ms on first open
 
 // Keyboard shortcuts, the way a terminal program has them: `?` lists them,
 // `less` keys move through a page, `g` then a letter jumps somewhere. `/` and
@@ -24,7 +24,6 @@ const typing = (t: EventTarget | null) => {
 // one text row, the page's own rhythm unit
 const row = () => parseFloat(getComputedStyle(document.body).fontSize) * 1.7;
 
-const ThemePicker = dynamic(() => import("./ThemePicker").then((m) => m.ThemePicker), { ssr: false });
 
 // the page's sections, in order: the h2/h3 headings of the reading column
 const sections = () =>
