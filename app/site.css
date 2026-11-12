@@ -616,6 +616,8 @@ td .bench-range { display: block; }
 .theme-overlay { background: none; place-items: start end; padding: calc(var(--nav-h) + 12px) 16px 0 0; }
 .theme-picker { width: min(380px, calc(100vw - 24px)); box-shadow: 0 8px 40px color-mix(in srgb, #000 35%, transparent); }
 .theme-picker .cmdk-results { max-height: min(60vh, 520px); }
+/* hover highlights a row without previewing it (the arrows preview) */
+@media (hover: hover) { .theme-picker .cmdk-item:not(.sel):hover { background: color-mix(in srgb, var(--bg-soft) 60%, transparent); color: var(--text); } }
 .theme-swatch { display: inline-flex; gap: 2px; align-items: center; padding: 3px 4px; border: 1px solid var(--border); background: var(--bg); align-self: center; }
 .theme-swatch i { width: 8px; height: 8px; display: block; }
 .theme-picker .cmdk-item { grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0; }

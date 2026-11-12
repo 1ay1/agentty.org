@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { applyScheme, currentScheme, parseThemes, type Scheme } from "@/lib/scheme";
 
 // agentty's theme browser, on the site: every scheme agentty ships, filtered
-// as you type, previewed live as the cursor moves (the page behind is the
-// preview), Enter keeps it, Esc puts back what you had. Opened with `t`,
+// as you type, previewed live as the arrow keys move the selection (the page
+// behind is the preview; hovering only highlights), Enter or a click keeps it,
+// Esc puts back what you had. Opened with `t`,
 // from the palette, or the nav's theme button.
 type Row = { name: string; scheme: Scheme | null; base?: "dark" | "light"; label?: string };
 
@@ -106,8 +107,9 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
                 className={`cmdk-item ${i === sel ? "sel" : ""}`}
                 role="option"
                 aria-selected={i === sel}
+                // the page changes theme only on the arrow keys (or a tap):
+                // the pointer passing over the list just highlights a row
                 onPointerDown={(e) => (touch.current = e.pointerType !== "mouse")}
-                onPointerMove={(e) => e.pointerType === "mouse" && i !== sel && setSel(i)}
                 onClick={() => (touch.current && i !== sel ? setSel(i) : keep(r))}
               >
                 <span className="cmdk-title">{r.name}{r.label && <span className="cmdk-parent"> · {r.label}</span>}</span>
