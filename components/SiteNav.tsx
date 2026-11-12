@@ -102,6 +102,14 @@ export function SiteNav() {
           >
             github
           </a>
+          {/* agentty's 615 colour schemes (the picker previews on the page) */}
+          <button
+            className="theme-toggle nav-themes"
+            title="agentty's colour schemes (t)"
+            onClick={() => window.dispatchEvent(new Event("agentty:open-theme"))}
+          >
+            themes
+          </button>
           <ThemeToggle />
         </div>
         <button
