@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { activeScheme, applyScheme, currentScheme, parseThemes, type Scheme } from "@/lib/scheme";
+import { activeScheme, applyScheme, currentScheme, isLight, parseThemes, type Scheme } from "@/lib/scheme";
+import { track } from "@/lib/analytics";
 
 // agentty's theme browser, on the site: every scheme agentty ships, filtered
 // as you type, previewed live as the arrow keys move the selection (the page
@@ -39,14 +40,25 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  // the scheme in force when the picker opened (✓ in the list)
+  const current = useMemo(() => before.current?.scheme ?? (before.current?.theme === "light" ? "agentty light" : "agentty dark"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [all]);
+
   const rows = useMemo<Row[]>(() => {
     const base: Row[] = [
       { name: "agentty dark", label: "the site's own (Flexoki)", scheme: null, base: "dark" },
       { name: "agentty light", label: "the site's own (Flexoki)", scheme: null, base: "light" },
     ];
+    // words match the name; "dark" and "light" also match how bright a scheme
+    // is, so "light nord" finds the light Nords whatever they're called
     const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const hit = (n: string) => words.every((w) => n.toLowerCase().includes(w));
-    return [...base.filter((r) => hit(r.name)), ...all.filter((s) => hit(s.name)).map((s) => ({ name: s.name, scheme: s }))];
+    const hit = (n: string, light: boolean) => words.every((w) =>
+      n.toLowerCase().includes(w) || (w === "light" && light) || (w === "dark" && !light));
+    return [
+      ...base.filter((r) => hit(r.name, r.base === "light")),
+      ...all.filter((s) => hit(s.name, isLight(s))).map((s) => ({ name: s.name, scheme: s })),
+    ];
   }, [q, all]);
 
   // start on the scheme in use
@@ -69,6 +81,7 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
     if (!r) return;
     kept.current = true;
     applyScheme(r.scheme, r.base, true);
+    track("theme-pick", { scheme: r.name });
     onClose();
   };
 
@@ -115,7 +128,10 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
                 onPointerDown={(e) => (touch.current = e.pointerType !== "mouse")}
                 onClick={() => (touch.current && i !== sel ? setSel(i) : keep(r))}
               >
-                <span className="cmdk-title">{r.name}{r.label && <span className="cmdk-parent"> · {r.label}</span>}</span>
+                <span className="cmdk-title">
+                  {r.name}{r.label && <span className="cmdk-parent"> · {r.label}</span>}
+                  {r.name === current && <span className="theme-current" aria-label="current"> ✓</span>}
+                </span>
                 {i === sel && <span className="theme-keep" aria-hidden="true">tap to keep</span>}
                 <span className="theme-swatch" aria-hidden="true" style={s ? { background: s.background, borderColor: s.border } : undefined} data-base={r.base}>
                   {s && [s.accent, s.info, s.secondary, s.warning, s.primary].map((c, j) => <i key={j} style={{ background: c }} />)}

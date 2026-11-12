@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { site, topNav } from "@/lib/site";
 import { versionLabel } from "@/lib/release";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { PageWeight } from "@/components/PageWeight";
 import { track } from "@/lib/analytics";
 
@@ -102,15 +101,16 @@ export function SiteNav() {
           >
             github
           </a>
-          {/* agentty's 615 colour schemes (the picker previews on the page) */}
+          {/* one control for colour: agentty's dark and light first, then its
+              615 schemes; the swatch is the scheme in force, from its tokens */}
           <button
-            className="theme-toggle nav-themes"
-            title="agentty's colour schemes (t)"
+            className="nav-theme"
+            title="Colour scheme (t)"
+            aria-label="Choose a colour scheme"
             onClick={() => window.dispatchEvent(new Event("agentty:open-theme"))}
           >
-            themes
+            theme <Swatch />
           </button>
-          <ThemeToggle />
         </div>
         <button
           ref={toggleRef}
@@ -158,10 +158,6 @@ export function SiteNav() {
             >
               search <kbd>/</kbd>
             </button>
-            <div className="mobile-util mobile-util-theme">
-              <span>theme</span>
-              <ThemeToggle />
-            </div>
             <button
               type="button"
               className="mobile-util"
@@ -170,11 +166,26 @@ export function SiteNav() {
                 window.dispatchEvent(new Event("agentty:open-theme"));
               }}
             >
-              agentty&apos;s 615 themes <span className="mobile-util-hint">›</span>
+              theme <Swatch /> <span className="mobile-util-hint">›</span>
             </button>
           </div>
         </div>
       )}
     </header>
+  );
+}
+
+// the scheme in force, at a glance: five of its colours, read from the same
+// CSS tokens the page is drawn with (so it is right before any JS, and
+// follows a preview live)
+function Swatch() {
+  return (
+    <span className="nav-swatch" aria-hidden="true">
+      <i style={{ background: "var(--accent)" }} />
+      <i style={{ background: "var(--cyan)" }} />
+      <i style={{ background: "var(--tip)" }} />
+      <i style={{ background: "var(--warn)" }} />
+      <i style={{ background: "var(--c-sym)" }} />
+    </span>
   );
 }

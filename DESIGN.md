@@ -90,7 +90,8 @@ or an animation to work, it doesn't belong.
 - A mode line along the bottom (desktop): the file you're reading, the
   section, the scheme, `Top / 42% / Bot`. Key messages show there, like
   vim's message line.
-- Themes are agentty's: all 615 schemes from maya's `schemes.hpp`
+- One colour control, `theme` in the header (`t`): agentty's own dark and
+  light first, then all 615 schemes from maya's `schemes.hpp`
   (scripts/gen-themes.mjs → public/themes.json), mapped onto the site's
   tokens by the same slots agentty uses. Picking one previews it live. The
   recorded demos repaint in it too (lib/recolor.ts): each recorded colour is
