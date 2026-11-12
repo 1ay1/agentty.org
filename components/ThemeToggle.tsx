@@ -19,12 +19,16 @@ export function ThemeToggle() {
     const now = (document.documentElement.getAttribute("data-theme") as Theme) || "dark";
     const next: Theme = now === "dark" ? "light" : "dark";
     document.documentElement.style.cssText = "";        // back to the site's own palette
+    document.documentElement.classList.remove("has-scheme");
     document.documentElement.setAttribute("data-theme", next);
     try {
       localStorage.setItem("theme", next);
       localStorage.removeItem("scheme");
       localStorage.removeItem("scheme-css");
+      localStorage.removeItem("scheme-slots");
     } catch {}
+    window.__agenttyScheme = null;
+    window.dispatchEvent(new CustomEvent("agentty:scheme-change", { detail: null }));
     setTheme(next);
   };
 

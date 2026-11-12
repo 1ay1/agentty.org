@@ -41,7 +41,10 @@ for (const m of src.matchAll(/inline constexpr Theme (\w+) \{([^}]*)\};/g)) {
 }
 // {"Display Name", &ident},
 const table = src.slice(src.indexOf("inline constexpr NamedTheme schemes[]"));
-const SLOTS = ["background", "surface", "border", "text", "muted", "accent", "primary", "secondary", "info", "warning", "error", "highlight"];
+// every slot maya's Theme has, in the order the site reads them: the first
+// twelve drive the site's own tokens, all of them drive the demo's recolour
+const SLOTS = ["background", "surface", "border", "text", "muted", "accent", "primary", "secondary", "info", "warning", "error", "highlight",
+  "success", "inverse_text", "diff_added", "diff_removed", "diff_changed", "selection", "cursor", "link", "placeholder", "shadow", "overlay"];
 const out = [];
 for (const m of table.matchAll(/\{"((?:[^"\\]|\\.)*)", &(\w+)\}/g)) {
   const t = bodies.get(m[2]);
@@ -50,4 +53,8 @@ for (const m of table.matchAll(/\{"((?:[^"\\]|\\.)*)", &(\w+)\}/g)) {
 }
 if (out.length < 100) throw new Error(`themes: only parsed ${out.length} schemes`);
 writeFileSync(join(ROOT, "public", "themes.json"), JSON.stringify({ slots: SLOTS, themes: out }) + "\n");
+// the scheme the demo was RECORDED in (agentty's Flexoki), bundled with the
+// page: the recolour needs it before themes.json is ever fetched
+const base = Object.fromEntries(["Flexoki Dark", "Flexoki Light"].map((n) => [n, out.find((t) => t[0] === n)?.slice(1)]));
+writeFileSync(join(ROOT, "lib", "demo-base-slots.generated.json"), JSON.stringify({ slots: SLOTS, dark: base["Flexoki Dark"], light: base["Flexoki Light"] }) + "\n");
 console.log(`themes: ${out.length} schemes → public/themes.json`);

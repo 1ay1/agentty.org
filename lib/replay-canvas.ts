@@ -52,16 +52,22 @@ export class CanvasGrid {
     this.measure();
   }
 
-  /** a recording's styles: class index → [fg, bg, font, decoration] */
-  use(scr: Screen, fg: string, bg: string) {
-    this.bg = bg;
+  /** a recording's styles: class index → [fg, bg, font, decoration];
+   *  `map` recolours every colour (another scheme, lib/recolor.ts) */
+  use(scr: Screen, fg: string, bg: string, map?: (c: string) => string) {
+    this.recolor(scr, fg, bg, map);
+    this.lines = [];
+  }
+  /** new colours for the same recording: the rows stay, everything repaints */
+  recolor(scr: Screen, fg: string, bg: string, map: (c: string) => string = (c) => c) {
+    this.bg = map(bg);
     this.styles = scr.classes.map(([s]) => {
       const [f, b, flags] = scr.styles[s] ?? [null, null, 0];
-      return { fg: f ?? fg, bg: b, font: `${flags & 2 ? "italic " : ""}${flags & 1 ? "700" : "400"}`, deco: flags & 12 };
+      return { fg: map(f ?? fg), bg: b ? map(b) : null, font: `${flags & 2 ? "italic " : ""}${flags & 1 ? "700" : "400"}`, deco: flags & 12 };
     });
     this.glyph = scr.classes.map(([, g]) => g);
-    this.lines = [];
     this.full = true;
+    this.request();
   }
   private bg = "#100f0f";
   private fgDefault = "#cecdc3";

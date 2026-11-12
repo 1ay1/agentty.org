@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { applyScheme, currentScheme, parseThemes, type Scheme } from "@/lib/scheme";
+import { activeScheme, applyScheme, currentScheme, parseThemes, type Scheme } from "@/lib/scheme";
 
 // agentty's theme browser, on the site: every scheme agentty ships, filtered
 // as you type, previewed live as the arrow keys move the selection (the page
@@ -32,7 +32,10 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
     return () => {
       if (kept.current || !before.current) return;
       d.style.cssText = before.current.css;              // Esc / click away: undo the preview
+      d.classList.toggle("has-scheme", !!before.current.css);
       d.setAttribute("data-theme", before.current.theme);
+      window.__agenttyScheme = undefined;                // back to what's stored
+      window.dispatchEvent(new CustomEvent("agentty:scheme-change", { detail: activeScheme() }));
     };
   }, []);
 

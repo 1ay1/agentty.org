@@ -92,7 +92,11 @@ or an animation to work, it doesn't belong.
   vim's message line.
 - Themes are agentty's: all 615 schemes from maya's `schemes.hpp`
   (scripts/gen-themes.mjs → public/themes.json), mapped onto the site's
-  tokens by the same slots agentty uses. Picking one previews it live.
+  tokens by the same slots agentty uses. Picking one previews it live. The
+  recorded demos repaint in it too (lib/recolor.ts): each recorded colour is
+  projected, in OKLab, onto the blend of two Flexoki slots it came from, and
+  that blend is rebuilt from the new scheme's slots, so fades, gradients and
+  dimmed text survive the change.
 - The header reports the page's own weight (`187 KB · 0 cookies`), measured
   by the browser: the site measures itself the way it measures agentty.
 - Printed, a page reads like a man page: `AGENTTY(1)` running header, CAPS

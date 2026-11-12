@@ -4,7 +4,8 @@
 // them: accent is the brand, info is structure (headings, paths), primary is
 // names, secondary is commands, warning is settings, error is values.
 
-export const SLOTS = ["background", "surface", "border", "text", "muted", "accent", "primary", "secondary", "info", "warning", "error", "highlight"] as const;
+export const SLOTS = ["background", "surface", "border", "text", "muted", "accent", "primary", "secondary", "info", "warning", "error", "highlight",
+  "success", "inverse_text", "diff_added", "diff_removed", "diff_changed", "selection", "cursor", "link", "placeholder", "shadow", "overlay"] as const;
 export type Scheme = { name: string } & Record<(typeof SLOTS)[number], string>;
 
 export function parseThemes(json: { slots: string[]; themes: string[][] }): Scheme[] {
@@ -42,6 +43,7 @@ export function schemeCss(s: Scheme): string {
     "--hl-token-string": s.info, "--hl-token-string-expression": s.secondary, "--hl-token-function": s.primary,
     "--hl-token-constant": mix(s.error, s.warning, 60), "--hl-token-parameter": s.text,
     "--hl-token-punctuation": mix(s.text, s.background, 65), "--hl-token-link": s.primary,
+    "--replay-bg": s.background, "--replay-thumb": mix(s.muted ?? s.border, s.background, 45), "--replay-thumb-hover": mix(s.muted ?? s.border, s.background, 75),
   };
   return Object.entries(v).map(([k, x]) => `${k}:${x}`).join(";");
 }
@@ -52,14 +54,33 @@ export function applyScheme(s: Scheme | null, base?: "dark" | "light", persist =
   const theme = s ? (isLight(s) ? "light" : "dark") : base ?? ((d.getAttribute("data-theme") as "dark" | "light") || "dark");
   const css = s ? schemeCss(s) : "";
   d.style.cssText = css;
+  d.classList.toggle("has-scheme", !!s);
   d.setAttribute("data-theme", theme);
+  // the recorded demos repaint in it too (preview included): ReplayTerminal
+  // listens for this and recolours its recording (lib/recolor.ts)
+  window.__agenttyScheme = s;
+  window.dispatchEvent(new CustomEvent("agentty:scheme-change", { detail: s }));
   if (!persist) return;
   try {
     localStorage.setItem("theme", theme);
-    if (s) { localStorage.setItem("scheme", s.name); localStorage.setItem("scheme-css", css); }
-    else { localStorage.removeItem("scheme"); localStorage.removeItem("scheme-css"); }
+    if (s) { localStorage.setItem("scheme", s.name); localStorage.setItem("scheme-css", css); localStorage.setItem("scheme-slots", JSON.stringify(s)); }
+    else { localStorage.removeItem("scheme"); localStorage.removeItem("scheme-css"); localStorage.removeItem("scheme-slots"); }
   } catch {}
   window.dispatchEvent(new CustomEvent("agentty:scheme", { detail: s?.name ?? null }));
+}
+
+declare global { interface Window { __agenttyScheme?: Scheme | null } }
+
+/** The scheme in force: the one being previewed, else the one kept. */
+export function activeScheme(): Scheme | null {
+  if (window.__agenttyScheme !== undefined) return window.__agenttyScheme;
+  try {
+    const j = localStorage.getItem("scheme-slots");
+    const s = j ? (JSON.parse(j) as Scheme) : null;
+    // a scheme kept before the full slot set existed: fall back to the site's palette for the demo
+    window.__agenttyScheme = s && s.success ? s : null;
+  } catch { window.__agenttyScheme = null; }
+  return window.__agenttyScheme;
 }
 
 export const currentScheme = () => {

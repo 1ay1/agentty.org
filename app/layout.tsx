@@ -169,7 +169,7 @@ export default function RootLayout({
             not consulted. A tiny blocking script so there's no FOUC. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t='dark',d=document.documentElement;try{if(localStorage.getItem('theme')==='light')t='light';var s=localStorage.getItem('scheme-css');if(s)d.style.cssText=s;}catch(e){}d.setAttribute('data-theme',t);})();`,
+            __html: `(function(){var t='dark',d=document.documentElement;try{if(localStorage.getItem('theme')==='light')t='light';var s=localStorage.getItem('scheme-css');if(s){d.style.cssText=s;d.classList.add('has-scheme');}}catch(e){}d.setAttribute('data-theme',t);})();`,
           }}
         />
         <script

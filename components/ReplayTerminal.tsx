@@ -3,6 +3,19 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { PREFIX, className, styleRule, type DemoTheme, type Frame, type Screen, type Seg } from "@/lib/replay";
 import { CanvasGrid } from "@/lib/replay-canvas";
+import { makeRecolor } from "@/lib/recolor";
+import { activeScheme, SLOTS } from "@/lib/scheme";
+import base from "@/lib/demo-base-slots.generated.json";
+
+// the recording was made in agentty's Flexoki; with another scheme in force,
+// every recorded colour is rebuilt from that scheme's slots (lib/recolor.ts)
+const baseSlots = base as { slots: string[]; dark: string[]; light: string[] };
+function schemeMap(t: DemoTheme): ((c: string) => string) | null {
+  const s = activeScheme();
+  if (!s) return null;
+  const from = SLOTS.map((k) => "#" + (baseSlots[t][baseSlots.slots.indexOf(k)] ?? "000000"));
+  return makeRecolor(from, SLOTS.map((k) => s[k] ?? s.text));
+}
 
 /**
  * ReplayTerminal — plays a REAL recorded agentty session as plain DOM.
@@ -229,11 +242,8 @@ export function ReplayTerminal({
       classNames = names[t]!;
       due = new Float64Array(data.frames.length);
       for (let n = 1, acc = 0; n < data.frames.length; n++) due[n] = acc += data.frames[n][0];
-      const o = t === "light" ? light : dark;
-      grid.style.color = o.fg ?? "";
-      grid.style.background = o.bg ?? "";
       box.dataset.theme = t;
-      canvas?.use(data, o.fg ?? getComputedStyle(grid).color, o.bg ?? getComputedStyle(grid).backgroundColor);
+      paintColours(true);
     };
 
     // the site theme changed: swap recordings and repaint the same moment
@@ -296,8 +306,7 @@ export function ReplayTerminal({
       // server-rendered spans go (the row divs stay, empty, as scroll content)
       try {
         canvas = new CanvasGrid(grid, cols, rows, (y) => (y - skipped) * rowH());
-        const o = theme === "light" ? light : dark;
-        canvas.use(data!, o.fg ?? getComputedStyle(grid).color, o.bg ?? getComputedStyle(grid).backgroundColor);
+        paintColours(true);
         for (const [y, segs] of data!.frames[0][1]) canvas.set(y, segs);
         cells.forEach((pool) => { pool.forEach((c) => c.el.remove()); pool.clear(); });
         box.dataset.canvas = "";
@@ -327,11 +336,48 @@ export function ReplayTerminal({
     const onVis = () => (document.hidden ? pause() : resume());
     document.addEventListener("visibilitychange", onVis);
 
+    // colours: the recording's own, or rebuilt in the scheme in force. Before
+    // the canvas exists that means the server-rendered opening frame's style
+    // rules (rewritten from their originals each time); after, the canvas.
+    const originals = new Map<CSSStyleRule, [string, string]>();
+    const grids = [...box.querySelectorAll<HTMLElement>(".replay-grid")];
+    const paintColours = (fresh = false) => {
+      const map = schemeMap(theme);
+      const m = map ?? ((c: string) => c);
+      // once the canvas draws, the server-rendered spans are gone: their rules
+      // don't matter, and rewriting ~800 of them was most of a recolour's cost
+      if (!canvas) for (const sheet of [...document.styleSheets, ...document.adoptedStyleSheets]) {
+        let rules: CSSRuleList;
+        try { rules = sheet.cssRules; } catch { continue; }
+        for (const r of rules) {
+          if (!(r instanceof CSSStyleRule) || !r.selectorText.startsWith(".replay-grid .")) continue;
+          if (!originals.has(r)) originals.set(r, [r.style.color, r.style.background]);
+          const [c, b] = originals.get(r)!;
+          if (c) r.style.color = map ? m(c) : c;
+          if (b) r.style.background = map ? m(b) : b;
+        }
+      }
+      for (const g of grids) {
+        const o = g.dataset.for === "light" ? light : dark;
+        g.style.color = o.fg ? m(o.fg) : "";
+        g.style.background = o.bg ? m(o.bg) : "";
+      }
+      if (canvas && data) {
+        const o = theme === "light" ? light : dark;
+        const fg = o.fg ?? "#cecdc3", bg = o.bg ?? "#100f0f";
+        if (fresh) canvas.use(data, fg, bg, map ?? undefined);
+        else canvas.recolor(data, fg, bg, map ?? undefined);
+      }
+    };
+    paintColours();
+    const onScheme = () => paintColours();
+    window.addEventListener("agentty:scheme-change", onScheme);
+
     // the site theme toggle: before the player loads, CSS already shows the
     // matching opening frame; after, swap recordings
     const mo = new MutationObserver(() => {
       const t = siteTheme();
-      if (!data) { grid = box.querySelector<HTMLDivElement>(`.replay-grid[data-for="${t}"]`)!; theme = t; return; }
+      if (!data) { grid = box.querySelector<HTMLDivElement>(`.replay-grid[data-for="${t}"]`)!; theme = t; paintColours(); return; }
       void switchTo(t);
     });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
@@ -342,6 +388,7 @@ export function ReplayTerminal({
       if (sleeper) clearTimeout(sleeper);
       io.disconnect();
       mo.disconnect();
+      window.removeEventListener("agentty:scheme-change", onScheme);
       canvas?.destroy();
       window.removeEventListener("resize", onResize);
       grid.removeEventListener("scroll", onScroll);
