@@ -1,101 +1,101 @@
 {
   "clips": {
     "command-palette": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "model-picker": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "provider-picker": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "todo-plan": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "inspect-outputs": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "smart-mode": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "thread-list": {
-      "version": "0.9.53",
+      "version": "0.9.54",
       "recorded": "2026-11-11"
     },
     "slash-commands": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "file-mention": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "composer-expand": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "multiline": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "queue": {
-      "version": "0.9.53",
+      "version": "0.9.54",
       "recorded": "2026-11-11"
     },
     "diff-review": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "fork": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "rewind": {
-      "version": "0.9.53",
+      "version": "0.9.54",
       "recorded": "2026-11-11"
     },
     "run-code": {
-      "version": "0.9.53",
+      "version": "0.9.54",
       "recorded": "2026-11-11"
     },
     "profiles": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "permission-prompt": {
-      "version": "0.9.53",
+      "version": "0.9.54",
       "recorded": "2026-11-11"
     },
     "new-thread": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "symbol-picker": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "editing": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "history": {
-      "version": "0.9.53",
+      "version": "0.9.54",
       "recorded": "2026-11-11"
     },
     "model-swap": {
-      "version": "0.9.53",
-      "recorded": "2026-11-11"
+      "version": "0.9.54",
+      "recorded": "2026-11-12"
     },
     "thread-cycle": {
-      "version": "0.9.53",
+      "version": "0.9.54",
       "recorded": "2026-11-11"
     }
   },
-  "agentty": "0.9.53"
+  "agentty": "0.9.54"
 }
