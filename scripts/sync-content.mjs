@@ -13,7 +13,7 @@
 //
 // Source resolution, in order (same contract as sync-docs.mjs):
 //   1. AGENTTY_CONTENT_DIR env var (absolute path to docs/website/content)
-//   2. sibling local checkout: ../agentty/docs/website/content
+//   2. (no implicit local checkout: see localBase)
 //   3. GitHub (raw.githubusercontent.com + contents API) at AGENTTY_DOCS_REF
 //
 // NEVER hard-fails the deploy: on any error per section it leaves the committed

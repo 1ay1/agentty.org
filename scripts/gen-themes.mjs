@@ -8,25 +8,22 @@
 //
 //   node scripts/gen-themes.mjs [path/to/schemes.hpp]
 //
-// Without a path it tries the agentty checkout next to this repo, then
-// GitHub (agentty-org/maya@master).
+// Without a path it reads GitHub (agentty-org/maya@master), so a scheme added
+// to maya reaches the site on the next deploy. A local file is used only when
+// named (argument or MAYA_SCHEMES): a sibling checkout may be months behind.
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const LOCAL = [
-  process.argv[2],
-  join(ROOT, "../agentty/build/_deps/maya-src/include/maya/style/schemes.hpp"),
-  join(ROOT, "../maya/include/maya/style/schemes.hpp"),
-].filter(Boolean);
+const LOCAL = process.argv[2] || process.env.MAYA_SCHEMES || "";
 const REMOTE = "https://raw.githubusercontent.com/agentty-org/maya/master/include/maya/style/schemes.hpp";
 
 let src = "";
-for (const p of LOCAL) if (existsSync(p)) { src = readFileSync(p, "utf8"); console.log(`themes: ${p}`); break; }
-if (!src) {
-  const r = await fetch(REMOTE);
+if (LOCAL && existsSync(LOCAL)) { src = readFileSync(LOCAL, "utf8"); console.log(`themes: ${LOCAL}`); }
+else {
+  const r = await fetch(REMOTE, { headers: { "User-Agent": "agentty-site-sync" } });
   if (!r.ok) throw new Error(`themes: ${REMOTE} → ${r.status}`);
   src = await r.text();
   console.log(`themes: ${REMOTE}`);

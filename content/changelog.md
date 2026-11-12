@@ -4,6 +4,69 @@ All notable changes to agentty. Versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.54] - 2026-11-12
+
+### Changed
+- **The review pane (^R) shows what changed in a line.** On an edited line only
+  the changed words get the strong band (bold underline below 256 colours), so
+  `= 30` to `= config().timeout` reads at a glance. Each change names its
+  function when that line isn't already in view, new and deleted files say so,
+  the code window fills the terminal instead of 24 rows, and file tabs are
+  pills with green/red `+N −N`.
+- **The ^U reader makes it obvious when the model is thinking and when it's
+  done.** "Thinking ⠋" with `● LIVE` and a timer that ticks every second, then
+  "✓ Done thinking" in green for a moment, then "✓ Reasoned" with the final time.
+- **The startup line says how to turn the sandbox off**:
+  `agentty: sandbox: active (claybin) · turn it off entirely with --sandbox off`.
+- **The README is half the length**, and its key table is current.
+
+### Fixed
+- The keymap doc listed `Ctrl+L` as redraw; it's Stats, and redraw is `Ctrl+Y`.
+
+## [0.9.53] - 2026-11-11
+
+### Added
+- **Credit the model in commits** (#59). Settings › General, off by
+  default. On, commits the agent makes end with
+  `Co-authored-by: agentty (<model>) <noreply@agentty.org>` (aider's
+  shape), naming the model that wrote that turn. Works in `agentty run`
+  and subagents too.
+- **The ^U reader shows what's known about the thinking** on its header
+  row: model, effort, full text or summary, time and tokens (the billed
+  count when the provider reports one). Turns now record their effort.
+
+### Fixed
+- **The ^U reader follows streaming thinking** while you're scrolled to
+  the bottom.
+
+## [0.9.52] - 2026-11-11
+
+### Added
+- **^U reads thinking in full** (#123). On an empty composer it opens the
+  newest thinking block over the screen; ←/→ go to older ones, Esc lists
+  them all, ^U closes. Collapsed blocks say `⋯ N lines above · ^U to read`,
+  and the palette has "Read thinking". A live retrieved-context card still
+  takes ^U first.
+
+### Changed
+- **The ^O and ^U viewers don't move under you.** On the newest entry while
+  it runs, scrolled to the bottom, you follow new tools or thinking blocks.
+  Anywhere else you stay put and new ones show as `↑ N new`; `t` goes to
+  the newest.
+- **Text arriving in those viewers types in** with the transcript's
+  typewriter and pacing. The Motion setting turns it off the same way.
+
+### Fixed
+- **Collapsed thinking counts its hidden lines right.** Long blocks said
+  "24 lines above" whatever their length.
+- **`-m` picks the model the TUI opens on.** It was saved but the
+  provider's saved model won at startup.
+- **Reasoning settings take effect** on the turn being written, the
+  "Reasoned · Ns" timer starts when thinking starts and stops on errors,
+  Hidden no longer fetches a summary it throws away, and Haiku/Sonnet 4.5
+  can think again.
+- **Alt+←/→ in threads includes threads made this session.**
+
 ## [0.9.51] - 2026-11-08
 
 ### Fixed

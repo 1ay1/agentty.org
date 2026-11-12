@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 // sync-changelog.mjs — pull CHANGELOG.md from the agentty repo into
 // content/changelog.md so the /changelog page always reflects the real release
-// history with zero human intervention. Same 3-tier source + never-fails
-// contract as sync-docs.mjs / sync-content.mjs.
+// history with zero human intervention. Never fails the deploy.
+//
+// Source: GitHub (agentty-org/agentty at $AGENTTY_DOCS_REF, default master).
+// A local checkout is used ONLY when AGENTTY_DIR names one. It used to fall
+// back to ../agentty implicitly, and that checkout is a working copy nobody
+// pulls: the page sat at v0.9.51 while three releases shipped, with every
+// deploy reporting OK (the same failure sync-docs.mjs already had removed).
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -19,8 +24,6 @@ const RAW = `https://raw.githubusercontent.com/${REPO}/${REF}/CHANGELOG.md`;
 function localSource() {
   if (process.env.AGENTTY_DIR && existsSync(join(process.env.AGENTTY_DIR, "CHANGELOG.md")))
     return join(process.env.AGENTTY_DIR, "CHANGELOG.md");
-  const sibling = join(ROOT, "..", "agentty", "CHANGELOG.md");
-  if (existsSync(sibling)) return sibling;
   return null;
 }
 

@@ -5,7 +5,7 @@
 //
 // Source resolution, in order:
 //   1. AGENTTY_DOCS_DIR env var (an absolute path to a docs/website dir)
-//   2. a sibling local checkout: ../agentty/docs/website
+//   2. (no implicit local checkout: see the note in main())
 //   3. GitHub (raw.githubusercontent.com) at AGENTTY_DOCS_REF (default: master)
 //
 // Never hard-fails the deploy: on any error it leaves the committed content/docs
