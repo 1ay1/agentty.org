@@ -1,5 +1,6 @@
 import Link from "next/link";
 import bench from "@/lib/bench.generated.json";
+import { getComparePages } from "@/lib/seo-pages";
 
 // Real measurements of terminal agent harnesses (scripts/bench-agents.mjs),
 // drawn as plain text bars. Server component: zero JS.
@@ -14,7 +15,15 @@ export const METRICS: Metric[] = [
   { key: "startup", label: "--version startup", unit: "ms", value: (t) => t.startupMs.median, fmt: (v) => (v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${v < 10 ? v.toFixed(1) : Math.round(v)} ms`) },
 ];
 
-export function BenchBars({ metrics = ["ready"], only }: { metrics?: string[]; only?: string[] }) {
+// each tool's head-to-head page, where one exists (content/compare/agentty-vs-<x>.md)
+const SLUG: Record<string, string> = { claude: "claude-code", codex: "codex-cli", gemini: "gemini-cli" };
+function compareHref(id: string): string | null {
+  const slug = `agentty-vs-${SLUG[id] ?? id}`;
+  return getComparePages().some((p) => p.slug === slug) ? `/compare/${slug}/` : null;
+}
+
+/** `compare`: tool names link to their agentty-vs-X page (the home page's bars) */
+export function BenchBars({ metrics = ["ready"], only, compare = false }: { metrics?: string[]; only?: string[]; compare?: boolean }) {
   const tools = only ? bench.tools.filter((t) => t.id === "agentty" || only.includes(t.id)) : bench.tools;
   return (
     <div className="bench">
@@ -30,7 +39,12 @@ export function BenchBars({ metrics = ["ready"], only }: { metrics?: string[]; o
                 const v = m.value(t), ratio = v / us;
                 return (
                   <li key={t.id} className={t.id === "agentty" ? "is-us" : undefined}>
-                    <span className="bench-name">{t.name}</span>
+                    {(() => {
+                      const href = compare && t.id !== "agentty" ? compareHref(t.id) : null;
+                      return href
+                        ? <Link className="bench-name" href={href} title={`agentty vs ${t.name}`}>{t.name}</Link>
+                        : <span className="bench-name">{t.name}</span>;
+                    })()}
                     <span className="bench-track">
                       <span className="bench-bar" style={{ width: `calc((100% - 15ch) * ${Math.max(0.006, v / max).toFixed(4)})` }} />
                       <span className="bench-val">
@@ -48,6 +62,7 @@ export function BenchBars({ metrics = ["ready"], only }: { metrics?: string[]; o
       <p className="bench-note">
         median of 10 launches · same machine · fresh install, no login ·{" "}
         <Link href="/benchmarks/">method &amp; all numbers</Link>
+        {compare && <> · <Link href="/compare/">compare side by side</Link></>}
       </p>
     </div>
   );

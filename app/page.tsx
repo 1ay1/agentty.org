@@ -36,7 +36,7 @@ export default function Home() {
       </section>
 
       <section className="home-bench" aria-label="Benchmarks">
-        <BenchBars metrics={["ready", "rss"]} />
+        <BenchBars metrics={["ready", "rss"]} compare />
       </section>
 
       <section className="home-info">
@@ -53,6 +53,7 @@ export default function Home() {
         <Link href="/docs/">docs</Link>
         <Link href="/docs/quick-start/">quick start</Link>
         <Link href="/docs/providers/">providers</Link>
+        <Link href="/compare/">compare</Link>
         <a href={repo.url} target="_blank" rel="noreferrer">github <span>{starLabel}</span></a>
         <a href={site.discord} target="_blank" rel="noopener noreferrer">discord</a>
         <Link href="/blog/">blog</Link>
