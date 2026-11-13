@@ -165,6 +165,31 @@
     "MB": null,
     "note": "uv-managed CPython 3.12 (what aider's official installer uses)"
    }
+  },
+  {
+   "id": "pi",
+   "name": "Pi",
+   "version": "1.5.2",
+   "startupMs": {
+    "median": 587.3,
+    "p10": 414.9,
+    "p90": 669.9,
+    "runs": 30
+   },
+   "readyMs": {
+    "median": 592,
+    "p10": 571.3,
+    "p90": 1046.8,
+    "runs": 10
+   },
+   "idleRssMB": 129.6,
+   "diskMB": 218,
+   "packageMB": 119.2,
+   "runtime": {
+    "name": "node",
+    "MB": 98.8
+   },
+   "measured": "2026-11-13T20:57:36.896Z"
   }
  ]
 }

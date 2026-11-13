@@ -50,6 +50,9 @@ export default function Benchmarks() {
         <p className="post-meta">
           <time dateTime={bench.measured}>measured {date}</time>
           <span>{bench.tools.length} tools</span>
+          {bench.tools.filter((t) => "measured" in t && t.measured).map((t) => (
+            <span key={t.id}>{t.name} measured {String((t as { measured?: string }).measured).slice(0, 10)}, same machine and method</span>
+          ))}
         </p>
         <p className="lead">
           What each <Link href="/agent-harness/">agent harness</Link> costs you before the model does any work:
@@ -70,7 +73,8 @@ export default function Benchmarks() {
             <tbody>
               {bench.tools.map((t) => (
                 <tr key={t.id}>
-                  <td>{t.name}<span className="bench-range ver-under">{ver(t.version)}</span></td>
+                  <td>{t.name}<span className="bench-range ver-under">{ver(t.version)}</span>
+                    {"measured" in t && t.measured ? <span className="bench-range"> measured {String(t.measured).slice(0, 10)}</span> : null}</td>
                   <td className="ver">{ver(t.version)}</td>
                   <td className="num" data-label="ready to type">{ms(t.readyMs.median)} <span className="bench-range">{range(t.readyMs.p10, t.readyMs.p90)}</span></td>
                   <td className="num" data-label="idle memory">{t.idleRssMB} MB</td>

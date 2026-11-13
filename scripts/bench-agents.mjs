@@ -33,19 +33,31 @@ const READY = {
   agentty: /1–6 choose/, claude: /Choose the text style/, codex: /Press enter to continue/,
   gemini: /3\. Don't trust/, opencode: /ctrl\+p commands/, aider: /\(Y\)es\/\(N\)o/,
   jcode: /Esc to skip onboarding|Log in to get started/,
+  pi: /\d+\.\d%\/\d+ \(auto\)/,
+  "pi-bin": /\d+\.\d%\/\d+ \(auto\)/,                           // its footer, drawn with the input box
 };
 
 const TOOLS = [
   { id: "agentty", name: "agentty", bin: `${B}/agentty/agentty`, dir: `${B}/agentty`, runtime: null },
   { id: "claude", name: "Claude Code", bin: `${B}/claude/node_modules/.bin/claude`, dir: `${B}/claude/node_modules`, runtime: null },
-  { id: "codex", name: "Codex CLI", bin: `${B}/codex/node_modules/.bin/codex`, dir: `${B}/codex/node_modules`, runtime: "node" },
+  // codex 0.169+ starts an app-server daemon in ~/.codex and leaves it running: counted, like jcode's
+  { id: "codex", name: "Codex CLI", bin: `${B}/codex/node_modules/.bin/codex`, dir: `${B}/codex/node_modules`, runtime: "node", daemon: /\.codex\/packages\/app-server-daemon\//, homeDisk: ".codex/packages" },
   { id: "gemini", name: "Gemini CLI", bin: `${B}/gemini/node_modules/.bin/gemini`, dir: `${B}/gemini/node_modules`, runtime: "node" },
   { id: "opencode", name: "opencode", bin: `${B}/opencode/node_modules/.bin/opencode`, dir: `${B}/opencode/node_modules`, runtime: null },
   // jcode runs its UI as a client of a background server it starts on first
   // launch and leaves running; that server is part of its footprint
   { id: "jcode", name: "jcode", bin: `${B}/jcode/home/.local/bin/jcode`, dir: `${B}/jcode/home/.jcode/builds`, runtime: null, daemon: /bench-agents\/jcode\// },
   { id: "aider", name: "Aider", bin: `${B}/aider/bin/aider`, dir: [`${B}/aider/tool`, `${B}/aider/python`], runtime: null },
+  // Pi (pi.dev): an npm package that needs Node.js 22.19+. On first launch it
+  // downloads ripgrep and fd into ~/.pi/agent/bin; those count toward its disk
+  { id: "pi", name: "Pi", bin: `${B}/pi/node_modules/.bin/pi`, dir: `${B}/pi/node_modules`, runtime: "node", homeDisk: ".pi/agent/bin" },
+  // …and its standalone binary (GitHub releases), which bundles its runtime
+  { id: "pi-bin", name: "Pi (binary)", bin: `${B}/pi-bin/pi/pi`, dir: `${B}/pi-bin`, runtime: null, homeDisk: ".pi/agent/bin", extra: true },
 ];
+// BENCH_ONLY=agentty,pi measures just those (written to stdout, not the file)
+const ONLY = process.env.BENCH_ONLY?.split(",");
+if (ONLY) TOOLS.splice(0, TOOLS.length, ...TOOLS.filter((t) => ONLY.includes(t.id)));
+else TOOLS.splice(0, TOOLS.length, ...TOOLS.filter((t) => !t.extra));   // extras (Pi's binary) only on request
 
 // ── helpers ────────────────────────────────────────────────────────────────
 const du = (p) => (fs.existsSync(p) ? Number(execFileSync("du", ["-sbL", p], { encoding: "utf8" }).split("\t")[0]) : 0);
@@ -156,12 +168,14 @@ const lt = TOOLS.map(() => []), lm = TOOLS.map(() => []);
 const lhomes = TOOLS.map(() => { const h = freshHome(); fs.mkdirSync(`${h}/project`); return h; });
 for (let round = 0; round < 11; round++)
   for (const [k, t] of TOOLS.entries()) { const r = await oneLaunch(t, lhomes[k]); if (round >= 1) { lt[k].push(r.settled); lm[k].push(r.mem); } }
+// what a tool downloaded into its home on first run (Pi's rg + fd), before the homes go
+const homeBytes = TOOLS.map((t, k) => (t.homeDisk ? du(path.join(lhomes[k], t.homeDisk)) : 0));
 lhomes.forEach((h) => fs.rmSync(h, { recursive: true, force: true }));
 console.log("launch done");
 for (const [k, tool] of TOOLS.entries()) {
   const s = stats(vt[k]), ready = stats(lt[k]);
   const rssMB = +(lm[k].sort((a, b) => a - b)[lm[k].length >> 1] / 1048576).toFixed(1);
-  const pkg = [].concat(tool.dir).reduce((a, d) => a + du(d), 0);
+  const pkg = [].concat(tool.dir).reduce((a, d) => a + du(d), 0) + homeBytes[k];
   const runtime = tool.runtime === "node" ? nodeBytes : 0;
   const diskMB = +((pkg + runtime) / 1048576).toFixed(1);
   console.log(`${tool.name.padEnd(12)} ${versions[k].slice(0, 26).padEnd(26)} startup ${String(s.median).padStart(7)}ms  ready ${String(ready.median).padStart(7)}ms  rss ${String(rssMB).padStart(6)}MB  disk ${diskMB}MB`);
@@ -173,5 +187,5 @@ for (const [k, tool] of TOOLS.entries()) {
   });
 }
 for (const t of TOOLS) if (t.daemon) for (const d of fs.readdirSync("/proc")) { try { if (t.daemon.test(fs.readlinkSync(`/proc/${d}/exe`))) process.kill(Number(d)); } catch {} }
-fs.writeFileSync(path.join(ROOT, "lib/bench.generated.json"), JSON.stringify(out, null, 1) + "\n");
-console.log("→ lib/bench.generated.json");
+if (ONLY) console.log(JSON.stringify(out));
+else { fs.writeFileSync(path.join(ROOT, "lib/bench.generated.json"), JSON.stringify(out, null, 1) + "\n"); console.log("→ lib/bench.generated.json"); }

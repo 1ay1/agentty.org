@@ -289,7 +289,7 @@ function benchmarksPage(): string {
   const date = bench.measured.slice(0, 10);
   const out: Line[] = [
     ...title("Agent harness benchmarks",
-      "Measured, not claimed: launch time, idle memory, disk and startup of seven terminal agents on one machine.", `measured ${date}`),
+      `Measured, not claimed: launch time, idle memory, disk and startup of ${bench.tools.length} terminal agents on one machine.`, `measured ${date}`),
     ...benchLines(["ready", "rss", "disk", "startup"]),
     L(), L(),
     L(bold("All numbers"), dim("##")), L(),
