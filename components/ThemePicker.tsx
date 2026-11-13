@@ -76,7 +76,9 @@ function startIndex(rows: Row[]): number {
 export function ThemePicker({ onClose }: { onClose: () => void }) {
   const [all, setAll] = useState<Row[]>(() => loaded ?? []);
   const [q, setQ] = useState("");
-  const [sel, setSel] = useState(() => startIndex([...BASE, ...(loaded ?? [])]));
+  const [sel, setSelRaw] = useState(() => startIndex([...BASE, ...(loaded ?? [])]));
+  const [nudge, setNudge] = useState(0);        // re-preview the same index (a tap on the selected row)
+  const setSel: typeof setSelRaw = (v) => { setSelRaw(v); setNudge((n) => n + 1); };
   // the page previews a row only after the arrow keys (or a tap) moved to it:
   // not on opening, not while typing a filter
   const navigated = useRef(false);
@@ -124,6 +126,22 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
     setSel(0);
   }, [q]);
 
+  // phones: follow the visual viewport, so the keyboard (opened by tapping
+  // the filter) lifts the sheet instead of covering it
+  const overlay = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const vv = window.visualViewport, el = overlay.current;
+    if (!vv || !el) return;
+    const fit = () => {
+      el.style.setProperty("--vv-h", `${vv.height}px`);
+      el.style.setProperty("--vv-top", `${vv.offsetTop}px`);
+    };
+    fit();
+    vv.addEventListener("resize", fit);
+    vv.addEventListener("scroll", fit);
+    return () => { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); };
+  }, []);
+
   // the visible window of rows
   useLayoutEffect(() => {
     const el = list.current;
@@ -150,7 +168,7 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
     const r = rows[sel];
     if (!r || !navigated.current) return;
     previewRaf.current = requestAnimationFrame(() => applyScheme(r.scheme, r.base, false));
-  }, [sel, rows]);
+  }, [sel, rows, nudge]);
 
   const keep = (r: Row | undefined) => {
     if (!r) return;
@@ -163,7 +181,11 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
   const rowsRef = useRef(rows); rowsRef.current = rows;
   const selRef = useRef(sel); selRef.current = sel;
   const onPick = useMemo(() => (i: number, touch: boolean) => {
-    if (touch && i !== selRef.current) { navigated.current = true; setSel(i); } else keep(rowsRef.current[i]);
+    // touch: the first tap on a row previews it, a tap on the row being
+    // previewed keeps it (a filtered list's first row is selected but not yet
+    // previewed, so it needs the preview tap too)
+    if (touch && !(navigated.current && i === selRef.current)) { navigated.current = true; setSel(i); }
+    else keep(rowsRef.current[i]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -173,7 +195,7 @@ export function ThemePicker({ onClose }: { onClose: () => void }) {
   const move = (d: number) => { navigated.current = true; setSel((s) => Math.min(rows.length - 1, Math.max(0, s + d))); };
 
   return (
-    <div className="cmdk-overlay theme-overlay" onClick={onClose}>
+    <div ref={overlay} className="cmdk-overlay theme-overlay" onClick={onClose}>
       <div className="cmdk theme-picker" role="dialog" aria-modal="true" aria-label="Theme" onClick={(e) => e.stopPropagation()}>
         <div className="cmdk-inputrow">
           <span className="cmdk-prompt" aria-hidden="true">theme</span>
