@@ -257,7 +257,10 @@ h4 > .anchor::before { content: "####"; }
 :where(.doc-body p, .doc-body li, .note) > code { overflow-wrap: anywhere; }
 :where(.doc-body, .note, .lead) code.nw { white-space: nowrap; overflow-wrap: normal; }
 .doc-body kbd { white-space: nowrap; }
-td code, td kbd { white-space: nowrap; overflow-wrap: normal; }
+/* in a table, a key or a short name stays on one line; a long value (a list
+   of env vars, a path) wraps instead of stretching its column off the page */
+td kbd, td code.nw { white-space: nowrap; overflow-wrap: normal; }
+td code:not(.nw) { white-space: normal; overflow-wrap: anywhere; }
 /* chips never break, so a column is never squeezed below its widest chip;
    cells still wrap between chips and words */
 td { overflow-wrap: break-word; }
@@ -307,7 +310,10 @@ pre.code .line.cmd::before { content: "$ "; margin-left: calc(var(--hang) * -1);
 /* tables */
 .tablewrap { overflow-x: auto; margin: 0 0 var(--line); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 @media (min-width: 721px) {
+  /* visible so the header can stick to the nav while the table scrolls by;
+     nothing in a cell can widen the table past the column (see td code) */
   .doc-body .tablewrap { overflow-x: visible; }
+  .doc-body table { table-layout: auto; max-width: 100%; }
   .doc-body thead th { position: sticky; top: var(--nav-h); z-index: 1; background: var(--bg); box-shadow: inset 0 -1px 0 var(--border); }
 }
 table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
