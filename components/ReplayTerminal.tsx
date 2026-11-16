@@ -102,13 +102,14 @@ export function ReplayTerminal({
     // moment you reach for the text (pointer down, select-all, copy), and
     // when the session ends. Playback itself never touches the DOM.
     const textDirty = new Set<number>();
+    let holding = false;                     // a selection is in the demo: leave its text alone
     const rowText = (segs: Seg[]) => {
       let out = "", col = 0;
       for (const [c, , t] of segs) { if (c > col) out += " ".repeat(c - col); out += t; col = c + [...t].length; }
       return out.trimEnd();
     };
     const flushText = () => {
-      if (!canvas || !textDirty.size) return;
+      if (!canvas || !textDirty.size || holding) return;
       textDirty.forEach((y) => { const el = rowEls[y]; if (el) el.textContent = rowText(canvas!.line(y) ?? []); });
       textDirty.clear();
     };
@@ -200,20 +201,23 @@ export function ReplayTerminal({
       resume();
     };
     replayBtn?.addEventListener("click", replay);
-    const onGrab = () => flushText();
-    const onKeys = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && /^[ac]$/i.test(e.key)) flushText(); };
-    // a selection in the demo holds the playback still (the text under it
-    // would otherwise keep changing); clearing it carries on
-    let holding = false;
+    // a new drag replaces any selection: bring the text up to date first
+    const onGrab = () => { holding = false; flushText(); };
+    // select-all wants the current text; copy must NOT rewrite (it would drop the selection)
+    const onKeys = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && /^a$/i.test(e.key)) { holding = false; flushText(); } };
+    // playback carries on under a selection, like a terminal. The selected
+    // rows' text is left as it was while the selection lives (rewriting a row
+    // would drop the selection), so a copy gives exactly what you selected;
+    // when it clears, the text layer catches up
     const onSelection = () => {
       const sel = document.getSelection();
       const inside = !!sel && !sel.isCollapsed && !!sel.anchorNode && grid.contains(sel.anchorNode);
-      if (inside && !holding) { holding = true; pause(); }
-      else if (!inside && holding) { holding = false; resume(); }
+      if (inside === holding) return;
+      holding = inside;
+      if (!inside && ended) flushText();
     };
     grid.addEventListener("pointerdown", onGrab, { capture: true, passive: true });
     document.addEventListener("keydown", onKeys, true);
-    document.addEventListener("copy", onGrab, true);
     document.addEventListener("selectionchange", onSelection);
 
     // ── clock ──────────────────────────────────────────────────────────────
@@ -239,7 +243,7 @@ export function ReplayTerminal({
       if (started && !pausedAt) pausedAt = performance.now();
     };
     const resume = () => {
-      if (!started || raf || ended || !onScreen || document.hidden || holding) return;
+      if (!started || raf || ended || !onScreen || document.hidden) return;
       if (pausedAt) {                      // shift the clock: continue, don't jump
         const gap = performance.now() - pausedAt;
         t0 += gap;
@@ -427,7 +431,6 @@ export function ReplayTerminal({
       canvas?.destroy();
       grid.removeEventListener("pointerdown", onGrab, { capture: true } as EventListenerOptions);
       document.removeEventListener("keydown", onKeys, true);
-      document.removeEventListener("copy", onGrab, true);
       document.removeEventListener("selectionchange", onSelection);
       window.removeEventListener("resize", onResize);
       grid.removeEventListener("scroll", onScroll);
