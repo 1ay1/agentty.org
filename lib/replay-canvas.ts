@@ -87,6 +87,8 @@ export class CanvasGrid {
   setRows(rows: number) { this.rows = rows; this.lines.length = Math.min(this.lines.length, rows); this.measure(); this.full = true; this.request(); }
 
   set(y: number, segs: Seg[]) { this.lines[y] = segs; this.dirty.add(y); this.request(); }
+  /** a row's segments as last set (the text layer reads them) */
+  line(y: number): Seg[] | undefined { return this.lines[y]; }
   reset() { this.lines = []; this.full = true; }
   invalidate() { this.full = true; this.request(); }
   request() { if (!this.queued) this.queued = requestAnimationFrame(() => { this.queued = 0; this.paint(); }); }

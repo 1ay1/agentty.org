@@ -95,8 +95,25 @@ export function ReplayTerminal({
 
     // ── write one row: reconcile segments into its pooled spans ────────────
     let canvas: CanvasGrid | null = null;   // once loaded: one canvas draws the visible rows
+    // ── the text layer: selectable, transparent text over the canvas ──────
+    // The canvas draws; the row divs above it carry the same characters in
+    // transparent ink, so dragging selects and ⌘C copies real text. Kept
+    // lazily: a changed row is only marked, and the marks are written the
+    // moment you reach for the text (pointer down, select-all, copy), and
+    // when the session ends. Playback itself never touches the DOM.
+    const textDirty = new Set<number>();
+    const rowText = (segs: Seg[]) => {
+      let out = "", col = 0;
+      for (const [c, , t] of segs) { if (c > col) out += " ".repeat(c - col); out += t; col = c + [...t].length; }
+      return out.trimEnd();
+    };
+    const flushText = () => {
+      if (!canvas || !textDirty.size) return;
+      textDirty.forEach((y) => { const el = rowEls[y]; if (el) el.textContent = rowText(canvas!.line(y) ?? []); });
+      textDirty.clear();
+    };
     const paint = (y: number, segs: Seg[]) => {
-      if (canvas) { canvas.set(y, segs); return; }
+      if (canvas) { canvas.set(y, segs); textDirty.add(y); return; }
       const row = rowEls[y], pool = cells[y], g = ++gen;
       for (let k = 0; k < segs.length; k++) {
         const [col, w, txt, ci] = segs[k];
@@ -168,12 +185,13 @@ export function ReplayTerminal({
       stale.forEach((segs, y) => { if (y >= top && y < bottom) { paint(y, segs); stale.delete(y); } });
     };
     const replayBtn = box.querySelector<HTMLButtonElement>(".replay-again");
-    const finish = () => { ended = true; if (replayBtn) replayBtn.hidden = false; };
+    const finish = () => { ended = true; flushText(); if (replayBtn) replayBtn.hidden = false; };
     const replay = () => {
       if (!data) return;
       for (let y = rowEls.length - 1; y >= rows; y--) rowEls[y].remove();
       rowEls.length = rows; cells.length = rows;
-      for (let y = 0; y < rows; y++) { cells[y].forEach((c) => c.el.remove()); cells[y].clear(); }
+      for (let y = 0; y < rows; y++) { cells[y].forEach((c) => c.el.remove()); cells[y].clear(); if (canvas) rowEls[y].textContent = ""; }
+      textDirty.clear();
       pending = new Array(data.lines ?? rows).fill(null); pendingRows = [];
       queue(data.frames[0]); flush();
       grid.scrollTop = 0; follow = true;
@@ -182,6 +200,21 @@ export function ReplayTerminal({
       resume();
     };
     replayBtn?.addEventListener("click", replay);
+    const onGrab = () => flushText();
+    const onKeys = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && /^[ac]$/i.test(e.key)) flushText(); };
+    // a selection in the demo holds the playback still (the text under it
+    // would otherwise keep changing); clearing it carries on
+    let holding = false;
+    const onSelection = () => {
+      const sel = document.getSelection();
+      const inside = !!sel && !sel.isCollapsed && !!sel.anchorNode && grid.contains(sel.anchorNode);
+      if (inside && !holding) { holding = true; pause(); }
+      else if (!inside && holding) { holding = false; resume(); }
+    };
+    grid.addEventListener("pointerdown", onGrab, { capture: true, passive: true });
+    document.addEventListener("keydown", onKeys, true);
+    document.addEventListener("copy", onGrab, true);
+    document.addEventListener("selectionchange", onSelection);
 
     // ── clock ──────────────────────────────────────────────────────────────
     const loop = (now: number) => {
@@ -206,7 +239,7 @@ export function ReplayTerminal({
       if (started && !pausedAt) pausedAt = performance.now();
     };
     const resume = () => {
-      if (!started || raf || ended || !onScreen || document.hidden) return;
+      if (!started || raf || ended || !onScreen || document.hidden || holding) return;
       if (pausedAt) {                      // shift the clock: continue, don't jump
         const gap = performance.now() - pausedAt;
         t0 += gap;
@@ -258,7 +291,8 @@ export function ReplayTerminal({
       use(t);
       for (let y = rowEls.length - 1; y >= rows; y--) rowEls[y].remove();
       rowEls.length = rows; cells.length = rows;
-      for (let y = 0; y < rows; y++) { cells[y].forEach((c) => c.el.remove()); cells[y].clear(); }
+      for (let y = 0; y < rows; y++) { cells[y].forEach((c) => c.el.remove()); cells[y].clear(); if (canvas) rowEls[y].textContent = ""; }
+      textDirty.clear();
       pending = new Array(data!.lines ?? rows).fill(null); pendingRows = [];
       let n = 0;
       while (n < data!.frames.length && (n === 0 || due[n] <= at)) n++;
@@ -310,6 +344,7 @@ export function ReplayTerminal({
         for (const [y, segs] of data!.frames[0][1]) canvas.set(y, segs);
         cells.forEach((pool) => { pool.forEach((c) => c.el.remove()); pool.clear(); });
         box.dataset.canvas = "";
+        for (const [y] of data!.frames[0][1]) textDirty.add(y);
       } catch { canvas = null; }
 
       if (reduce) {                        // the finished session, painted once
@@ -390,6 +425,10 @@ export function ReplayTerminal({
       mo.disconnect();
       window.removeEventListener("agentty:scheme-change", onScheme);
       canvas?.destroy();
+      grid.removeEventListener("pointerdown", onGrab, { capture: true } as EventListenerOptions);
+      document.removeEventListener("keydown", onKeys, true);
+      document.removeEventListener("copy", onGrab, true);
+      document.removeEventListener("selectionchange", onSelection);
       window.removeEventListener("resize", onResize);
       grid.removeEventListener("scroll", onScroll);
       replayBtn?.removeEventListener("click", replay);

@@ -794,6 +794,10 @@ html[data-theme="light"] .replay-grid[data-for="light"]:not([data-live]) { displ
 .replay-grid > div { position: relative; height: var(--rh); contain: strict; }
 .replay-grid > div:first-of-type { margin-top: calc(var(--skip, 0) * var(--rh) * -1 - var(--canvas-h, 0px)); }
 .replay-canvas { position: sticky; top: 0; z-index: 1; display: block; pointer-events: none; }
+/* the text layer: real characters in transparent ink above the canvas, so
+   the demo selects and copies like a terminal (ReplayTerminal keeps it) */
+.replay[data-canvas] .replay-grid > div { z-index: 2; color: transparent; cursor: text; }
+.replay[data-canvas] .replay-grid > div::selection { background: color-mix(in srgb, var(--accent) 38%, transparent); color: transparent; }
 .replay-grid span { position: absolute; top: 0; height: 100%; overflow: visible; }
 @media (max-width: 720px) { .replay-screen { padding: 8px 2px 8px 8px; } .replay-grid { --sb: 8px; } }
 
