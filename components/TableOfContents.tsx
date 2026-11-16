@@ -36,11 +36,12 @@ export function TableOfContents() {
     // that right after a click-scroll the clicked heading reliably registers
     // as "above the line" — a tight threshold loses the race to sub-pixel
     // rounding and the previous heading wins ("selects one above" symptom).
-    const navH =
-      parseInt(
-        getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
-      ) || 64;
-    const readLine = navH + 56;
+    // The reading line sits below where a jump lands a heading (the page's
+    // scroll-padding-top), with room for rounding: a clicked heading is
+    // always "above the line", so it is the one that lights up.
+    const cs = getComputedStyle(document.documentElement);
+    const landing = parseFloat(cs.scrollPaddingTop) || (parseInt(cs.getPropertyValue("--nav-h")) || 52) + 24;
+    const readLine = landing + 32;
 
     const setActiveId = (id: string) => {
       if (activeRef.current !== id) {

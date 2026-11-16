@@ -32,9 +32,12 @@ const nav = () => parseFloat(getComputedStyle(document.documentElement).getPrope
 function jumpSection(dir: 1 | -1) {
   const hs = sections();
   if (!hs.length) return;
-  const y = nav() + 8;
+  // where a jump lands a heading: the page's scroll-padding-top (one offset
+  // for every anchor jump); measured from there, the heading just jumped to
+  // sits at 0, so the next press moves on instead of repeating it
+  const y = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || nav() + 24;
   const tops = hs.map((h) => h.getBoundingClientRect().top - y);
-  const i = dir > 0 ? tops.findIndex((t) => t > 2) : tops.map((t, j) => [t, j]).filter(([t]) => t < -2).pop()?.[1] ?? -1;
+  const i = dir > 0 ? tops.findIndex((t) => t > 4) : tops.map((t, j) => [t, j]).filter(([t]) => t < -4).pop()?.[1] ?? -1;
   if (i < 0) { if (dir < 0) window.scrollTo(0, 0); return; }
   hs[i].scrollIntoView({ block: "start" });
   history.replaceState(null, "", `#${hs[i].id}`);

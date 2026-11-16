@@ -72,7 +72,10 @@ html[data-theme="light"] {
 *, *::before, *::after { box-sizing: border-box; }
 /* wide screens get a margin wide enough to hang `##`, `$` and `note` into */
 @media (min-width: 721px) { :root, html[data-theme] { --gutter: 40px; } }
-html { scroll-padding-top: calc(var(--nav-h) + 16px); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }   /* iOS never enlarges text itself */
+/* one offset for every jump to an anchor (TOC, #links, search results):
+   the sticky nav plus a row of air. scroll-padding on the page and
+   scroll-margin on the target ADD UP, so only this one is set */
+html { scroll-padding-top: calc(var(--nav-h) + 24px); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }   /* iOS never enlarges text itself */
 body {
   hanging-punctuation: first allow-end;
   margin: 0;
@@ -201,7 +204,7 @@ button { font: inherit; color: inherit; }
 .doc-body h2 { font-size: var(--fs-h2); line-height: 1.4; letter-spacing: -.01em; margin: calc(var(--line) * 2.25) 0 calc(var(--line) * .5); color: var(--c-head); }
 .doc-body h3 { font-size: var(--fs-h3); line-height: 1.45; margin: calc(var(--line) * 1.6) 0 calc(var(--line) * .4); color: var(--text); }
 .doc-body h4 { font-size: var(--fs-read); line-height: var(--line); margin: var(--line) 0 0; color: var(--text); }
-.doc-body :is(h2, h3, h4) { position: relative; scroll-margin-top: calc(var(--nav-h) + 24px); }
+.doc-body :is(h2, h3, h4) { position: relative; }
 .doc-body > :first-child, .doc-chunk:first-child > :first-child { margin-top: 0; }
 /* heading self-link: a quiet # after the heading, shown on hover / focus */
 .anchor { position: absolute; right: 100%; top: 0; margin-right: .8ch; color: color-mix(in srgb, var(--c-head) 45%, transparent); text-decoration: none; font-weight: 400; }
@@ -214,7 +217,6 @@ h4 > .anchor::before { content: "####"; }
 :is(h3, h4):hover > .anchor, :is(h3, h4) > .anchor:focus-visible { opacity: 1; }
 .anchor:hover { color: var(--accent); }
 @media (max-width: 720px) { .anchor { display: none; } }
-:target { scroll-margin-top: calc(var(--nav-h) + 24px); }
 .doc-body h2:target, .doc-body h3:target { color: var(--accent); }
 
 .doc-body ul, .doc-body ol { padding-left: 0; }
