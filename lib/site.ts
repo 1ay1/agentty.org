@@ -9,7 +9,7 @@ export const site = {
   releases: "https://github.com/agentty-org/agentty/releases",
   releasesLatest: "https://github.com/agentty-org/agentty/releases/latest",
   issues: "https://github.com/agentty-org/agentty/issues",
-  discord: "https://discord.gg/qhb9AZ8f3c",
+  discord: "https://discord.gg/ZEM3CTAJH7",
   license: "MIT",
   maya: "https://github.com/1ay1/maya",
   installOneLiner:
